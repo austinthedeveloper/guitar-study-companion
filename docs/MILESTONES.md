@@ -1,0 +1,101 @@
+# Milestones
+
+**Tracking rule:** Check off `- [x]` only after the work is implemented, tested, and its exit criteria met. Leave incomplete work as `- [ ]`. Commit changes to this file alongside implementation. Do not mark a milestone complete merely because scaffolding exists.
+
+## M0 — Repository foundation
+
+**Goal:** Establish a deployable, low-cost skeleton and documented domain boundaries.
+
+- [ ] Initialize Nx workspace with Angular application and Azure Functions API project (choose compatible Nx integration or custom build targets).
+- [ ] Create shared `contracts`, `music-domain`, and `ai-core` libraries.
+- [ ] Configure TypeScript strict mode, linting, formatting, unit tests, and CI.
+- [ ] Define environment variables and secrets policy; provide `.env.example` without credentials.
+- [ ] Establish local development commands for UI and Functions.
+- [ ] Create a minimal health endpoint and verify UI-to-API calls locally.
+- [ ] Document deployment approach and estimated per-request cost drivers.
+- [ ] Add `fixtures/private/` to `.gitignore` and define safe fixture handling.
+
+**Exit criteria:** One-command local start is documented; CI passes; UI can call health endpoint; no secrets or book scans are committed.
+
+## M1 — Image fixture intake and passage selection
+
+**Goal:** Work with supplied book-page images without building a camera feature.
+
+- [ ] Support local JPG/PNG upload in Angular.
+- [ ] Display a page image with zoom and passage crop/selection.
+- [ ] Capture source metadata (book, page, tuning, capo, optional chord context).
+- [ ] Add explicit consent/confirmation before sending an image to an external AI service.
+- [ ] Send selected crop to a serverless API endpoint with size/type limits.
+- [ ] Return an editable draft transcription with confidence/uncertainty indicators.
+- [ ] Implement correction UI for strings, frets, note order, durations, and techniques.
+- [ ] Persist a user-confirmed phrase and retain provenance.
+- [ ] Add at least three representative private image fixtures and expected outputs.
+
+**Exit criteria:** A user can import a supplied photo, select a phrase, fix recognition mistakes, and save verified notes. No camera capture required.
+
+## M2 — Musical analysis
+
+**Goal:** Explain why the phrase works.
+
+- [ ] Define canonical pitch, string/fret, tuning, timing, and articulation types.
+- [ ] Compute notes and intervals deterministically from verified tab and tuning.
+- [ ] Support user-provided key, chord progression, and phrase position within the progression.
+- [ ] Identify candidate scales and chord tones with uncertainty when harmony is ambiguous.
+- [ ] Generate a concise explanation of phrasing, target notes, and techniques.
+- [ ] Highlight note roles on the tablature/fretboard display.
+- [ ] Validate analysis against hand-authored examples, including ambiguous cases.
+- [ ] Allow user feedback/correction of harmonic assumptions.
+
+**Exit criteria:** A verified lick can be explained in musical context without pretending that key or harmony is always knowable from tab alone.
+
+## M3 — Practice-program generator
+
+**Goal:** Turn the lick into a useful, achievable lesson.
+
+- [ ] Define exercise schema: objective, notes, tempo, repetitions, success condition.
+- [ ] Generate a sequence: isolate → slow practice → connect phrases → apply over chords.
+- [ ] Include technique-specific drills where justified by the passage.
+- [ ] Add metronome/playback MVP (simple synthesized notes or MIDI acceptable).
+- [ ] Let users adjust difficulty, session duration, and focus.
+- [ ] Track completion and notes without requiring audio performance grading.
+- [ ] Add a review step to reject exercises with incorrect notes or impossible fingerings.
+- [ ] Test one complete learning plan end-to-end with a real fixture.
+
+**Exit criteria:** User can complete and track a short practice plan derived from a scanned passage.
+
+## M4 — Transposition and creative application
+
+**Goal:** Help transfer the idea beyond the original passage.
+
+- [ ] Transpose note pitches into a selected key while preserving intervals.
+- [ ] Generate at least one playable guitar fingering for the new key.
+- [ ] Allow selection of preferred fretboard position and range.
+- [ ] Show chord-tone function before and after transposition.
+- [ ] Generate two controlled variations (e.g., rhythm change, alternate ending).
+- [ ] Offer an application exercise over a user-entered chord progression.
+- [ ] Validate fret limits, tuning, playability constraints, and preserved musical intent.
+
+**Exit criteria:** A user can take one lick into another key and practice applying a variation over chords.
+
+## M5 — Vocabulary library and private beta
+
+**Goal:** Make repeated study useful over time.
+
+- [ ] Save and search phrases by key, technique, interval pattern, and source.
+- [ ] Add tags, personal annotations, and favorite phrases.
+- [ ] Surface past practice sessions and pending review items.
+- [ ] Add authentication and per-user data isolation if deploying for multiple users.
+- [ ] Add observability, error handling, retry policy, and AI usage caps.
+- [ ] Deploy UI and API to Azure and configure database access securely.
+- [ ] Run a private beta with a varied set of book images and record failure modes.
+- [ ] Review privacy, image retention, and copyright-related UX before broader use.
+
+**Exit criteria:** Private end-to-end product works in Azure, with a reusable library and bounded operational cost.
+
+## Release gate
+
+- [ ] All M0–M5 exit criteria satisfied.
+- [ ] No known data-loss or cross-user-access bugs.
+- [ ] AI responses are clearly distinguishable from deterministic music calculations.
+- [ ] Scan and source-image retention settings are understandable.
+- [ ] Cost/usage monitoring is configured.
