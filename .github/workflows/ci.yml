@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'feature/**']
   pull_request:
   schedule:
     # Nightly full-browser e2e (Chromium, Firefox, WebKit).
