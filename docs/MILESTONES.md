@@ -14,8 +14,9 @@
 - [ ] Create a minimal health endpoint and verify UI-to-API calls locally.
 - [ ] Document deployment approach and estimated per-request cost drivers.
 - [ ] Add `fixtures/private/` to `.gitignore` and define safe fixture handling.
+- [ ] Set up the Playwright e2e harness (full stack: UI + Functions + ephemeral Mongo + fake AI provider), route-coverage guard, and axe checks; run it in CI. See [TESTING.md](TESTING.md#e2e-strategy).
 
-**Exit criteria:** One-command local start is documented; CI passes; UI can call health endpoint; no secrets or book scans are committed.
+**Exit criteria:** One-command local start is documented; CI passes (lint, unit, e2e); UI can call health endpoint, which is proven by an e2e spec; no secrets or book scans are committed.
 
 ## M1 — Image fixture intake and passage selection
 
@@ -30,6 +31,7 @@
 - [ ] Implement correction UI for strings, frets, note order, durations, and techniques.
 - [ ] Persist a user-confirmed phrase and retain provenance.
 - [ ] Add at least three representative private image fixtures and expected outputs.
+- [ ] E2E: M1 journey and page specs pass (including consent decline, file limits, AI failure recovery, unknown rhythm).
 
 **Exit criteria:** A user can import a supplied photo, select a phrase, fix recognition mistakes, and save verified notes. No camera capture required.
 
@@ -45,6 +47,7 @@
 - [ ] Highlight note roles on the tablature/fretboard display.
 - [ ] Validate analysis against hand-authored examples, including ambiguous cases.
 - [ ] Allow user feedback/correction of harmonic assumptions.
+- [ ] E2E: M2 journey and page specs pass (including stale-analysis invalidation).
 
 **Exit criteria:** A verified lick can be explained in musical context without pretending that key or harmony is always knowable from tab alone.
 
@@ -60,6 +63,7 @@
 - [ ] Track completion and notes without requiring audio performance grading.
 - [ ] Add a review step to reject exercises with incorrect notes or impossible fingerings.
 - [ ] Test one complete learning plan end-to-end with a real fixture.
+- [ ] E2E: M3 journey and page specs pass (stubbed audio and clock; progress persists across reload).
 
 **Exit criteria:** User can complete and track a short practice plan derived from a scanned passage.
 
@@ -74,6 +78,7 @@
 - [ ] Generate two controlled variations (e.g., rhythm change, alternate ending).
 - [ ] Offer an application exercise over a user-entered chord progression.
 - [ ] Validate fret limits, tuning, playability constraints, and preserved musical intent.
+- [ ] E2E: M4 journey and page specs pass.
 
 **Exit criteria:** A user can take one lick into another key and practice applying a variation over chords.
 
@@ -89,6 +94,7 @@
 - [ ] Deploy UI and API to Azure and configure database access securely.
 - [ ] Run a private beta with a varied set of book images and record failure modes.
 - [ ] Review privacy, image retention, and copyright-related UX before broader use.
+- [ ] E2E: M5 journey specs pass, including cross-user isolation; deployed smoke suite passes against Azure.
 
 **Exit criteria:** Private end-to-end product works in Azure, with a reusable library and bounded operational cost.
 
@@ -99,3 +105,4 @@
 - [ ] AI responses are clearly distinguishable from deterministic music calculations.
 - [ ] Scan and source-image retention settings are understandable.
 - [ ] Cost/usage monitoring is configured.
+- [ ] Full e2e suite (every route, plus the north-star journey) passes on Chromium, Firefox, and WebKit.

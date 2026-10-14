@@ -15,6 +15,7 @@
 
 - [ ] Implementation works locally.
 - [ ] Relevant automated tests pass.
+- [ ] New or changed pages and flows have e2e specs (happy path, empty, error, axe), and the full e2e suite passes.
 - [ ] Errors and ambiguous input are handled.
 - [ ] No private fixtures, secrets, or raw scan logs are exposed.
 - [ ] Documentation and milestone checklist reflect verified state.
