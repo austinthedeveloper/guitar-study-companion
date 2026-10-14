@@ -100,6 +100,7 @@ Record consequential choices here. Status values: `Proposed`, `Accepted`, `Super
 - [ ] Choose initial authentication method (defer until hosted multi-user milestone if local-only).
 - [x] Image upload path: the **request body**, carrying a base64 JPEG/PNG/WebP crop of at most 4 MB and 2048 px on the longest side. The full page never leaves the browser and nothing is stored. Revisit if retention becomes opt-in (M5).
 - [ ] Select the default AI provider/model from private fixture evaluation, cost, and privacy terms. OpenAI and Claude adapters both exist; run `tools/fixtures/eval-private.mts` against each.
+  - 2026-10-13, OpenAI `gpt-5.6-sol`, 3 verified cases: 26/29 positions read correctly (100%, 78%, 93%). Correct rhythm-unknown flag; about 1.5k input and 0.7-3.2k output tokens per crop; 10-43 s per crop. **Confidence was poorly calibrated:** no notes were flagged for review, even in the misread cases. Claude is not yet evaluated (needs `ANTHROPIC_API_KEY`).
 - [x] Determine notation renderer/editor: a custom Angular tab editor for correction; alphaTab or VexFlow for display (to be chosen during M1/M2).
 - [x] Rhythm may be explicitly **unknown** in M1 (`durationTicks: null`, `rhythmKnown: false`).
 - [ ] Determine which Azure Functions hosting option best fits usage and current pricing.

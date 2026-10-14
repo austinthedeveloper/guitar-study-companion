@@ -1,6 +1,6 @@
 import {
   AiProvider,
-  createAiProvider,
+  createAiProviderSafely,
   DEFAULT_AI_TIMEOUT_MS,
 } from '@gsc/api/ai-core';
 import { MongoConnection, PhraseRepository } from '@gsc/api/data-access';
@@ -26,7 +26,9 @@ export function appContext(): AppContext {
   let repo: PhraseRepository | null = null;
   context = {
     version: process.env['APP_VERSION'] || 'dev',
-    ai: createAiProvider(process.env),
+    ai: createAiProviderSafely(process.env, (reason) =>
+      console.error(`[ai] provider misconfigured: ${reason}`),
+    ),
     aiTimeoutMs: Number(process.env['AI_TIMEOUT_MS']) || DEFAULT_AI_TIMEOUT_MS,
     mongo,
     e2eMode: process.env['E2E_MODE'] === 'true',

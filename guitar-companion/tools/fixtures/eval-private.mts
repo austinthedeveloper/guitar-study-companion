@@ -88,6 +88,19 @@ for (const id of readdirSync(root).filter((d) => !only || d === only)) {
   const want = columns(expected.events);
   const got = columns(body.draft.events);
   const matched = lcs(want, got);
+  // Keep the full draft and a column diff (private) so misreads can be inspected without re-running.
+  writeFileSync(
+    join(dir, `draft-${body.provider}.json`),
+    JSON.stringify({ draft: body.draft, model: body.model }, null, 2),
+  );
+  writeFileSync(
+    join(dir, `diff-${body.provider}.txt`),
+    Array.from(
+      { length: Math.max(want.length, got.length) },
+      (_, i) =>
+        `${String(i).padStart(2)}  expected ${(want[i] ?? '-').padEnd(12)} got ${got[i] ?? '-'}${want[i] === got[i] ? '' : '   <--'}`,
+    ).join('\n') + '\n',
+  );
   rows.push({
     id,
     verified: expected.verified === true,

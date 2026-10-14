@@ -27,6 +27,7 @@ These ideas are **not committed MVP scope**. Re-rank after each milestone based 
 - [ ] PDF import and multi-page extraction.
 - [ ] MusicXML, Guitar Pro, MIDI, and other supported file imports/exports.
 - [ ] Handwritten annotations and chord-diagram recognition.
+- [ ] **Book notation legends as recognition context:** collect the notation legend pages from the owner's books (bends, slides, pre-bends, hold/release, dead notes, etc.) and give the relevant legend to the AI provider, or turn it into prompt rules, so each publisher's symbols are read correctly. Legends are copyrighted, so keep them private like scans.
 - [ ] Search phrases by melodic contour, intervals, technique, or chord function.
 - [ ] Offline/PWA support for saved exercises.
 

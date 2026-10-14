@@ -30,7 +30,7 @@
 - [x] Return an editable draft transcription with confidence/uncertainty indicators.
 - [x] Implement correction UI for strings, frets, note order, durations, and techniques.
 - [x] Persist a user-confirmed phrase and retain provenance.
-- [ ] Add at least three representative private image fixtures and expected outputs. *(Tooling ready: `tools/fixtures/eval-private.mts`. Needs owner-verified `expected.json` per case and a real provider run.)*
+- [x] Add at least three representative private image fixtures and expected outputs. *(3 owner-verified cases: solo bends, a tilted power-chord riff with dead notes, and a sideways legato riff. First OpenAI `gpt-5.6-sol` run read 26 of 29 positions; see DECISIONS.md.)*
 - [x] E2E: M1 journey and page specs pass (including consent decline, file limits, AI failure recovery, unknown rhythm).
 
 **Exit criteria:** A user can import a supplied photo, select a phrase, fix recognition mistakes, and save verified notes. No camera capture required.
