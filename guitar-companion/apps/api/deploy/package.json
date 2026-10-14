@@ -1,0 +1,5 @@
+{
+  "name": "gsc-api",
+  "private": true,
+  "main": "main.js"
+}

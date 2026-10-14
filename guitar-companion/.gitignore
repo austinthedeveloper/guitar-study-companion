@@ -54,3 +54,15 @@ vitest.config.*.timestamp*
 .nx/polygraph
 .nx/self-healing
 .nx/migrate-runs
+# Local settings / secrets (see .env.example)
+.env
+.env.*
+!.env.example
+local.settings.json
+
+# Private copyrighted fixtures — never commit (see docs/TESTING.md)
+fixtures/private/
+
+# e2e artifacts
+test-results
+playwright-report

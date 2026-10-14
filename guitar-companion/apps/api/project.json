@@ -1,73 +1,51 @@
 {
   "name": "api",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/api/src",
   "projectType": "application",
-  "tags": ["scope:api"],
-  "release": {
-    "docker": {
-      "repositoryName": "org/angular-template-api"
-    }
-  },
+  "sourceRoot": "apps/api/src",
+  "tags": ["scope:api", "type:app"],
   "targets": {
     "build": {
       "executor": "@nx/esbuild:esbuild",
       "outputs": ["{options.outputPath}"],
-      "defaultConfiguration": "production",
       "options": {
         "platform": "node",
-        "outputPath": "apps/api/dist",
-        "format": ["cjs"],
-        "bundle": false,
+        "outputPath": "dist/apps/api",
         "main": "apps/api/src/main.ts",
         "tsConfig": "apps/api/tsconfig.app.json",
-        "assets": ["apps/api/src/assets"],
-        "generatePackageJson": true,
+        "format": ["cjs"],
+        "bundle": true,
+        "thirdParty": true,
+        "generatePackageJson": false,
+        "sourcemap": true,
+        "outputFileName": "main.js",
+        "declaration": false,
+        "assets": [
+          {
+            "input": "apps/api/deploy",
+            "glob": "{*,.funcignore}",
+            "output": "."
+          }
+        ],
         "esbuildOptions": {
-          "sourcemap": true,
           "outExtension": {
             ".js": ".js"
           }
-        }
-      },
-      "configurations": {
-        "development": {},
-        "production": {
-          "generateLockfile": true,
-          "esbuildOptions": {
-            "sourcemap": false,
-            "outExtension": {
-              ".js": ".js"
-            }
-          }
-        }
+        },
+        "external": ["@azure/functions-core"]
       }
     },
     "serve": {
       "continuous": true,
-      "executor": "@nx/js:node",
-      "defaultConfiguration": "development",
       "dependsOn": ["build"],
+      "executor": "nx:run-commands",
       "options": {
-        "buildTarget": "api:build",
-        "runBuildTargetDependencies": false
-      },
-      "configurations": {
-        "development": {
-          "buildTarget": "api:build:development"
-        },
-        "production": {
-          "buildTarget": "api:build:production"
-        }
+        "commands": [
+          "node tools/scripts/write-local-settings.mjs dist/apps/api",
+          "func start --script-root dist/apps/api --port 7071"
+        ],
+        "parallel": false
       }
-    },
-    "test": {
-      "options": {
-        "passWithNoTests": true
-      }
-    },
-    "docker:build": {
-      "dependsOn": ["build"]
     }
   }
 }

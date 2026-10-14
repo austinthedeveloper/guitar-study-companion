@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Nightly full-browser e2e (Chromium, Firefox, WebKit).
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+defaults:
+  run:
+    working-directory: guitar-companion
+
+env:
+  NX_NO_CLOUD: true
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          filter: tree:0
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: guitar-companion/.nvmrc
+          cache: npm
+          cache-dependency-path: guitar-companion/package-lock.json
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-binaries-${{ runner.os }}-${{ hashFiles('guitar-companion/package-lock.json') }}
+
+      - run: npm ci
+
+      - name: Install Playwright browsers
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            npx playwright install --with-deps
+          else
+            npx playwright install --with-deps chromium
+          fi
+
+      - run: npx nx format:check
+      - run: npx nx run-many -t lint test typecheck build
+
+      - name: E2E (whole site, full stack)
+        run: npx nx e2e web-e2e
+        env:
+          E2E_ALL_BROWSERS: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '1' || '' }}
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: guitar-companion/dist/.playwright
+          retention-days: 7

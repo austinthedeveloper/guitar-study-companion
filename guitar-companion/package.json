@@ -1,8 +1,17 @@
 {
-  "name": "@org/source",
+  "name": "@gsc/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,magenta \"nx serve api\" \"nx serve web\"",
+    "build": "nx run-many -t build",
+    "test": "nx run-many -t test",
+    "lint": "nx run-many -t lint",
+    "e2e": "nx e2e web-e2e",
+    "e2e:all-browsers": "E2E_ALL_BROWSERS=1 nx e2e web-e2e",
+    "e2e:ui": "nx e2e web-e2e --ui",
+    "verify": "nx format:check && nx run-many -t lint test typecheck build && nx e2e web-e2e"
+  },
   "private": true,
   "dependencies": {
     "@angular-devkit/build-angular": "22.1.6",
@@ -11,11 +20,11 @@
     "@angular/core": "22.1.4",
     "@angular/forms": "22.1.4",
     "@angular/platform-browser": "22.1.4",
-    "@angular/platform-server": "22.1.4",
     "@angular/router": "22.1.4",
-    "@angular/ssr": "22.1.6",
-    "express": "^4.21.2",
+    "@azure/functions": "^4.16.5",
+    "mongodb": "^7.7.0",
     "rxjs": "~7.8.0",
+    "zod": "^4.6.7",
     "zone.js": "0.16.2"
   },
   "devDependencies": {
@@ -27,10 +36,11 @@
     "@angular/cli": "22.1.6",
     "@angular/compiler-cli": "22.1.4",
     "@angular/language-service": "22.1.4",
+    "@axe-core/playwright": "^4.13.0",
+    "@azure/static-web-apps-cli": "^2.0.10",
     "@eslint/js": "^9.8.0",
     "@nx/angular": "23.2.0",
     "@nx/devkit": "23.2.0",
-    "@nx/docker": "23.2.0",
     "@nx/esbuild": "23.2.0",
     "@nx/eslint": "23.2.0",
     "@nx/eslint-plugin": "23.2.0",
@@ -47,13 +57,14 @@
     "@swc-node/register": "1.11.1",
     "@swc/core": "1.15.8",
     "@swc/helpers": "0.5.18",
-    "@types/express": "^4.17.21",
+    "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^24.0.0",
-    "@types/supertest": "^6.0.3",
     "@typescript-eslint/utils": "^8.40.0",
     "@vitest/coverage-v8": "~4.1.0",
     "@vitest/ui": "~4.1.0",
     "angular-eslint": "22.2.0",
+    "azure-functions-core-tools": "^4.16.0",
+    "concurrently": "^10.0.6",
     "esbuild": "^0.27.0",
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^10.0.0",
@@ -61,15 +72,21 @@
     "jiti": "2.4.2",
     "jsdom": "~22.1.0",
     "jsonc-eslint-parser": "^2.1.0",
+    "mongodb-memory-server": "^11.3.0",
     "nx": "23.2.0",
+    "postcss": "^8.5.30",
     "prettier": "^3.8.1",
-    "supertest": "^7.1.4",
+    "tailwindcss": "^4.3.3",
     "ts-node": "10.9.1",
     "tslib": "^2.3.0",
     "typescript": "6.0.3",
     "typescript-eslint": "^8.40.0",
     "vite": "8.0.9",
     "vite-tsconfig-paths": "^5.1.4",
-    "vitest": "~4.1.0"
+    "vitest": "~4.1.0",
+    "wait-on": "^9.5.1"
+  },
+  "engines": {
+    "node": "^22.22.3"
   }
 }

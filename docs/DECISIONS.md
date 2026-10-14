@@ -4,7 +4,7 @@ Record consequential choices here. Status values: `Proposed`, `Accepted`, `Super
 
 ## ADR-001 — Angular + Nx monorepo
 
-**Status:** Proposed
+**Status:** Accepted
 
 **Decision:** Use Angular for the web UI and Nx for applications/shared libraries.
 
@@ -14,7 +14,7 @@ Record consequential choices here. Status values: `Proposed`, `Accepted`, `Super
 
 ## ADR-002 — Azure Functions rather than an always-on API server
 
-**Status:** Proposed
+**Status:** Accepted
 
 **Decision:** Use Node.js/TypeScript HTTP-triggered Azure Functions for API endpoints.
 
@@ -50,18 +50,44 @@ Record consequential choices here. Status values: `Proposed`, `Accepted`, `Super
 
 ## ADR-006 — AI provider abstraction
 
-**Status:** Proposed
+**Status:** Accepted
 
 **Decision:** Define provider-neutral `interpretImage`, `explainPhrase`, and `proposeExercises` interfaces with schema validation.
 
 **Why:** Enables model comparison and cost control without rewriting product logic.
+
+**Implementation:** A registry in `@gsc/api/ai-core` resolves `AI_PROVIDER` (default `fake`). Multiple providers are supported; the deterministic `fake` provider is used for dev and e2e. One real provider is added in M1, and a second at fixture evaluation time.
+
+## ADR-007 — Presentational libraries, thin apps
+
+**Status:** Accepted
+
+**Decision:** UI components live in `@gsc/web/ui` and are purely presentational (inputs/outputs, no injected services). Routed pages live in `@gsc/web/feature-*` and connect UI to `@gsc/web/data-access`. Apps only compose routes and providers. API handlers live in `@gsc/api/handlers`, and the Functions app only registers triggers. Tag-based lint rules enforce the boundaries.
+
+**Why:** Reuse, testability without a runtime, and a clear separation of concerns.
+
+## ADR-008 — Tailwind CSS
+
+**Status:** Accepted
+
+**Decision:** Use Tailwind v4 (PostCSS) for styling.
+
+**Why:** Most of the UI is custom (tab editor, fretboard, cropper). Utility classes keep presentational components self-contained, and there is no Bootstrap JavaScript to conflict with Angular.
+
+## ADR-009 — Whole-site e2e against production builds
+
+**Status:** Accepted
+
+**Decision:** Playwright drives production builds served by the SWA CLI, which proxies to the real Functions host. Tests use ephemeral MongoDB and the fake AI provider. A route manifest (`@gsc/web/routes`) plus a reporter fail CI if any route lacks a tagged spec.
+
+**Why:** It mirrors Azure routing, is deterministic and free in CI, and makes "e2e on the whole site" enforceable rather than aspirational.
 
 ## Open decisions
 
 - [ ] Choose initial authentication method (defer until hosted multi-user milestone if local-only).
 - [ ] Choose image upload path: request body vs private blob + short-lived URL.
 - [ ] Select AI provider/model based on private fixture evaluation, cost, and privacy terms.
-- [ ] Determine notation renderer/editor (existing library vs custom Angular UI).
-- [ ] Decide whether rhythm editing is mandatory for M1 or can be explicitly unknown.
+- [x] Determine notation renderer/editor: a custom Angular tab editor for correction; alphaTab or VexFlow for display (to be chosen during M1/M2).
+- [x] Rhythm may be explicitly **unknown** in M1 (`durationTicks: null`, `rhythmKnown: false`).
 - [ ] Determine which Azure Functions hosting option best fits usage and current pricing.
 - [ ] Decide whether saved images are opt-in or retained briefly by default.

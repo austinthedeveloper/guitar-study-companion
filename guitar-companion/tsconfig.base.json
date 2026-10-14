@@ -14,16 +14,15 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "paths": {
-      "@org/api/products": ["./packages/api/products/src/index.ts"],
-      "@org/models": ["./packages/shared/models/src/index.ts"],
-      "@org/shop/data": ["./packages/shop/data/src/index.ts"],
-      "@org/shop/feature-product-detail": [
-        "./packages/shop/feature-product-detail/src/index.ts"
-      ],
-      "@org/shop/feature-products": [
-        "./packages/shop/feature-products/src/index.ts"
-      ],
-      "@org/shop/shared-ui": ["./packages/shop/shared-ui/src/index.ts"]
+      "@gsc/contracts": ["./packages/shared/contracts/src/index.ts"],
+      "@gsc/music-domain": ["./packages/shared/music-domain/src/index.ts"],
+      "@gsc/api/ai-core": ["./packages/api/ai-core/src/index.ts"],
+      "@gsc/api/data-access": ["./packages/api/data-access/src/index.ts"],
+      "@gsc/api/handlers": ["./packages/api/handlers/src/index.ts"],
+      "@gsc/web/ui": ["./packages/web/ui/src/index.ts"],
+      "@gsc/web/data-access": ["./packages/web/data-access/src/index.ts"],
+      "@gsc/web/feature-home": ["./packages/web/feature-home/src/index.ts"],
+      "@gsc/web/routes": ["./packages/web/routes/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

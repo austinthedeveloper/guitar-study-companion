@@ -1,0 +1,16 @@
+@import 'tailwindcss';
+@source '../../../packages/web';
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --color-brand-50: oklch(97% 0.02 70);
+  --color-brand-600: oklch(55% 0.15 50);
+  --color-brand-700: oklch(47% 0.14 48);
+}
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-brand-600);
+    outline-offset: 2px;
+  }
+}

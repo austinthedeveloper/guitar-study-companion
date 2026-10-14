@@ -6,14 +6,14 @@
 
 **Goal:** Establish a deployable, low-cost skeleton and documented domain boundaries.
 
-- [ ] Initialize Nx workspace with Angular application and Azure Functions API project (choose compatible Nx integration or custom build targets).
-- [ ] Create shared `contracts`, `music-domain`, and `ai-core` libraries.
+- [x] Initialize Nx workspace with Angular application and Azure Functions API project (choose compatible Nx integration or custom build targets).
+- [x] Create shared `contracts`, `music-domain`, and `ai-core` libraries.
 - [ ] Configure TypeScript strict mode, linting, formatting, unit tests, and CI.
-- [ ] Define environment variables and secrets policy; provide `.env.example` without credentials.
-- [ ] Establish local development commands for UI and Functions.
-- [ ] Create a minimal health endpoint and verify UI-to-API calls locally.
-- [ ] Document deployment approach and estimated per-request cost drivers.
-- [ ] Add `fixtures/private/` to `.gitignore` and define safe fixture handling.
+- [x] Define environment variables and secrets policy; provide `.env.example` without credentials.
+- [x] Establish local development commands for UI and Functions.
+- [x] Create a minimal health endpoint and verify UI-to-API calls locally.
+- [x] Document deployment approach and estimated per-request cost drivers.
+- [x] Add `fixtures/private/` to `.gitignore` and define safe fixture handling.
 - [ ] Set up the Playwright e2e harness (full stack: UI + Functions + ephemeral Mongo + fake AI provider), route-coverage guard, and axe checks; run it in CI. See [TESTING.md](TESTING.md#e2e-strategy).
 
 **Exit criteria:** One-command local start is documented; CI passes (lint, unit, e2e); UI can call health endpoint, which is proven by an e2e spec; no secrets or book scans are committed.

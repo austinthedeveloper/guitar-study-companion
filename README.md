@@ -47,6 +47,7 @@ The authoritative checklist is [MILESTONES.md](docs/MILESTONES.md). Check a task
 | [Roadmap](docs/ROADMAP.md) | Product phases and sequencing |
 | [Architecture](docs/ARCHITECTURE.md) | Components, API shape, deployment and cost controls |
 | [Domain Model](docs/DOMAIN_MODEL.md) | Music representation and persistence |
+| [Development](docs/DEVELOPMENT.md) | Local commands, layout, env/secrets, deployment, cost drivers |
 | [Testing](docs/TESTING.md) | Fixture-based validation using provided tab-book images |
 | [Feature Backlog](docs/FEATURE_BACKLOG.md) | Ideas beyond committed milestones |
 | [Decisions](docs/DECISIONS.md) | Architecture decision records and open questions |
@@ -55,9 +56,11 @@ The authoritative checklist is [MILESTONES.md](docs/MILESTONES.md). Check a task
 
 ## Getting started
 
+The app lives in [`guitar-companion/`](guitar-companion). See [DEVELOPMENT.md](docs/DEVELOPMENT.md) for prerequisites, commands, and environment setup. The short version: `cd guitar-companion && nvm use && npm ci && npm run dev`.
+
 1. Add representative tab-book images under a local, gitignored `fixtures/private/` directory.
 2. Complete Milestone 0 before adding significant application code.
 3. Build one vertical slice: **image → corrected phrase → analysis → exercise → transformation**.
 4. Validate generated music with deterministic checks and user review.
 
-**Status:** Planning; no implementation claimed.
+**Status:** M0 in progress; see [MILESTONES.md](docs/MILESTONES.md).

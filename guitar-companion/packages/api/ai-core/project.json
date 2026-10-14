@@ -1,0 +1,9 @@
+{
+  "name": "ai-core",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/api/ai-core/src",
+  "projectType": "library",
+  "tags": ["scope:api", "type:util"],
+  "// targets": "to see all targets run: nx show project ai-core --web",
+  "targets": {}
+}
