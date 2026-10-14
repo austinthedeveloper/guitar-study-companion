@@ -1,0 +1,79 @@
+{
+  "stringCount": 6,
+  "rhythmKnown": false,
+  "events": [
+    {
+      "id": "e1",
+      "order": 0,
+      "stringIndex": 1,
+      "fret": 15,
+      "durationTicks": null,
+      "techniques": ["bend"],
+      "bendSemitones": 2
+    },
+    {
+      "id": "e2",
+      "order": 1,
+      "stringIndex": 0,
+      "fret": 15,
+      "durationTicks": null,
+      "techniques": []
+    },
+    {
+      "id": "e3",
+      "order": 2,
+      "stringIndex": 0,
+      "fret": 17,
+      "durationTicks": null,
+      "techniques": []
+    },
+    {
+      "id": "e4",
+      "order": 3,
+      "stringIndex": 1,
+      "fret": 17,
+      "durationTicks": null,
+      "techniques": []
+    },
+    {
+      "id": "e5",
+      "order": 4,
+      "stringIndex": 1,
+      "fret": 15,
+      "durationTicks": null,
+      "techniques": []
+    },
+    {
+      "id": "e6",
+      "order": 5,
+      "stringIndex": 2,
+      "fret": 14,
+      "durationTicks": null,
+      "techniques": []
+    },
+    {
+      "id": "e7",
+      "order": 5,
+      "stringIndex": 1,
+      "fret": 15,
+      "durationTicks": null,
+      "techniques": []
+    },
+    {
+      "id": "e8",
+      "order": 6,
+      "stringIndex": 3,
+      "fret": null,
+      "durationTicks": null,
+      "techniques": ["dead-note"]
+    },
+    {
+      "id": "e9",
+      "order": 7,
+      "stringIndex": 2,
+      "fret": 12,
+      "durationTicks": null,
+      "techniques": []
+    }
+  ]
+}

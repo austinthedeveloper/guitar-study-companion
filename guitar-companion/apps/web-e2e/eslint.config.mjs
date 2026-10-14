@@ -6,7 +6,18 @@ export default [
   ...baseConfig,
   {
     files: ['**/*.ts', '**/*.js'],
-    // Override or add rules here
-    rules: {},
+    rules: {
+      'playwright/expect-expect': [
+        'warn',
+        {
+          assertFunctionNames: [
+            'expectNoA11yViolations',
+            'reachReview',
+            'upload',
+            'selectPassage',
+          ],
+        },
+      ],
+    },
   },
 ];

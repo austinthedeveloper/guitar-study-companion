@@ -22,16 +22,16 @@
 
 **Goal:** Work with supplied book-page images without building a camera feature.
 
-- [ ] Support local JPG/PNG upload in Angular.
-- [ ] Display a page image with zoom and passage crop/selection.
-- [ ] Capture source metadata (book, page, tuning, capo, optional chord context).
-- [ ] Add explicit consent/confirmation before sending an image to an external AI service.
-- [ ] Send selected crop to a serverless API endpoint with size/type limits.
-- [ ] Return an editable draft transcription with confidence/uncertainty indicators.
-- [ ] Implement correction UI for strings, frets, note order, durations, and techniques.
-- [ ] Persist a user-confirmed phrase and retain provenance.
-- [ ] Add at least three representative private image fixtures and expected outputs.
-- [ ] E2E: M1 journey and page specs pass (including consent decline, file limits, AI failure recovery, unknown rhythm).
+- [x] Support local JPG/PNG upload in Angular.
+- [x] Display a page image with zoom and passage crop/selection.
+- [x] Capture source metadata (book, page, tuning, capo, optional chord context).
+- [x] Add explicit consent/confirmation before sending an image to an external AI service.
+- [x] Send selected crop to a serverless API endpoint with size/type limits.
+- [x] Return an editable draft transcription with confidence/uncertainty indicators.
+- [x] Implement correction UI for strings, frets, note order, durations, and techniques.
+- [x] Persist a user-confirmed phrase and retain provenance.
+- [ ] Add at least three representative private image fixtures and expected outputs. *(Tooling ready: `tools/fixtures/eval-private.mts`. Needs owner-verified `expected.json` per case and a real provider run.)*
+- [x] E2E: M1 journey and page specs pass (including consent decline, file limits, AI failure recovery, unknown rhythm).
 
 **Exit criteria:** A user can import a supplied photo, select a phrase, fix recognition mistakes, and save verified notes. No camera capture required.
 

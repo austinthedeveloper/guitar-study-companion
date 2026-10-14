@@ -52,6 +52,7 @@ const apiEnv = {
   MONGODB_URI: mongo.getUri(),
   MONGODB_DB: 'gsc-e2e',
   E2E_MODE: 'true',
+  AI_TIMEOUT_MS: '3000',
 };
 console.log(`[e2e-stack] mongo at ${mongo.getUri()}`);
 

@@ -5,5 +5,19 @@
   "projectType": "library",
   "tags": ["scope:shared", "type:util"],
   "// targets": "to see all targets run: nx show project contracts --web",
-  "targets": {}
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["default", "^default"],
+      "options": {
+        "cwd": "packages/shared/contracts",
+        "commands": [
+          "tsc -p tsconfig.lib.json --noEmit",
+          "tsc -p tsconfig.spec.json --noEmit"
+        ],
+        "parallel": false
+      }
+    }
+  }
 }

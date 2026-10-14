@@ -6,11 +6,12 @@ import {
 } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { HealthApi } from '@gsc/web/data-access';
+import { RouterLink } from '@angular/router';
 import { ApiStatusComponent, ApiStatusView } from '@gsc/web/ui';
 
 @Component({
   selector: 'gsc-home-page',
-  imports: [ApiStatusComponent],
+  imports: [ApiStatusComponent, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="space-y-3">
@@ -21,6 +22,14 @@ import { ApiStatusComponent, ApiStatusView } from '@gsc/web/ui';
         Turn passages from your guitar books into vocabulary you can understand,
         practice, and use in your own playing.
       </p>
+      <div class="flex gap-3 pt-2">
+        <a routerLink="/import" class="btn-primary" data-testid="cta-import"
+          >Import a passage</a
+        >
+        <a routerLink="/phrases" class="btn-secondary" data-testid="cta-phrases"
+          >My phrases</a
+        >
+      </div>
     </section>
     <div class="mt-8 max-w-md">
       <gsc-api-status [status]="status()" />

@@ -21,8 +21,11 @@
     "@angular/forms": "22.1.4",
     "@angular/platform-browser": "22.1.4",
     "@angular/router": "22.1.4",
+    "@anthropic-ai/sdk": "^0.133.0",
     "@azure/functions": "^4.16.5",
+    "heic-to": "^1.6.6",
     "mongodb": "^7.7.0",
+    "openai": "^7.32.0",
     "rxjs": "~7.8.0",
     "zod": "^4.6.7",
     "zone.js": "0.16.2"

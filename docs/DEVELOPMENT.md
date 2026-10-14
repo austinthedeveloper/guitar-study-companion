@@ -64,7 +64,11 @@ Module boundaries are enforced by lint (`eslint.config.mjs`):
 | Variable | Default | Purpose |
 |---|---|---|
 | `APP_VERSION` | `dev` | Version reported by `/api/health` |
-| `AI_PROVIDER` | `fake` | Name of a provider in the AI registry |
+| `AI_PROVIDER` | `fake` | `fake`, `openai`, or `claude` |
+| `AI_TIMEOUT_MS` | `60000` | Recognition request timeout |
+| `AI_MAX_OUTPUT_TOKENS` | provider default | Output token cap |
+| `OPENAI_API_KEY` / `OPENAI_MODEL` | *(empty)* | Required for `openai` (vision-capable model) |
+| `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL` | *(empty)* / `claude-opus-5-5` | Required for `claude` |
 | `MONGODB_URI` | *(empty)* | Mongo connection string; empty means running without a DB |
 | `MONGODB_DB` | `gsc` | Database name |
 | `E2E_MODE` | `false` | Test-only seeding endpoints |

@@ -56,7 +56,10 @@ Record consequential choices here. Status values: `Proposed`, `Accepted`, `Super
 
 **Why:** Enables model comparison and cost control without rewriting product logic.
 
-**Implementation:** A registry in `@gsc/api/ai-core` resolves `AI_PROVIDER` (default `fake`). Multiple providers are supported; the deterministic `fake` provider is used for dev and e2e. One real provider is added in M1, and a second at fixture evaluation time.
+**Implementation:** A registry in `@gsc/api/ai-core` resolves `AI_PROVIDER` (`fake` by default, `openai`, or `claude`). The deterministic `fake` provider is used for dev and e2e and simulates failure modes. Every provider returns the same strict JSON Schema (`DRAFT_WIRE_JSON_SCHEMA`), and the shared pipeline (`interpretTab`) validates it: malformed or impossible events are dropped and explained, partial rhythm is cleared, and timeouts and outages map to retryable errors.
+
+- **OpenAI:** Responses API with a strict `json_schema` format. Requires `OPENAI_MODEL`, a vision-capable model of the owner's choice.
+- **Claude:** Messages API with an `output_config.format` JSON schema and effort `high`. The model defaults to `claude-opus-5-5` and can be overridden with `ANTHROPIC_MODEL`. Server-side refusal fallback (`fallbacks: "default"`) is enabled, so a policy decline is retried on a fallback model in the same call.
 
 ## ADR-007 — Presentational libraries, thin apps
 
@@ -82,12 +85,22 @@ Record consequential choices here. Status values: `Proposed`, `Accepted`, `Super
 
 **Why:** It mirrors Azure routing, is deterministic and free in CI, and makes "e2e on the whole site" enforceable rather than aspirational.
 
+## ADR-010 — Client-side HEIC decoding
+
+**Status:** Accepted
+
+**Decision:** Decode iPhone HEIC photos in the browser with `heic-to` (libheif, WASM). It is lazy-loaded only when a HEIC file is chosen. Crops are always re-encoded as JPEG before upload.
+
+**Why:** Phone photos are often HEIC, but Chromium and Firefox can't display HEIC, AI providers don't accept it, and common server image libraries ship without a HEVC decoder.
+
+**Tradeoff:** The decoder is LGPL-3.0 and about 1 MB. It stays a separate dynamically loaded chunk and is only fetched when a HEIC file is used. Revisit before any public distribution.
+
 ## Open decisions
 
 - [ ] Choose initial authentication method (defer until hosted multi-user milestone if local-only).
-- [ ] Choose image upload path: request body vs private blob + short-lived URL.
-- [ ] Select AI provider/model based on private fixture evaluation, cost, and privacy terms.
+- [x] Image upload path: the **request body**, carrying a base64 JPEG/PNG/WebP crop of at most 4 MB and 2048 px on the longest side. The full page never leaves the browser and nothing is stored. Revisit if retention becomes opt-in (M5).
+- [ ] Select the default AI provider/model from private fixture evaluation, cost, and privacy terms. OpenAI and Claude adapters both exist; run `tools/fixtures/eval-private.mts` against each.
 - [x] Determine notation renderer/editor: a custom Angular tab editor for correction; alphaTab or VexFlow for display (to be chosen during M1/M2).
 - [x] Rhythm may be explicitly **unknown** in M1 (`durationTicks: null`, `rhythmKnown: false`).
 - [ ] Determine which Azure Functions hosting option best fits usage and current pricing.
-- [ ] Decide whether saved images are opt-in or retained briefly by default.
+- [x] Images are **not retained** in M1. Only the corrected phrase is saved. Retention, if ever added, will be opt-in.

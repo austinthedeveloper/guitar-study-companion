@@ -46,6 +46,16 @@
         ],
         "parallel": false
       }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["default", "^default"],
+      "options": {
+        "cwd": "apps/api",
+        "commands": ["tsc -p tsconfig.app.json --noEmit"],
+        "parallel": false
+      }
     }
   }
 }

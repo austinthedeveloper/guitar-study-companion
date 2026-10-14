@@ -8,9 +8,9 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "importHelpers": true,
-    "target": "es2015",
+    "target": "es2022",
     "module": "esnext",
-    "lib": ["es2020", "dom"],
+    "lib": ["es2022", "dom"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "paths": {
@@ -22,7 +22,12 @@
       "@gsc/web/ui": ["./packages/web/ui/src/index.ts"],
       "@gsc/web/data-access": ["./packages/web/data-access/src/index.ts"],
       "@gsc/web/feature-home": ["./packages/web/feature-home/src/index.ts"],
-      "@gsc/web/routes": ["./packages/web/routes/src/index.ts"]
+      "@gsc/web/routes": ["./packages/web/routes/src/index.ts"],
+      "@gsc/web/image-tools": ["./packages/web/image-tools/src/index.ts"],
+      "@gsc/web/feature-import": ["./packages/web/feature-import/src/index.ts"],
+      "@gsc/web/feature-phrases": [
+        "./packages/web/feature-phrases/src/index.ts"
+      ]
     }
   },
   "exclude": ["node_modules", "tmp"]

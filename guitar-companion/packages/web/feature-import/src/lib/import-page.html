@@ -1,0 +1,281 @@
+<div class="space-y-6">
+  <header class="space-y-3">
+    <h1 class="text-2xl font-semibold text-stone-900">Import a passage</h1>
+    <gsc-steps [steps]="steps" [current]="step()" />
+  </header>
+
+  @switch (step()) { @case (0) {
+  <section
+    aria-labelledby="upload-heading"
+    class="space-y-4"
+    data-testid="step-upload"
+  >
+    <h2 id="upload-heading" class="text-lg font-medium">
+      Upload a photo of a page
+    </h2>
+    <gsc-file-drop
+      [accept]="accept"
+      [busy]="loadingImage()"
+      [label]="loadingImage() ? 'Loading image…' : 'Choose a photo or drop it here'"
+      hint="JPG, PNG, WebP, or iPhone HEIC. Use pages from books you own."
+      (fileSelected)="onFile($event)"
+    />
+    @if (uploadError(); as err) {
+    <gsc-alert kind="error" heading="Can't use that file">{{ err }}</gsc-alert>
+    }
+  </section>
+  } @case (1) { @if (image(); as img) {
+  <section
+    aria-labelledby="select-heading"
+    class="space-y-4"
+    data-testid="step-select"
+  >
+    <div class="flex flex-wrap items-baseline justify-between gap-2">
+      <h2 id="select-heading" class="text-lg font-medium">
+        Select the passage
+      </h2>
+      <span class="text-sm text-stone-600" data-testid="file-name"
+        >{{ fileName() }}</span
+      >
+    </div>
+    <gsc-image-cropper
+      [image]="img"
+      [(rotation)]="rotation"
+      [(selection)]="selection"
+    />
+    @if (selection() && !selectionUsable()) {
+    <gsc-alert kind="warning"
+      >That selection is too small to read. Drag a larger area.</gsc-alert
+    >
+    } @if (cropError(); as err) {
+    <gsc-alert kind="error">{{ err }}</gsc-alert>
+    }
+    <div class="flex justify-between">
+      <button type="button" class="btn-secondary" (click)="startOver()">
+        Choose another photo
+      </button>
+      <button
+        type="button"
+        class="btn-primary"
+        [disabled]="!selectionUsable()"
+        (click)="confirmSelection()"
+        data-testid="selection-next"
+      >
+        Use this selection
+      </button>
+    </div>
+  </section>
+  } } @case (2) {
+  <section
+    aria-labelledby="details-heading"
+    class="space-y-4"
+    data-testid="step-details"
+  >
+    <h2 id="details-heading" class="text-lg font-medium">
+      Where is this from?
+    </h2>
+    @if (crop(); as c) {
+    <img
+      [src]="c.url"
+      alt="Selected passage"
+      class="max-h-48 rounded border border-stone-300 bg-white"
+      data-testid="crop-preview"
+    />
+    }
+    <gsc-source-form
+      [initial]="meta()"
+      [showErrors]="metaAttempted()"
+      (valueChange)="meta.set($event)"
+    />
+
+    @if (interpretError(); as err) {
+    <gsc-alert kind="error" heading="Recognition failed">
+      <p data-testid="interpret-error">{{ err.message }}</p>
+      @if (events().length > 0) {
+      <p class="mt-1">Your corrected notes are safe.</p>
+      }
+    </gsc-alert>
+    }
+
+    <div class="flex flex-wrap justify-between gap-2">
+      <button type="button" class="btn-secondary" (click)="goTo(1)">
+        Back
+      </button>
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="btn-secondary"
+          (click)="enterManually()"
+          data-testid="enter-manually"
+        >
+          {{ events().length ? 'Back to my notes' : 'Enter notes manually' }}
+        </button>
+        <button
+          type="button"
+          class="btn-primary"
+          [disabled]="interpreting()"
+          (click)="requestRecognition()"
+          data-testid="recognize"
+        >
+          {{ interpreting() ? 'Reading tablature…' : interpretError() ? 'Try
+          again' : 'Recognize tab' }}
+        </button>
+      </div>
+    </div>
+    @if (interpreting()) {
+    <p class="text-sm text-stone-600" role="status" data-testid="interpreting">
+      Reading the tablature. This can take up to a minute.
+    </p>
+    }
+  </section>
+  } @case (3) {
+  <section
+    aria-labelledby="review-heading"
+    class="space-y-4"
+    data-testid="step-review"
+  >
+    <h2 id="review-heading" class="text-lg font-medium">Review and correct</h2>
+
+    @if (pendingDraft(); as draft) {
+    <gsc-alert kind="info" heading="New recognition ready">
+      <p>
+        Replace your current notes with the new result ({{
+        draft.draft.events.length }} notes)?
+      </p>
+      <div class="mt-2 flex gap-2">
+        <button
+          type="button"
+          class="btn-primary"
+          (click)="applyDraft(draft)"
+          data-testid="replace-notes"
+        >
+          Replace
+        </button>
+        <button
+          type="button"
+          class="btn-secondary"
+          (click)="pendingDraft.set(null)"
+          data-testid="keep-notes"
+        >
+          Keep my notes
+        </button>
+      </div>
+    </gsc-alert>
+    } @if (crop(); as c) {
+    <figure class="rounded border border-stone-300 bg-white p-2">
+      <img
+        [src]="c.url"
+        alt="Selected passage for comparison"
+        class="mx-auto max-h-64"
+        data-testid="review-crop"
+      />
+      <figcaption class="sr-only">
+        The passage you selected, for comparison while correcting.
+      </figcaption>
+    </figure>
+    } @if (recognition(); as r) {
+    <p class="text-sm text-stone-600" data-testid="recognition-summary">
+      Draft from {{ r.provider }} ({{ r.model }}). AI recognition is a starting
+      point; your corrections are what get saved. @if (reviewCount() > 0) {
+      <strong data-testid="review-count"
+        >{{ reviewCount() }} note(s) need review.</strong
+      >
+      }
+    </p>
+    @if (r.rejectedEventCount > 0) {
+    <gsc-alert kind="warning" data-testid="rejected-alert">
+      {{ r.rejectedEventCount }} recognized note(s) were impossible on this
+      instrument and were removed. Check the passage for gaps.
+    </gsc-alert>
+    } } @else {
+    <p class="text-sm text-stone-600">
+      Type fret numbers into the grid. Top row is the highest string. Use x for
+      dead notes.
+    </p>
+    } @if (uncertainties().length > 0) {
+    <details
+      class="rounded border border-amber-300 bg-amber-50 p-3 text-sm"
+      open
+      data-testid="uncertainties"
+    >
+      <summary class="cursor-pointer font-medium">
+        Recognition notes ({{ uncertainties().length }})
+      </summary>
+      <ul class="mt-2 list-disc space-y-1 pl-5">
+        @for (u of uncertainties(); track $index) {
+        <li>{{ u.reason }}</li>
+        }
+      </ul>
+    </details>
+    }
+
+    <label class="flex max-w-md flex-col gap-1 text-sm">
+      <span>Phrase name <span aria-hidden="true">*</span></span>
+      <input
+        class="rounded border border-stone-300 px-2 py-1.5"
+        [value]="title()"
+        (input)="title.set($any($event.target).value)"
+        required
+        data-testid="phrase-title"
+      />
+    </label>
+
+    <gsc-tab-editor
+      [(events)]="events"
+      [(rhythmKnown)]="rhythmKnown"
+      [stringCount]="stringCount()"
+      [stringLabels]="stringLabels()"
+      [uncertainEventIds]="uncertainIds()"
+      [issues]="issues()"
+    />
+
+    @if (issues().length > 0) {
+    <gsc-alert
+      kind="warning"
+      heading="Fix these before saving"
+      data-testid="issues-summary"
+    >
+      <ul class="list-disc pl-5">
+        @for (i of issues(); track $index) {
+        <li>{{ i.message }}</li>
+        }
+      </ul>
+    </gsc-alert>
+    } @if (saveError(); as err) {
+    <gsc-alert kind="error" heading="Could not save">
+      <p data-testid="save-error">{{ err.message }}</p>
+      @for (i of err.issues; track $index) {
+      <p>{{ i.message }}</p>
+      }
+    </gsc-alert>
+    }
+
+    <div class="flex flex-wrap justify-between gap-2">
+      <button
+        type="button"
+        class="btn-secondary"
+        (click)="goTo(2)"
+        data-testid="review-back"
+      >
+        Back
+      </button>
+      <button
+        type="button"
+        class="btn-primary"
+        [disabled]="!canSave()"
+        (click)="save()"
+        data-testid="save-phrase"
+      >
+        {{ saving() ? 'Saving…' : 'Save phrase' }}
+      </button>
+    </div>
+  </section>
+  } }
+
+  <gsc-consent-dialog
+    [open]="consentOpen()"
+    [providerLabel]="providerLabel()"
+    (confirmed)="onConsent()"
+    (declined)="consentOpen.set(false)"
+  />
+</div>

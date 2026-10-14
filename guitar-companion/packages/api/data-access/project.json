@@ -5,5 +5,19 @@
   "projectType": "library",
   "tags": ["scope:api", "type:data-access"],
   "// targets": "to see all targets run: nx show project api-data-access --web",
-  "targets": {}
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["default", "^default"],
+      "options": {
+        "cwd": "packages/api/data-access",
+        "commands": [
+          "tsc -p tsconfig.lib.json --noEmit",
+          "tsc -p tsconfig.spec.json --noEmit"
+        ],
+        "parallel": false
+      }
+    }
+  }
 }

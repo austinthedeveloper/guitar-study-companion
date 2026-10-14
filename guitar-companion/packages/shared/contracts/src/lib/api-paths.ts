@@ -1,4 +1,7 @@
 /** Relative API paths shared by the Functions host and the web client. */
 export const API_PATHS = {
   health: '/api/health',
+  interpret: '/api/imports/interpret',
+  phrases: '/api/phrases',
+  phrase: (id: string) => `/api/phrases/${encodeURIComponent(id)}`,
 } as const;

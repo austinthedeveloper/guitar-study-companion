@@ -13,5 +13,7 @@ import { AppShellComponent, NavLink } from '@gsc/web/ui';
 export class App {
   protected readonly links: NavLink[] = [
     { label: 'Home', path: ROUTE_PATHS.home },
+    { label: 'Import', path: ROUTE_PATHS.import },
+    { label: 'My phrases', path: ROUTE_PATHS.phrases },
   ];
 }

@@ -5,6 +5,9 @@
  */
 export const ROUTE_PATHS = {
   home: '/',
+  import: '/import',
+  phrases: '/phrases',
+  phrase: '/phrases/:id',
   notFound: '/**',
 } as const;
 
@@ -14,4 +17,9 @@ export type RoutePath = (typeof ROUTE_PATHS)[RouteKey];
 /** Playwright tag for a route, e.g. `@route:/`. */
 export function routeTag(path: RoutePath): string {
   return `@route:${path}`;
+}
+
+/** Angular Router path (no leading slash). */
+export function routerPath(path: RoutePath): string {
+  return path.replace(/^\//, '');
 }
