@@ -17,6 +17,8 @@ export interface Interval {
 
 export interface NoteFact {
   eventId: string;
+  /** Written as "x": muted, no pitch. */
+  dead: boolean;
   /** Sounding pitch at the fret (or harmonic); null for dead notes and unknown harmonics. */
   midi: number | null;
   name: string | null;
@@ -118,6 +120,7 @@ function noteFact(
   }
   const fact: NoteFact = {
     eventId: e.id,
+    dead: e.fret === null,
     midi,
     name: midi === null ? null : spellMidi(midi, key),
   };

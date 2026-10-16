@@ -32,8 +32,11 @@ export const samplePhrase = (title: string): CreatePhraseRequest => ({
 export async function createPhrase(
   request: APIRequestContext,
   title: string,
+  context?: Partial<CreatePhraseRequest['context']>,
 ): Promise<Phrase> {
-  const res = await request.post('/api/phrases', { data: samplePhrase(title) });
+  const data = samplePhrase(title);
+  data.context = { ...data.context, ...context };
+  const res = await request.post('/api/phrases', { data });
   expect(res.status()).toBe(201);
   return PhraseSchema.parse(await res.json());
 }

@@ -40,7 +40,7 @@
 **Goal:** Explain why the phrase works.
 
 - [ ] Define canonical pitch, string/fret, tuning, timing, and articulation types.
-- [ ] Compute notes and intervals deterministically from verified tab and tuning.
+- [x] Compute notes and intervals deterministically from verified tab and tuning. *(`analyzeNotes` and `parseKey` in music-domain: capo, bend targets, natural harmonics, and key-aware spelling. Shown on the phrase page as "Notes and intervals", labelled as computed from the tab.)*
 - [ ] Support user-provided key, chord progression, and phrase position within the progression.
 - [ ] Identify candidate scales and chord tones with uncertainty when harmony is ambiguous.
 - [ ] Generate a concise explanation of phrasing, target notes, and techniques.

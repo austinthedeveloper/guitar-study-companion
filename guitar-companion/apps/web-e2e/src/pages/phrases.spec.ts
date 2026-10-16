@@ -59,6 +59,47 @@ test.describe(
       await expectNoA11yViolations(page);
     });
 
+    test('shows computed note names and intervals', async ({
+      page,
+      request,
+    }) => {
+      const phrase = await createPhrase(request, `Notes ${Date.now()}`);
+      await page.goto(`/phrases/${phrase.id}`);
+      const facts = page.getByTestId('note-facts');
+      await expect(facts).toContainText('No key given, so notes use sharps.');
+      await expect(page.getByTestId('note-range')).toHaveText('E5 – G5');
+      await expect(page.getByTestId('note-pitch-classes')).toHaveText('E F# G');
+      const rows = page.getByTestId('note-row');
+      await expect(rows.nth(0)).toContainText('E5 → F#5');
+      // Measured from the bend target F#5 to G5.
+      await expect(rows.nth(1)).toContainText('G5');
+      await expect(rows.nth(1)).toContainText('m2 up');
+    });
+
+    test('spells notes in the phrase key, or says when the key is unclear', async ({
+      page,
+      request,
+    }) => {
+      const flat = await createPhrase(request, `Flat ${Date.now()}`, {
+        key: 'Bb minor',
+      });
+      await page.goto(`/phrases/${flat.id}`);
+      await expect(page.getByTestId('note-facts')).toContainText(
+        'Spelled in Bb minor.',
+      );
+      await expect(page.getByTestId('note-row').nth(0)).toContainText(
+        'E5 → Gb5',
+      );
+
+      const unclear = await createPhrase(request, `Unclear ${Date.now()}`, {
+        key: 'bluesy A',
+      });
+      await page.goto(`/phrases/${unclear.id}`);
+      await expect(page.getByTestId('note-facts')).toContainText(
+        'Key "bluesy A" was not understood',
+      );
+    });
+
     test('shows not found for unknown and malformed ids', async ({ page }) => {
       for (const id of ['0123456789abcdef01234567', 'not-an-id']) {
         await page.goto(`/phrases/${id}`);

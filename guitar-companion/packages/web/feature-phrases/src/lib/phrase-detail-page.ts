@@ -8,13 +8,29 @@ import {
 } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { findTuningPreset, midiToNoteName } from '@gsc/music-domain';
+import {
+  analyzeNotes,
+  findTuningPreset,
+  formatKey,
+  midiToNoteName,
+  parseKey,
+} from '@gsc/music-domain';
 import { Flash, PhrasesApi, toClientError } from '@gsc/web/data-access';
-import { AlertComponent, TabEditorComponent } from '@gsc/web/ui';
+import {
+  AlertComponent,
+  NoteFactsComponent,
+  TabEditorComponent,
+} from '@gsc/web/ui';
 
 @Component({
   selector: 'gsc-phrase-detail-page',
-  imports: [AlertComponent, TabEditorComponent, RouterLink, DatePipe],
+  imports: [
+    AlertComponent,
+    NoteFactsComponent,
+    TabEditorComponent,
+    RouterLink,
+    DatePipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (phrase.isLoading()) {
@@ -104,6 +120,11 @@ import { AlertComponent, TabEditorComponent } from '@gsc/web/ui';
           [stringLabels]="stringLabels()"
           [readonly]="true"
         />
+        <gsc-note-facts
+          [analysis]="noteAnalysis()"
+          [keyLabel]="key() ? formatKey(key()!) : null"
+          [unparsedKey]="key() ? null : (p.context.key ?? null)"
+        />
         <a routerLink="/phrases" class="text-brand-700 underline"
           >All phrases</a
         >
@@ -125,6 +146,19 @@ export class PhraseDetailPage {
     this.phrase.error() ? toClientError(this.phrase.error()) : null,
   );
   protected readonly events = computed(() => this.phrase.value()?.events ?? []);
+  protected readonly formatKey = formatKey;
+  protected readonly key = computed(() =>
+    parseKey(this.phrase.value()?.context.key),
+  );
+  protected readonly noteAnalysis = computed(() => {
+    const p = this.phrase.value();
+    return analyzeNotes({
+      events: p?.events ?? [],
+      tuningMidi: p?.context.tuningMidi ?? [],
+      capo: p?.context.capo ?? 0,
+      key: this.key(),
+    });
+  });
   protected readonly stringLabels = computed(() =>
     (this.phrase.value()?.context.tuningMidi ?? []).map((m) =>
       midiToNoteName(m).replace(/-?\d+$/, ''),
