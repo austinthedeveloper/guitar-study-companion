@@ -39,14 +39,14 @@
 
 **Goal:** Explain why the phrase works.
 
-- [ ] Define canonical pitch, string/fret, tuning, timing, and articulation types.
+- [x] Define canonical pitch, string/fret, tuning, timing, and articulation types. *(String/fret, timing and articulations are `TabEvent` in contracts; tuning, capo, key, chords and placement are `MusicalContext`; derived pitch types are in music-domain: `NoteFact`, `Interval`, `Key`, `Chord`, `NoteRole`.)*
 - [x] Compute notes and intervals deterministically from verified tab and tuning. *(`analyzeNotes` and `parseKey` in music-domain: capo, bend targets, natural harmonics, and key-aware spelling. Shown on the phrase page as "Notes and intervals", labelled as computed from the tab.)*
 - [x] Support user-provided key, chord progression, and phrase position within the progression. *(Harmony panel on the phrase page. Chord symbols are parsed, and unknown ones are listed rather than guessed. Users place chords per note; a lone chord is assumed to cover the whole phrase, labelled as assumed. `PUT /api/phrases/{id}/harmony` saves with revision checks, and a stale page gets a 409.)*
 - [x] Identify candidate scales and chord tones with uncertainty when harmony is ambiguous. *(`candidateScales` tries 12 scale types on every root and ranks them by stated evidence: the key you gave, the chord roots, the landing note, and the smallest scale that fits. It reports clear, ambiguous (the top candidates have different roots) or too few notes. Scales are spelled by degree (the b5 of A is Eb). Chord tones are shown as note roles.)*
 - [x] Generate a concise explanation of phrasing, target notes, and techniques. *(The "Why it works" panel. The AI sees only facts computed in code plus the user's assumptions. Observations must cite real note ids, or they're dropped; interpretations state their assumption. The explanation is stored against the phrase revision and marked stale when harmony changes. `gpt-6-luna` took about 8 s and about 1k/0.7k tokens; see DECISIONS.md.)*
 - [x] Highlight note roles on the tablature/fretboard display. *(Tablature: each fret shows its role, with chord tones in bold and bends as `b7→R`; chord names appear where they change; explanation citations highlight their notes in the tab. A fretboard diagram isn't built yet; it belongs with M4 transposition.)*
-- [ ] Validate analysis against hand-authored examples, including ambiguous cases.
-- [ ] Allow user feedback/correction of harmonic assumptions.
+- [x] Validate analysis against hand-authored examples, including ambiguous cases. *(`analysis-examples.spec.ts`: 9 invented phrases worked out by hand, run through notes, roles and scales. They include an ambiguous pentatonic, the same run resolved by a chord, too few pitches, N.C. and slash chords, unknown chord symbols, flat-key spelling, drop D harmonics and capo.)*
+- [x] Allow user feedback/correction of harmonic assumptions. *(Harmony panel: key, chords and placement are editable; roles, spelling and scales update live; saving bumps the revision and marks the explanation stale until it is updated.)*
 - [ ] E2E: M2 journey and page specs pass (including stale-analysis invalidation).
 
 **Exit criteria:** A verified lick can be explained in musical context without pretending that key or harmony is always knowable from tab alone.
