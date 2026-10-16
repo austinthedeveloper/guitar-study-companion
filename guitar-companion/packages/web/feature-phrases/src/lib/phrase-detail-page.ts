@@ -128,6 +128,9 @@ import { firstValueFrom } from 'rxjs';
           [stringCount]="p.context.tuningMidi.length"
           [stringLabels]="stringLabels()"
           [readonly]="true"
+          [roles]="roles()"
+          [columnChords]="columnChords()"
+          [highlightIds]="highlightIds()"
         />
         <section
           class="space-y-3 rounded-lg border border-stone-300 bg-white p-4"
@@ -230,7 +233,9 @@ import { firstValueFrom } from 'rxjs';
               : null
           "
           [stepOf]="stepOf()"
+          [shownIds]="highlightIds()"
           (explain)="explain(p)"
+          (showNotes)="highlightIds.set($event)"
         />
         <a routerLink="/phrases" class="text-brand-700 underline"
           >All phrases</a
@@ -313,6 +318,8 @@ export class PhraseDetailPage {
       chords: this.harmony().chords,
     }),
   );
+  /** Notes highlighted in the tab, from an explanation point. */
+  protected readonly highlightIds = signal<string[]>([]);
   protected readonly explaining = signal(false);
   protected readonly explainError = signal<string | null>(null);
   protected readonly stepOf = computed(() =>

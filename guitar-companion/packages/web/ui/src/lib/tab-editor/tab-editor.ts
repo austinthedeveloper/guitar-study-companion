@@ -10,6 +10,7 @@ import { Technique } from '@gsc/contracts';
 import {
   deleteSlice,
   EventIssue,
+  NoteRoles,
   insertSliceBefore,
   moveSlice,
   setNote,
@@ -90,6 +91,22 @@ import {
         >
           <table class="border-collapse font-mono text-sm">
             <thead>
+              @if (readonly() && columnChords().length) {
+                <tr data-testid="tab-chords">
+                  <th scope="col" class="sr-only">Chord</th>
+                  @for (order of columns(); track order; let col = $index) {
+                    <th
+                      scope="col"
+                      class="px-0.5 text-left font-sans text-xs font-semibold text-stone-700"
+                      [attr.data-testid]="'tab-chord-' + col"
+                    >
+                      @if (chordChangesAt(col); as chord) {
+                        {{ chord }}
+                      }
+                    </th>
+                  }
+                </tr>
+              }
               <tr>
                 <th scope="col" class="sr-only">String</th>
                 @for (order of columns(); track order; let col = $index) {
@@ -131,10 +148,32 @@ import {
                     <td class="border-y border-stone-300 px-0.5 py-0.5">
                       @if (readonly()) {
                         <span
-                          class="inline-block w-9 text-center"
-                          [attr.data-testid]="'cell-' + col + '-' + s"
-                          >{{ cellText(e) }}</span
+                          class="inline-flex w-9 flex-col items-center rounded"
+                          [class.bg-amber-100]="!!e && highlighted().has(e.id)"
+                          [class.ring-2]="!!e && highlighted().has(e.id)"
+                          [class.ring-amber-500]="
+                            !!e && highlighted().has(e.id)
+                          "
+                          [attr.data-highlighted]="
+                            e && highlighted().has(e.id) ? 'true' : null
+                          "
                         >
+                          <span [attr.data-testid]="'cell-' + col + '-' + s">{{
+                            cellText(e)
+                          }}</span>
+                          @if (e && roleLabel(e.id); as label) {
+                            <span
+                              class="font-sans text-[10px] leading-none"
+                              [class]="
+                                roles()[e.id]?.note?.chordTone
+                                  ? 'font-semibold text-brand-700'
+                                  : 'text-stone-500'
+                              "
+                              [attr.data-testid]="'cell-role-' + col + '-' + s"
+                              >{{ label }}</span
+                            >
+                          }
+                        </span>
                       } @else {
                         <input
                           type="text"
@@ -166,6 +205,15 @@ import {
           </table>
         </div>
 
+        @if (readonly() && hasRoles()) {
+          <p class="text-xs text-stone-600" data-testid="tab-role-legend">
+            Under each fret: its role over the chord (<span
+              class="font-semibold text-brand-700"
+              >bold</span
+            >
+            = chord tone).
+          </p>
+        }
         @if (!readonly() && selected(); as sel) {
           <section
             class="rounded border border-stone-200 bg-stone-50 p-3"
@@ -341,6 +389,28 @@ export class TabEditorComponent {
   readonly uncertainEventIds = input<string[]>([]);
   readonly issues = input<EventIssue[]>([]);
   readonly readonly = input(false);
+  /** Read-only display: each note's role over its chord, by event id. */
+  readonly roles = input<Readonly<Record<string, NoteRoles>>>({});
+  /** Read-only display: chord in effect at each column; shown where it changes. */
+  readonly columnChords = input<readonly (string | null)[]>([]);
+  /** Read-only display: notes to highlight (e.g. cited by an explanation). */
+  readonly highlightIds = input<readonly string[]>([]);
+  protected readonly highlighted = computed(() => new Set(this.highlightIds()));
+  protected readonly hasRoles = computed(() =>
+    Object.values(this.roles()).some((r) => r.note),
+  );
+
+  protected chordChangesAt(col: number): string | null {
+    const chords = this.columnChords();
+    const chord = chords[col] ?? null;
+    return chord && (col === 0 || chords[col - 1] !== chord) ? chord : null;
+  }
+
+  protected roleLabel(id: string): string | null {
+    const r = this.roles()[id];
+    if (!r?.note) return null;
+    return r.bendTo ? `${r.note.label}→${r.bendTo.label}` : r.note.label;
+  }
 
   protected readonly selectedColumn = signal<number | null>(null);
   protected readonly techniqueOptions = TECHNIQUE_OPTIONS;

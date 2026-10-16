@@ -120,6 +120,13 @@ test.describe(
         page.getByTestId('note-row').nth(1).getByTestId('note-role'),
       ).toHaveText(['b7']);
 
+      // Roles and chord changes appear on the tab itself.
+      await expect(page.getByTestId('tab-chord-0')).toHaveText('E7');
+      await expect(page.getByTestId('tab-chord-1')).toHaveText('A7');
+      await expect(page.getByTestId('cell-role-0-1')).toHaveText('R→2');
+      await expect(page.getByTestId('cell-role-1-0')).toHaveText('b7');
+      await expect(page.getByTestId('tab-role-legend')).toBeVisible();
+
       await page.getByTestId('harmony-save').click();
       await expect(page.getByTestId('harmony-dirty')).toHaveCount(0);
       await page.reload();
@@ -207,6 +214,14 @@ test.describe(
         page.getByTestId('explanation-interpretation'),
       ).toContainText('Assumes: Chord placement is assumed.');
       await expect(page.getByTestId('explain')).toHaveCount(0);
+
+      // A point's citation highlights its notes in the tab, and toggles off.
+      const show = page.getByTestId('explanation-show').first();
+      await show.click();
+      await expect(show).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.locator('[data-highlighted="true"]')).toHaveCount(1);
+      await show.click();
+      await expect(page.locator('[data-highlighted="true"]')).toHaveCount(0);
       await expectNoA11yViolations(page);
 
       // Persisted with the phrase.

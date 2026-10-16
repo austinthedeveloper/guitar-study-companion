@@ -6,6 +6,7 @@ import {
   output,
 } from '@angular/core';
 import { Explanation, ExplanationPoint } from '@gsc/contracts';
+import { NgTemplateOutlet } from '@angular/common';
 import { AlertComponent } from '../alert/alert';
 
 /**
@@ -15,7 +16,7 @@ import { AlertComponent } from '../alert/alert';
  */
 @Component({
   selector: 'gsc-explanation',
-  imports: [AlertComponent],
+  imports: [AlertComponent, NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section
@@ -48,7 +49,9 @@ import { AlertComponent } from '../alert/alert';
               @for (p of observations(); track $index) {
                 <li data-testid="explanation-observation">
                   {{ p.text }}
-                  <span class="text-stone-500">({{ cites(p) }})</span>
+                  <ng-container
+                    *ngTemplateOutlet="show; context: { $implicit: p }"
+                  />
                 </li>
               }
             </ul>
@@ -62,7 +65,9 @@ import { AlertComponent } from '../alert/alert';
                 <li data-testid="explanation-interpretation">
                   {{ p.text }}
                   @if (p.eventIds.length) {
-                    <span class="text-stone-500">({{ cites(p) }})</span>
+                    <ng-container
+                      *ngTemplateOutlet="show; context: { $implicit: p }"
+                    />
                   }
                   @if (p.assumption) {
                     <div class="text-stone-600">
@@ -74,6 +79,18 @@ import { AlertComponent } from '../alert/alert';
             </ul>
           </div>
         }
+        <ng-template #show let-p>
+          <button
+            type="button"
+            class="ml-1 rounded px-1 text-stone-600 underline decoration-dotted hover:bg-stone-100"
+            [attr.aria-pressed]="isShown(p)"
+            [attr.aria-label]="'Show ' + cites(p) + ' in the tab'"
+            (click)="showNotes.emit(isShown(p) ? [] : p.eventIds)"
+            data-testid="explanation-show"
+          >
+            ({{ cites(p) }})
+          </button>
+        </ng-template>
         <p class="text-xs text-stone-500" data-testid="explanation-meta">
           {{ ex.provider }} · {{ ex.model }}
         </p>
@@ -118,7 +135,20 @@ export class ExplanationComponent {
   readonly blockedReason = input<string | null>(null);
   /** Note number (1-based column) for each event id, for citations. */
   readonly stepOf = input<Readonly<Record<string, number>>>({});
+  /** Notes currently highlighted in the tab. */
+  readonly shownIds = input<readonly string[]>([]);
   readonly explain = output<void>();
+  /** Highlight these notes in the tab (empty to clear). */
+  readonly showNotes = output<string[]>();
+
+  protected isShown(p: ExplanationPoint): boolean {
+    const shown = this.shownIds();
+    return (
+      p.eventIds.length > 0 &&
+      shown.length === p.eventIds.length &&
+      p.eventIds.every((id) => shown.includes(id))
+    );
+  }
 
   protected readonly observations = computed(() =>
     (this.explanation()?.points ?? []).filter((p) => p.kind === 'observation'),
