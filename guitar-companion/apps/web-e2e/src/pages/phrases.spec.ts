@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { ROUTE_PATHS, routeTag } from '@gsc/web/routes';
 import { expectNoA11yViolations } from '../support/a11y';
-import { createPhrase } from '../support/api';
+import { createPhrase, updateHarmony } from '../support/api';
 
 test.describe('My phrases page', { tag: routeTag(ROUTE_PATHS.phrases) }, () => {
   test('lists saved phrases and links to them', async ({ page, request }) => {
@@ -74,6 +74,84 @@ test.describe(
       // Measured from the bend target F#5 to G5.
       await expect(rows.nth(1)).toContainText('G5');
       await expect(rows.nth(1)).toContainText('m2 up');
+    });
+
+    test('assumes a lone chord for the whole phrase and labels roles', async ({
+      page,
+      request,
+    }) => {
+      const phrase = await createPhrase(request, `One chord ${Date.now()}`);
+      await page.goto(`/phrases/${phrase.id}`);
+      await expect(page.getByTestId('placement-help')).toContainText(
+        'Add chords',
+      );
+      await page.getByTestId('harmony-chords').fill('E7 Cmaj13#11');
+      await expect(page.getByTestId('unknown-chords')).toContainText(
+        'Cmaj13#11',
+      );
+      await page.getByTestId('harmony-chords').fill('E7');
+      await expect(page.getByTestId('placement-help')).toContainText(
+        'Assumed: the whole phrase is over E7',
+      );
+      // E5 is the root, bent up to the 2 (F#5), then G5 is a b3 over E7.
+      await expect(
+        page.getByTestId('note-row').nth(0).getByTestId('note-role'),
+      ).toHaveText(['R', '2']);
+      await expect(
+        page.getByTestId('note-row').nth(1).getByTestId('note-role'),
+      ).toHaveText(['b3']);
+      await expect(page.getByTestId('harmony-dirty')).toBeVisible();
+    });
+
+    test('places chords on notes and saves them', async ({ page, request }) => {
+      const phrase = await createPhrase(request, `Placed ${Date.now()}`);
+      await page.goto(`/phrases/${phrase.id}`);
+      await page.getByTestId('harmony-key').fill('A');
+      await page.getByTestId('harmony-chords').fill('E7 A7');
+      await expect(page.getByTestId('placement-help')).toContainText(
+        'Chord column',
+      );
+      await expect(page.getByTestId('note-role')).toHaveCount(0);
+      const selects = page.getByTestId('chord-select');
+      await selects.nth(0).selectOption('E7');
+      await selects.nth(1).selectOption('A7');
+      // G5 over A7 is the b7, a chord tone.
+      await expect(
+        page.getByTestId('note-row').nth(1).getByTestId('note-role'),
+      ).toHaveText(['b7']);
+
+      await page.getByTestId('harmony-save').click();
+      await expect(page.getByTestId('harmony-dirty')).toHaveCount(0);
+      await page.reload();
+      await expect(page.getByTestId('harmony-key')).toHaveValue('A');
+      await expect(page.getByTestId('harmony-chords')).toHaveValue('E7 A7');
+      await expect(selects.nth(1)).toHaveValue('A7');
+      await expect(page.getByTestId('note-facts')).toContainText(
+        'Spelled in A major.',
+      );
+      await expectNoA11yViolations(page);
+    });
+
+    test('rejects a harmony save from a stale page', async ({
+      page,
+      request,
+    }) => {
+      const phrase = await createPhrase(request, `Stale ${Date.now()}`);
+      await page.goto(`/phrases/${phrase.id}`);
+      await expect(page.getByTestId('harmony-key')).toBeVisible();
+      // Someone else saves first.
+      await updateHarmony(request, phrase.id, {
+        revision: 1,
+        key: 'G',
+        chordChanges: [],
+      });
+      await page.getByTestId('harmony-key').fill('E');
+      await page.getByTestId('harmony-save').click();
+      await expect(page.getByTestId('harmony')).toContainText(
+        'This phrase changed since you opened it',
+      );
+      await page.getByTestId('harmony-reload').click();
+      await expect(page.getByTestId('harmony-key')).toHaveValue('G');
     });
 
     test('spells notes in the phrase key, or says when the key is unclear', async ({

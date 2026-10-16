@@ -81,4 +81,67 @@ describe('PhraseRepository', () => {
       'old',
     ]);
   });
+
+  describe('updateHarmony', () => {
+    it('replaces key, chords, and placement, and bumps the revision', async () => {
+      const created = await repo.create('dave', {
+        ...input,
+        context: { ...input.context, key: 'E', chords: 'E7' },
+      });
+      const updated = await repo.updateHarmony('dave', created.id, {
+        revision: 1,
+        key: 'A',
+        chords: 'A7 D7',
+        chordChanges: [
+          { fromOrder: 3, chord: 'D7' },
+          { fromOrder: 0, chord: 'A7' },
+        ],
+      });
+      expect(updated).toMatchObject({
+        revision: 2,
+        context: {
+          key: 'A',
+          chords: 'A7 D7',
+          chordChanges: [
+            { fromOrder: 0, chord: 'A7' },
+            { fromOrder: 3, chord: 'D7' },
+          ],
+          tuningMidi: input.context.tuningMidi,
+        },
+      });
+    });
+
+    it('removes cleared fields', async () => {
+      const created = await repo.create('dave', {
+        ...input,
+        context: { ...input.context, key: 'E', chords: 'E7' },
+      });
+      const updated = await repo.updateHarmony('dave', created.id, {
+        revision: 1,
+        chordChanges: [],
+      });
+      expect(updated).not.toBe('conflict');
+      const ctx = (updated as Exclude<typeof updated, string>).context;
+      expect(ctx.key).toBeUndefined();
+      expect(ctx.chords).toBeUndefined();
+      expect(ctx.chordChanges).toBeUndefined();
+    });
+
+    it('rejects a stale revision and hides other users phrases', async () => {
+      const created = await repo.create('erin', input);
+      const update = { revision: 1, key: 'G', chordChanges: [] };
+      expect(await repo.updateHarmony('erin', created.id, update)).not.toBe(
+        'conflict',
+      );
+      expect(await repo.updateHarmony('erin', created.id, update)).toBe(
+        'conflict',
+      );
+      expect(await repo.updateHarmony('bob', created.id, update)).toBe(
+        'not_found',
+      );
+      expect(await repo.updateHarmony('erin', 'bad-id', update)).toBe(
+        'not_found',
+      );
+    });
+  });
 });

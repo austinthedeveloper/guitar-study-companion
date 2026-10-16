@@ -3,24 +3,39 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
+  signal,
 } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
+import { ChordChange, Phrase } from '@gsc/contracts';
 import {
   analyzeNotes,
+  assumedChordChanges,
+  chordAt,
   findTuningPreset,
   formatKey,
   midiToNoteName,
+  noteRole,
+  parseChord,
   parseKey,
+  parseProgression,
 } from '@gsc/music-domain';
-import { Flash, PhrasesApi, toClientError } from '@gsc/web/data-access';
+import {
+  ClientError,
+  Flash,
+  PhrasesApi,
+  toClientError,
+} from '@gsc/web/data-access';
 import {
   AlertComponent,
   NoteFactsComponent,
+  NoteRoles,
   TabEditorComponent,
 } from '@gsc/web/ui';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'gsc-phrase-detail-page',
@@ -90,14 +105,6 @@ import {
           <dd data-testid="phrase-tuning">{{ tuningLabel() }}</dd>
           <dt class="text-stone-600">Capo</dt>
           <dd>{{ p.context.capo || 'None' }}</dd>
-          @if (p.context.key) {
-            <dt class="text-stone-600">Key</dt>
-            <dd>{{ p.context.key }}</dd>
-          }
-          @if (p.context.chords) {
-            <dt class="text-stone-600">Chords</dt>
-            <dd>{{ p.context.chords }}</dd>
-          }
           <dt class="text-stone-600">Rhythm</dt>
           <dd data-testid="phrase-rhythm">
             {{ p.rhythmKnown ? 'Known' : 'Unknown (not transcribed)' }}
@@ -114,16 +121,99 @@ import {
           <dd>{{ p.createdAt | date: 'medium' }}</dd>
         </dl>
         <gsc-tab-editor
+          class="block"
           [events]="events()"
           [rhythmKnown]="p.rhythmKnown"
           [stringCount]="p.context.tuningMidi.length"
           [stringLabels]="stringLabels()"
           [readonly]="true"
         />
+        <section
+          class="space-y-3 rounded-lg border border-stone-300 bg-white p-4"
+          aria-labelledby="harmony-heading"
+          data-testid="harmony"
+        >
+          <header>
+            <h2 id="harmony-heading" class="text-lg font-semibold">Harmony</h2>
+            <p class="text-sm text-stone-600">
+              Your assumptions about the music around this phrase. Tab alone
+              can't tell us the key or which chord is under each note.
+            </p>
+          </header>
+          <div class="grid gap-3 sm:grid-cols-[10rem_1fr]">
+            <label class="text-sm">
+              <span class="block text-stone-700">Key</span>
+              <input
+                class="mt-1 w-full rounded border border-stone-300 px-2 py-1"
+                placeholder="e.g. A or F#m"
+                autocomplete="off"
+                [value]="keyText()"
+                (input)="keyText.set($any($event.target).value)"
+                data-testid="harmony-key"
+              />
+            </label>
+            <label class="text-sm">
+              <span class="block text-stone-700">Chords</span>
+              <input
+                class="mt-1 w-full rounded border border-stone-300 px-2 py-1"
+                placeholder="e.g. A7 D7 E7"
+                autocomplete="off"
+                [value]="chordsText()"
+                (input)="chordsText.set($any($event.target).value)"
+                data-testid="harmony-chords"
+              />
+            </label>
+          </div>
+          @if (unknownChords().length) {
+            <p class="text-sm text-amber-800" data-testid="unknown-chords">
+              Not understood, so not used for note roles:
+              {{ unknownChords().join(', ') }}
+            </p>
+          }
+          <p class="text-sm text-stone-600" data-testid="placement-help">
+            {{ placementHelp() }}
+          </p>
+          @if (saveError(); as err) {
+            <gsc-alert kind="error" heading="Could not save harmony">
+              <p>{{ err.message }}</p>
+              @if (err.code === 'conflict') {
+                <button
+                  type="button"
+                  class="btn-secondary mt-2"
+                  (click)="phrase.reload()"
+                  data-testid="harmony-reload"
+                >
+                  Reload
+                </button>
+              }
+            </gsc-alert>
+          }
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              class="btn-primary"
+              [disabled]="!dirty() || saving()"
+              (click)="saveHarmony(p)"
+              data-testid="harmony-save"
+            >
+              {{ saving() ? 'Saving…' : 'Save harmony' }}
+            </button>
+            @if (dirty()) {
+              <span class="text-sm text-stone-600" data-testid="harmony-dirty"
+                >Unsaved changes. Note roles already reflect them.</span
+              >
+            }
+          </div>
+        </section>
         <gsc-note-facts
           [analysis]="noteAnalysis()"
           [keyLabel]="key() ? formatKey(key()!) : null"
-          [unparsedKey]="key() ? null : (p.context.key ?? null)"
+          [unparsedKey]="key() ? null : keyText().trim() || null"
+          [roles]="roles()"
+          [columnChords]="columnChords()"
+          [chordOptions]="chordOptions()"
+          [chordStarts]="chordStarts()"
+          (chordChange)="placeChord($event.order, $event.chord)"
         />
         <a routerLink="/phrases" class="text-brand-700 underline"
           >All phrases</a
@@ -142,16 +232,128 @@ export class PhraseDetailPage {
     params: () => this.id(),
     stream: ({ params }) => this.api.get(params),
   });
+  /** The loaded phrase, or undefined while loading or after an error. */
+  private readonly loaded = computed(() =>
+    this.phrase.hasValue() ? this.phrase.value() : undefined,
+  );
   protected readonly error = computed(() =>
     this.phrase.error() ? toClientError(this.phrase.error()) : null,
   );
-  protected readonly events = computed(() => this.phrase.value()?.events ?? []);
+  protected readonly events = computed(() => this.loaded()?.events ?? []);
   protected readonly formatKey = formatKey;
-  protected readonly key = computed(() =>
-    parseKey(this.phrase.value()?.context.key),
+
+  // Harmony being edited; reset whenever a phrase (or new revision) loads.
+  protected readonly keyText = signal('');
+  protected readonly chordsText = signal('');
+  protected readonly changes = signal<ChordChange[]>([]);
+  protected readonly saving = signal(false);
+  protected readonly saveError = signal<ClientError | null>(null);
+
+  protected readonly key = computed(() => parseKey(this.keyText()));
+  private readonly progression = computed(() =>
+    parseProgression(this.chordsText()),
   );
+  protected readonly unknownChords = computed(() =>
+    this.progression()
+      .filter((p) => !p.chord)
+      .map((p) => p.text),
+  );
+  protected readonly chordOptions = computed(() => [
+    ...new Set([
+      ...this.progression()
+        .filter((p) => p.chord)
+        .map((p) => p.text),
+      // Keep placed chords selectable even if removed from the list.
+      ...this.changes().map((c) => c.chord),
+    ]),
+  ]);
+  /** User placement, or the one-chord assumption when nothing is placed. */
+  private readonly effectiveChanges = computed(() =>
+    this.changes().length
+      ? this.changes()
+      : assumedChordChanges(this.progression()),
+  );
+  protected readonly chordStarts = computed(() =>
+    Object.fromEntries(this.changes().map((c) => [c.fromOrder, c.chord])),
+  );
+  protected readonly placementHelp = computed(() => {
+    if (!this.chordOptions().length)
+      return 'Add chords to see what role each note plays.';
+    if (this.changes().length)
+      return 'Each chord lasts until the next one you place.';
+    const assumed = this.effectiveChanges()[0];
+    return assumed
+      ? `Assumed: the whole phrase is over ${assumed.chord}. Place chords below to change this.`
+      : 'Use the Chord column below to show where each chord starts.';
+  });
+  protected readonly columnChords = computed(() =>
+    this.noteAnalysis().columns.map((c) =>
+      chordAt(this.effectiveChanges(), c.order),
+    ),
+  );
+  protected readonly roles = computed(() => {
+    const out: Record<string, NoteRoles> = {};
+    this.noteAnalysis().columns.forEach((col, i) => {
+      const symbol = this.columnChords()[i];
+      const chord = symbol ? parseChord(symbol) : null;
+      if (!chord) return;
+      for (const n of col.notes)
+        out[n.eventId] = {
+          note: n.midi === null ? null : noteRole(n.midi, chord),
+          bendTo:
+            n.bendToMidi === undefined ? null : noteRole(n.bendToMidi, chord),
+        };
+    });
+    return out;
+  });
+  protected readonly dirty = computed(() => {
+    const ctx = this.loaded()?.context;
+    if (!ctx) return false;
+    return (
+      this.keyText().trim() !== (ctx.key ?? '') ||
+      this.chordsText().trim() !== (ctx.chords ?? '') ||
+      JSON.stringify(sortChanges(this.changes())) !==
+        JSON.stringify(sortChanges(ctx.chordChanges ?? []))
+    );
+  });
+
+  constructor() {
+    effect(() => {
+      const ctx = this.loaded()?.context;
+      this.keyText.set(ctx?.key ?? '');
+      this.chordsText.set(ctx?.chords ?? '');
+      this.changes.set(ctx?.chordChanges ?? []);
+      this.saveError.set(null);
+    });
+  }
+
+  protected placeChord(order: number, chord: string | null): void {
+    const rest = this.changes().filter((c) => c.fromOrder !== order);
+    this.changes.set(chord ? [...rest, { fromOrder: order, chord }] : rest);
+  }
+
+  protected async saveHarmony(p: Phrase): Promise<void> {
+    this.saving.set(true);
+    this.saveError.set(null);
+    try {
+      const updated = await firstValueFrom(
+        this.api.updateHarmony(p.id, {
+          revision: p.revision,
+          key: this.keyText().trim() || undefined,
+          chords: this.chordsText().trim() || undefined,
+          chordChanges: sortChanges(this.changes()),
+        }),
+      );
+      this.phrase.value.set(updated);
+    } catch (err) {
+      this.saveError.set(toClientError(err));
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
   protected readonly noteAnalysis = computed(() => {
-    const p = this.phrase.value();
+    const p = this.loaded();
     return analyzeNotes({
       events: p?.events ?? [],
       tuningMidi: p?.context.tuningMidi ?? [],
@@ -160,15 +362,18 @@ export class PhraseDetailPage {
     });
   });
   protected readonly stringLabels = computed(() =>
-    (this.phrase.value()?.context.tuningMidi ?? []).map((m) =>
+    (this.loaded()?.context.tuningMidi ?? []).map((m) =>
       midiToNoteName(m).replace(/-?\d+$/, ''),
     ),
   );
   protected readonly tuningLabel = computed(() => {
-    const midi = this.phrase.value()?.context.tuningMidi ?? [];
+    const midi = this.loaded()?.context.tuningMidi ?? [];
     return (
       findTuningPreset(midi)?.label ??
       midi.map((m) => midiToNoteName(m)).join(' ')
     );
   });
 }
+
+const sortChanges = (changes: readonly ChordChange[]) =>
+  [...changes].sort((a, b) => a.fromOrder - b.fromOrder);

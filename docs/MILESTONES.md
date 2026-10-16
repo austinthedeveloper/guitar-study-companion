@@ -41,7 +41,7 @@
 
 - [ ] Define canonical pitch, string/fret, tuning, timing, and articulation types.
 - [x] Compute notes and intervals deterministically from verified tab and tuning. *(`analyzeNotes` and `parseKey` in music-domain: capo, bend targets, natural harmonics, and key-aware spelling. Shown on the phrase page as "Notes and intervals", labelled as computed from the tab.)*
-- [ ] Support user-provided key, chord progression, and phrase position within the progression.
+- [x] Support user-provided key, chord progression, and phrase position within the progression. *(Harmony panel on the phrase page. Chord symbols are parsed, and unknown ones are listed rather than guessed. Users place chords per note; a lone chord is assumed to cover the whole phrase, labelled as assumed. `PUT /api/phrases/{id}/harmony` saves with revision checks, and a stale page gets a 409.)*
 - [ ] Identify candidate scales and chord tones with uncertainty when harmony is ambiguous.
 - [ ] Generate a concise explanation of phrasing, target notes, and techniques.
 - [ ] Highlight note roles on the tablature/fretboard display.

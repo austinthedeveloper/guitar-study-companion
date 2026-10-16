@@ -2,6 +2,8 @@ import {
   CreatePhraseRequestSchema,
   Phrase,
   PhraseSummary,
+  UpdateHarmonyRequest,
+  UpdateHarmonyRequestSchema,
 } from '@gsc/contracts';
 import { validateEvents } from '@gsc/music-domain';
 import { apiError, HandlerResponse, zodIssues } from './http';
@@ -14,6 +16,11 @@ export interface PhraseStore {
   ): Promise<Phrase>;
   get(userId: string, id: string): Promise<Phrase | null>;
   list(userId: string): Promise<PhraseSummary[]>;
+  updateHarmony(
+    userId: string,
+    id: string,
+    update: UpdateHarmonyRequest,
+  ): Promise<Phrase | 'not_found' | 'conflict'>;
 }
 
 export interface PhraseDeps {
@@ -68,4 +75,27 @@ export async function getPhrase(
 
 export async function listPhrases(deps: PhraseDeps): Promise<HandlerResponse> {
   return { status: 200, body: await deps.store.list(deps.userId) };
+}
+
+export async function updateHarmony(
+  id: string,
+  body: unknown,
+  deps: PhraseDeps,
+): Promise<HandlerResponse> {
+  const parsed = UpdateHarmonyRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    return apiError(400, 'validation_failed', 'Invalid harmony update.', {
+      issues: zodIssues(parsed.error),
+    });
+  }
+  const result = await deps.store.updateHarmony(deps.userId, id, parsed.data);
+  if (result === 'not_found')
+    return apiError(404, 'not_found', 'Phrase not found.');
+  if (result === 'conflict')
+    return apiError(
+      409,
+      'conflict',
+      'This phrase changed since you opened it. Reload to see the latest version.',
+    );
+  return { status: 200, body: result };
 }

@@ -1,5 +1,11 @@
 import { CreatePhraseRequest, Phrase } from '@gsc/contracts';
-import { createPhrase, getPhrase, listPhrases, PhraseStore } from './phrases';
+import {
+  createPhrase,
+  getPhrase,
+  listPhrases,
+  PhraseStore,
+  updateHarmony,
+} from './phrases';
 
 function memoryStore(): PhraseStore {
   const rows: (Phrase & { userId: string })[] = [];
@@ -18,6 +24,21 @@ function memoryStore(): PhraseStore {
     async get(userId, id) {
       const row = rows.find((r) => r.id === id && r.userId === userId);
       if (!row) return null;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { userId: _u, ...p } = row;
+      return p;
+    },
+    async updateHarmony(userId, id, update) {
+      const row = rows.find((r) => r.id === id && r.userId === userId);
+      if (!row) return 'not_found';
+      if (row.revision !== update.revision) return 'conflict';
+      row.revision += 1;
+      row.context = {
+        ...row.context,
+        key: update.key,
+        chords: update.chords,
+        chordChanges: update.chordChanges,
+      };
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { userId: _u, ...p } = row;
       return p;
@@ -117,5 +138,56 @@ describe('phrase handlers', () => {
       { store: memoryStore(), userId: 'u1' },
     );
     expect(res.status).toBe(422);
+  });
+
+  describe('updateHarmony', () => {
+    const setup = async () => {
+      const deps = { store: memoryStore(), userId: 'u1' };
+      const id = ((await createPhrase(valid, deps)).body as Phrase).id;
+      return { deps, id };
+    };
+
+    it('saves harmony and returns the new revision', async () => {
+      const { deps, id } = await setup();
+      const res = await updateHarmony(
+        id,
+        {
+          revision: 1,
+          key: 'A',
+          chords: 'A7',
+          chordChanges: [{ fromOrder: 0, chord: 'A7' }],
+        },
+        deps,
+      );
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ revision: 2, context: { key: 'A' } });
+    });
+
+    it('rejects two chords starting at the same note', async () => {
+      const { deps, id } = await setup();
+      const res = await updateHarmony(
+        id,
+        {
+          revision: 1,
+          chordChanges: [
+            { fromOrder: 0, chord: 'A7' },
+            { fromOrder: 0, chord: 'D7' },
+          ],
+        },
+        deps,
+      );
+      expect(res.status).toBe(400);
+    });
+
+    it('returns 409 for a stale revision and 404 for unknown phrases', async () => {
+      const { deps, id } = await setup();
+      expect((await updateHarmony(id, { revision: 1 }, deps)).status).toBe(200);
+      const stale = await updateHarmony(id, { revision: 1 }, deps);
+      expect(stale.status).toBe(409);
+      expect(stale.body).toMatchObject({ error: { code: 'conflict' } });
+      expect((await updateHarmony('nope', { revision: 1 }, deps)).status).toBe(
+        404,
+      );
+    });
   });
 });

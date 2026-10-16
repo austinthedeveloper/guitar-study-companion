@@ -1,5 +1,10 @@
 import { app } from '@azure/functions';
-import { createPhrase, getPhrase, listPhrases } from '@gsc/api/handlers';
+import {
+  createPhrase,
+  getPhrase,
+  listPhrases,
+  updateHarmony,
+} from '@gsc/api/handlers';
 import { appContext, currentUserId } from '../composition';
 import { readJson, safe } from '../http';
 
@@ -39,4 +44,18 @@ app.http('phrases-get', {
       userId: currentUserId(),
     }),
   ),
+});
+
+app.http('phrases-update-harmony', {
+  methods: ['PUT'],
+  authLevel: 'anonymous',
+  route: 'phrases/{id}/harmony',
+  handler: safe(async (req) => {
+    const body = await readJson(req);
+    if (!body.ok) return body.res;
+    return updateHarmony(req.params['id'] ?? '', body.body, {
+      store: await appContext().phrases(),
+      userId: currentUserId(),
+    });
+  }),
 });

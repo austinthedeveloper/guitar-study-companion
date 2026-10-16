@@ -1,5 +1,11 @@
 import { APIRequestContext, expect } from '@playwright/test';
-import { CreatePhraseRequest, Phrase, PhraseSchema } from '@gsc/contracts';
+import {
+  API_PATHS,
+  CreatePhraseRequest,
+  Phrase,
+  PhraseSchema,
+  UpdateHarmonyRequest,
+} from '@gsc/contracts';
 
 export const samplePhrase = (title: string): CreatePhraseRequest => ({
   title,
@@ -38,5 +44,15 @@ export async function createPhrase(
   data.context = { ...data.context, ...context };
   const res = await request.post('/api/phrases', { data });
   expect(res.status()).toBe(201);
+  return PhraseSchema.parse(await res.json());
+}
+
+export async function updateHarmony(
+  request: APIRequestContext,
+  id: string,
+  data: UpdateHarmonyRequest,
+): Promise<Phrase> {
+  const res = await request.put(API_PATHS.phraseHarmony(id), { data });
+  expect(res.status()).toBe(200);
   return PhraseSchema.parse(await res.json());
 }

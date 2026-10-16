@@ -6,6 +6,7 @@ export const API_ERROR_CODES = [
   'unsupported_media_type',
   'consent_required',
   'not_found',
+  'conflict',
   'ai_unavailable',
   'ai_invalid_output',
   'ai_timeout',

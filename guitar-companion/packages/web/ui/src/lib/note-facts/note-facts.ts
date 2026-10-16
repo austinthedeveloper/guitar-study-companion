@@ -3,12 +3,20 @@ import {
   Component,
   computed,
   input,
+  output,
 } from '@angular/core';
-import { Interval, NoteAnalysis, NoteFact } from '@gsc/music-domain';
+import { Interval, NoteAnalysis, NoteFact, NoteRole } from '@gsc/music-domain';
+
+/** A note's role over the chord in effect, and its bend target's. */
+export interface NoteRoles {
+  note: NoteRole | null;
+  bendTo: NoteRole | null;
+}
 
 /**
  * Verified note facts computed from the tab: names, chord shapes, and
- * melodic steps. Presentational only; spelling key is described by the caller.
+ * melodic steps, plus each note's role over the user's chord placement.
+ * Presentational only; the caller computes roles and owns placement.
  */
 @Component({
   selector: 'gsc-note-facts',
@@ -43,6 +51,9 @@ import { Interval, NoteAnalysis, NoteFact } from '@gsc/music-domain';
             <thead class="text-stone-600">
               <tr>
                 <th scope="col" class="py-1 pr-4 font-medium">#</th>
+                @if (chordOptions().length) {
+                  <th scope="col" class="py-1 pr-4 font-medium">Chord</th>
+                }
                 <th scope="col" class="py-1 pr-4 font-medium">Notes</th>
                 <th scope="col" class="py-1 font-medium">Interval</th>
               </tr>
@@ -57,7 +68,60 @@ import { Interval, NoteAnalysis, NoteFact } from '@gsc/music-domain';
                   <td class="py-1 pr-4 tabular-nums text-stone-500">
                     {{ i + 1 }}
                   </td>
-                  <td class="py-1 pr-4">{{ notesLabel(col.notes) }}</td>
+                  @if (chordOptions().length) {
+                    <td class="py-1 pr-4">
+                      <select
+                        class="rounded border border-stone-300 bg-white px-1 py-0.5"
+                        [attr.aria-label]="'Chord from note ' + (i + 1)"
+                        (change)="
+                          chordChange.emit({
+                            order: col.order,
+                            chord: $any($event.target).value || null,
+                          })
+                        "
+                        data-testid="chord-select"
+                      >
+                        <option value="" [selected]="!chordStarts()[col.order]">
+                          {{
+                            i === 0
+                              ? '—'
+                              : '↳ ' + (columnChords()[i - 1] ?? '—')
+                          }}
+                        </option>
+                        @for (c of chordOptions(); track c) {
+                          <option
+                            [value]="c"
+                            [selected]="chordStarts()[col.order] === c"
+                          >
+                            {{ c }}
+                          </option>
+                        }
+                      </select>
+                    </td>
+                  }
+                  <td class="py-1 pr-4" data-testid="note-cell">
+                    @for (n of col.notes; track n.eventId; let last = $last) {
+                      <span>{{ noteLabel(n) }}</span>
+                      @if (roles()[n.eventId]?.note; as r) {
+                        <span [class]="roleClass(r)" data-testid="note-role">{{
+                          r.label
+                        }}</span>
+                      }
+                      @if (n.bendToName) {
+                        <span> → {{ n.bendToName }}</span>
+                        @if (roles()[n.eventId]?.bendTo; as r) {
+                          <span
+                            [class]="roleClass(r)"
+                            data-testid="note-role"
+                            >{{ r.label }}</span
+                          >
+                        }
+                      }
+                      @if (!last) {
+                        <span> + </span>
+                      }
+                    }
+                  </td>
                   <td class="py-1">
                     {{ intervalLabel(col.fromPrevious, col.chordIntervals) }}
                   </td>
@@ -80,6 +144,16 @@ export class NoteFactsComponent {
   readonly keyLabel = input<string | null>(null);
   /** The key text as entered, when it could not be understood. */
   readonly unparsedKey = input<string | null>(null);
+  /** Role of each note (by event id) over the chord in effect. */
+  readonly roles = input<Readonly<Record<string, NoteRoles>>>({});
+  /** Chord symbol in effect at each column (same index as analysis columns). */
+  readonly columnChords = input<readonly (string | null)[]>([]);
+  /** Chords the user can place; when empty, the Chord column is hidden. */
+  readonly chordOptions = input<readonly string[]>([]);
+  /** Chord placed at a column, by event order. */
+  readonly chordStarts = input<Readonly<Record<number, string>>>({});
+  /** A chord now starts at this column (or, with null, the previous one continues). */
+  readonly chordChange = output<{ order: number; chord: string | null }>();
 
   protected readonly spelling = computed(() => {
     if (this.keyLabel()) return `Spelled in ${this.keyLabel()}.`;
@@ -88,14 +162,18 @@ export class NoteFactsComponent {
     return 'No key given, so notes use sharps.';
   });
 
-  protected notesLabel(notes: readonly NoteFact[]): string {
-    return notes
-      .map((n) => {
-        if (n.dead) return 'x';
-        if (n.name === null) return '?';
-        return n.bendToName ? `${n.name} → ${n.bendToName}` : n.name;
-      })
-      .join(' + ');
+  protected noteLabel(n: NoteFact): string {
+    if (n.dead) return 'x';
+    return n.name ?? '?';
+  }
+
+  protected roleClass(role: NoteRole): string {
+    return (
+      'ml-1 rounded px-1 text-xs ' +
+      (role.chordTone
+        ? 'bg-brand-50 font-semibold text-brand-700'
+        : 'bg-stone-100 text-stone-600')
+    );
   }
 
   protected intervalLabel(

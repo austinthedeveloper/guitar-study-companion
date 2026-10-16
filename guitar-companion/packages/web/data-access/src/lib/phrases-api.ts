@@ -7,6 +7,7 @@ import {
   PhraseSchema,
   PhraseSummary,
   PhraseSummarySchema,
+  UpdateHarmonyRequest,
 } from '@gsc/contracts';
 import { map, Observable } from 'rxjs';
 
@@ -23,6 +24,12 @@ export class PhrasesApi {
   get(id: string): Observable<Phrase> {
     return this.http
       .get<unknown>(API_PATHS.phrase(id))
+      .pipe(map((b) => PhraseSchema.parse(b)));
+  }
+
+  updateHarmony(id: string, request: UpdateHarmonyRequest): Observable<Phrase> {
+    return this.http
+      .put<unknown>(API_PATHS.phraseHarmony(id), request)
       .pipe(map((b) => PhraseSchema.parse(b)));
   }
 
