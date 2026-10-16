@@ -133,8 +133,8 @@ const ZOOMS = [0.5, 0.75, 1, 1.5, 2, 3];
       </div>
       <p class="text-sm text-stone-600">
         Drag over the passage you want. Keep it to a few bars of one tab staff.
-        If the page is tilted, use Straighten until the tab lines run level
-        with the guides.
+        If the page is tilted, use Straighten until the tab lines run level with
+        the guides.
       </p>
       <div
         class="max-h-[70vh] overflow-auto rounded border border-stone-300 bg-stone-100"
@@ -147,7 +147,10 @@ const ZOOMS = [0.5, 0.75, 1, 1.5, 2, 3];
             data-testid="cropper-canvas"
             role="img"
             [attr.aria-label]="
-              'Page image, rotated ' + rotation() + ' degrees, straightened ' + tiltLabel()
+              'Page image, rotated ' +
+              rotation() +
+              ' degrees, straightened ' +
+              tiltLabel()
             "
             (pointerdown)="onDown($event)"
             (pointermove)="onMove($event)"
