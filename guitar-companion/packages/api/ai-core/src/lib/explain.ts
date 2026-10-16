@@ -6,9 +6,9 @@ import {
 import {
   analyzeNotes,
   candidateScales,
+  describeStep,
   formatKey,
   harmonize,
-  Interval,
   midiToNoteName,
   NoteRole,
   parseKey,
@@ -16,6 +16,7 @@ import {
 import { z } from 'zod';
 import { AiProvider } from './ai-provider';
 import { AiError } from './errors';
+import { withAiTimeout } from './with-timeout';
 
 /** Versioned so stored explanations can record which prompt produced them. */
 export const EXPLAIN_PROMPT_VERSION = 'explain-v1';
@@ -59,16 +60,6 @@ export interface ExplainFacts {
 
 const roleText = (r: NoteRole | null | undefined) =>
   r ? `${r.label}${r.chordTone ? ' (chord tone)' : ''}` : undefined;
-
-function intervalText(
-  from: Interval | null,
-  chord: readonly Interval[],
-): string | null {
-  if (chord.length) return `chord: ${chord.map((c) => c.name).join(', ')}`;
-  if (!from) return null;
-  if (from.semitones === 0) return 'same note';
-  return `${from.name} ${from.semitones > 0 ? 'up' : 'down'}`;
-}
 
 /** Computes everything the model is allowed to talk about, in code. */
 export function buildExplainFacts(phrase: Phrase): ExplainFacts {
@@ -124,7 +115,7 @@ export function buildExplainFacts(phrase: Phrase): ExplainFacts {
           ...(roles?.bendTo ? { bendToRole: roleText(roles.bendTo) } : {}),
         };
       }),
-      interval: intervalText(col.fromPrevious, col.chordIntervals),
+      interval: describeStep(col.fromPrevious, col.chordIntervals),
     })),
     range: analysis.range
       ? `${analysis.range.lowest}-${analysis.range.highest}`
@@ -215,24 +206,9 @@ export async function explainPhrase(
   options: { timeoutMs?: number; scenario?: string } = {},
 ): Promise<ExplainResult> {
   const facts = buildExplainFacts(phrase);
-  const controller = new AbortController();
-  const timeoutMs = options.timeoutMs ?? DEFAULT_EXPLAIN_TIMEOUT_MS;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => {
-      controller.abort();
-      reject(
-        new AiError(
-          'ai_timeout',
-          `AI provider did not respond within ${Math.round(timeoutMs / 1000)}s`,
-        ),
-      );
-    }, timeoutMs);
-  });
-
-  let raw;
-  try {
-    raw = await Promise.race([
+  const raw = await withAiTimeout(
+    options.timeoutMs ?? DEFAULT_EXPLAIN_TIMEOUT_MS,
+    (signal) =>
       provider.generateJson({
         task: 'explain-phrase',
         system: EXPLAIN_SYSTEM_PROMPT,
@@ -243,19 +219,10 @@ export async function explainPhrase(
           unknown
         >,
         data: facts,
-        signal: controller.signal,
+        signal,
         scenario: options.scenario,
       }),
-      timeout,
-    ]);
-  } catch (err) {
-    if (err instanceof AiError) throw err;
-    throw new AiError('ai_unavailable', 'AI provider request failed', {
-      cause: err,
-    });
-  } finally {
-    clearTimeout(timer);
-  }
+  );
 
   const wire = WireSchema.safeParse(raw.json);
   if (!wire.success)

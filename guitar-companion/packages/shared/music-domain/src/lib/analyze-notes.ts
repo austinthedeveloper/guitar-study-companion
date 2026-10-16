@@ -86,6 +86,21 @@ export function intervalName(semitones: number): string {
   return `${size} semitones`;
 }
 
+/**
+ * A column's step in words: "chord: P5", "m3 up", "same note", or null at
+ * the start of a line.
+ */
+export function describeStep(
+  fromPrevious: Interval | null,
+  chordIntervals: readonly Interval[],
+): string | null {
+  if (chordIntervals.length)
+    return `chord: ${chordIntervals.map((c) => c.name).join(', ')}`;
+  if (!fromPrevious) return null;
+  if (fromPrevious.semitones === 0) return 'same note';
+  return `${fromPrevious.name} ${fromPrevious.semitones > 0 ? 'up' : 'down'}`;
+}
+
 export function interval(fromMidi: number, toMidi: number): Interval {
   const semitones = toMidi - fromMidi;
   return { semitones, name: intervalName(semitones) };

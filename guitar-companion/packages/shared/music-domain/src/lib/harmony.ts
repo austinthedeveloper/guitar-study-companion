@@ -17,6 +17,14 @@ export interface NoteRoles {
   bendTo: NoteRole | null;
 }
 
+/** Short role text for display: "b3", or "b7→R" for a bend. Null if no role. */
+export function formatRoles(roles: NoteRoles | undefined): string | null {
+  if (!roles?.note) return null;
+  return roles.bendTo
+    ? `${roles.note.label}→${roles.bendTo.label}`
+    : roles.note.label;
+}
+
 export interface Harmony {
   progression: ProgressionItem[];
   /** Placement in use: the user's, or the one-chord assumption. */

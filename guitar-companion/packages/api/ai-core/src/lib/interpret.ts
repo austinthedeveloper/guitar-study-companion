@@ -13,6 +13,7 @@ import {
 } from './ai-provider';
 import { disagreements } from './consensus';
 import { AiError } from './errors';
+import { withAiTimeout } from './with-timeout';
 
 export interface InterpretTabResult {
   draft: TranscriptionDraft;
@@ -40,40 +41,19 @@ export async function interpretTab(
   timeoutMs = DEFAULT_AI_TIMEOUT_MS,
   passes = 1,
 ): Promise<InterpretTabResult> {
-  const controller = new AbortController();
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => {
-      controller.abort();
-      reject(
-        new AiError(
-          'ai_timeout',
-          `AI provider did not respond within ${Math.round(timeoutMs / 1000)}s`,
-        ),
-      );
-    }, timeoutMs);
-  });
-
   const settled = await Promise.allSettled(
     Array.from({ length: Math.max(1, passes) }, () =>
-      Promise.race([
-        provider.interpretTab({ ...input, signal: controller.signal }),
-        timeout,
-      ]).then((raw) => ({ raw, ...toDraft(raw, input.tuningMidi.length) })),
+      withAiTimeout(timeoutMs, (signal) =>
+        provider.interpretTab({ ...input, signal }),
+      ).then((raw) => ({ raw, ...toDraft(raw, input.tuningMidi.length) })),
     ),
   );
-  clearTimeout(timer);
 
   const readings = settled.flatMap((r) =>
     r.status === 'fulfilled' ? [r.value] : [],
   );
-  if (readings.length === 0) {
-    const err = (settled[0] as PromiseRejectedResult).reason;
-    if (err instanceof AiError) throw err;
-    throw new AiError('ai_unavailable', 'AI provider request failed', {
-      cause: err,
-    });
-  }
+  // Every pass failed; each rejection is already an AiError.
+  if (readings.length === 0) throw (settled[0] as PromiseRejectedResult).reason;
 
   const [first, ...others] = readings;
   first.draft.uncertainties.push(

@@ -13,3 +13,4 @@ export * from './lib/tab-editor/tab-editor-model';
 export * from './lib/note-facts/note-facts';
 export * from './lib/scale-candidates/scale-candidates';
 export * from './lib/explanation/explanation';
+export * from './lib/harmony-form/harmony-form';

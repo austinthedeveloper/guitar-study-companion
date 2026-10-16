@@ -69,10 +69,11 @@ function fakeExplanation(facts: ExplainFacts) {
     kind: 'interpretation',
     text: 'Synthetic interpretation from the fake provider.',
     eventIds: [],
-    assumption:
-      facts.chords.placement === 'unknown'
-        ? 'No chord placement was given.'
-        : `Chord placement is ${facts.chords.placement}.`,
+    assumption: {
+      unknown: 'No chord placement was given.',
+      assumed: 'One chord is assumed for the whole phrase.',
+      placed: 'The chords are where the player placed them.',
+    }[facts.chords.placement],
   });
   return {
     summary: `Synthetic explanation of "${facts.title}" (fake provider).`,

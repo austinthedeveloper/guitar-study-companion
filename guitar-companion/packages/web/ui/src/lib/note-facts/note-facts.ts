@@ -6,6 +6,7 @@ import {
   output,
 } from '@angular/core';
 import {
+  describeStep,
   Interval,
   NoteAnalysis,
   NoteFact,
@@ -180,9 +181,6 @@ export class NoteFactsComponent {
     fromPrevious: Interval | null,
     chord: readonly Interval[],
   ): string {
-    if (chord.length) return `chord: ${chord.map((c) => c.name).join(', ')}`;
-    if (!fromPrevious) return '—';
-    if (fromPrevious.semitones === 0) return 'same note';
-    return `${fromPrevious.name} ${fromPrevious.semitones > 0 ? 'up' : 'down'}`;
+    return describeStep(fromPrevious, chord) ?? '—';
   }
 }

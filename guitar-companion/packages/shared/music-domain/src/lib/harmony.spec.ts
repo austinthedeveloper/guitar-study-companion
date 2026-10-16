@@ -1,5 +1,5 @@
 import { analyzeNotes } from './analyze-notes';
-import { harmonize } from './harmony';
+import { formatRoles, harmonize } from './harmony';
 import { STANDARD_TUNING_MIDI } from './pitch';
 
 // E5 bent a whole step to F#5, then G5.
@@ -59,5 +59,15 @@ describe('harmonize', () => {
       chords: [],
     });
     expect(harmonize({ analysis, chords: 'Xyz' }).roles).toEqual({});
+  });
+});
+
+describe('formatRoles', () => {
+  it('shows a bend as start→target and nothing without a role', () => {
+    const r = (label: string) => ({ label, chordTone: true });
+    expect(formatRoles({ note: r('b7'), bendTo: r('R') })).toBe('b7→R');
+    expect(formatRoles({ note: r('3'), bendTo: null })).toBe('3');
+    expect(formatRoles({ note: null, bendTo: null })).toBeNull();
+    expect(formatRoles(undefined)).toBeNull();
   });
 });

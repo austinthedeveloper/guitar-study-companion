@@ -212,7 +212,7 @@ test.describe(
       );
       await expect(
         page.getByTestId('explanation-interpretation'),
-      ).toContainText('Assumes: Chord placement is assumed.');
+      ).toContainText('Assumes: One chord is assumed for the whole phrase.');
       await expect(page.getByTestId('explain')).toHaveCount(0);
 
       // A point's citation highlights its notes in the tab, and toggles off.

@@ -10,6 +10,7 @@ import { Technique } from '@gsc/contracts';
 import {
   deleteSlice,
   EventIssue,
+  formatRoles,
   NoteRoles,
   insertSliceBefore,
   moveSlice,
@@ -407,9 +408,7 @@ export class TabEditorComponent {
   }
 
   protected roleLabel(id: string): string | null {
-    const r = this.roles()[id];
-    if (!r?.note) return null;
-    return r.bendTo ? `${r.note.label}→${r.bendTo.label}` : r.note.label;
+    return formatRoles(this.roles()[id]);
   }
 
   protected readonly selectedColumn = signal<number | null>(null);

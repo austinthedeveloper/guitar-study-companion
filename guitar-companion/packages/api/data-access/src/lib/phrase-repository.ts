@@ -89,10 +89,7 @@ export class PhraseRepository {
       },
       { returnDocument: 'after' },
     );
-    if (doc) return toPhrase(doc);
-    return (await this.collection.countDocuments({ _id, userId }, { limit: 1 }))
-      ? 'conflict'
-      : 'not_found';
+    return doc ? toPhrase(doc) : this.missOrConflict(userId, _id);
   }
 
   /**
@@ -112,10 +109,19 @@ export class PhraseRepository {
       { $set: { explanation, updatedAt: now } },
       { returnDocument: 'after' },
     );
-    if (doc) return toPhrase(doc);
-    return (await this.collection.countDocuments({ _id, userId }, { limit: 1 }))
-      ? 'conflict'
-      : 'not_found';
+    return doc ? toPhrase(doc) : this.missOrConflict(userId, _id);
+  }
+
+  /** After a revision-guarded update matched nothing: was it gone, or changed? */
+  private async missOrConflict(
+    userId: string,
+    _id: ObjectId,
+  ): Promise<'not_found' | 'conflict'> {
+    const exists = await this.collection.countDocuments(
+      { _id, userId },
+      { limit: 1 },
+    );
+    return exists ? 'conflict' : 'not_found';
   }
 
   async list(userId: string, limit = 50): Promise<PhraseSummary[]> {

@@ -1,4 +1,4 @@
-import { analyzeNotes, intervalName } from './analyze-notes';
+import { analyzeNotes, describeStep, intervalName } from './analyze-notes';
 import { parseKey } from './keys';
 import { STANDARD_TUNING_MIDI } from './pitch';
 import { EventLike } from './validate-events';
@@ -41,6 +41,19 @@ describe('intervalName', () => {
       'P15',
     ]);
     expect(intervalName(27)).toBe('27 semitones');
+  });
+});
+
+describe('describeStep', () => {
+  it('describes chords, steps, repeats, and line starts', () => {
+    const iv = (semitones: number) => ({
+      semitones,
+      name: intervalName(semitones),
+    });
+    expect(describeStep(null, [iv(7)])).toBe('chord: P5');
+    expect(describeStep(iv(-3), [])).toBe('m3 down');
+    expect(describeStep(iv(0), [])).toBe('same note');
+    expect(describeStep(null, [])).toBeNull();
   });
 });
 

@@ -5,7 +5,7 @@
  * Includes ambiguous and under-specified cases on purpose.
  */
 import { analyzeNotes } from './analyze-notes';
-import { harmonize } from './harmony';
+import { formatRoles, harmonize } from './harmony';
 import { parseKey } from './keys';
 import { STANDARD_TUNING_MIDI } from './pitch';
 import { candidateScales, ScaleAnalysis } from './scales';
@@ -198,13 +198,7 @@ describe('hand-authored analysis examples', () => {
       expect(
         analysis.columns.map((c) =>
           c.notes
-            .map((n) => {
-              const r = harmony.roles[n.eventId];
-              if (!r?.note) return null;
-              return r.bendTo
-                ? `${r.note.label}→${r.bendTo.label}`
-                : r.note.label;
-            })
+            .map((n) => formatRoles(harmony.roles[n.eventId]))
             .filter((r) => r !== null)
             .join('+'),
         ),
