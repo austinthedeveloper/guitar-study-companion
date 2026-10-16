@@ -66,6 +66,7 @@ Module boundaries are enforced by lint (`eslint.config.mjs`):
 | `APP_VERSION` | `dev` | Version reported by `/api/health` |
 | `AI_PROVIDER` | `fake` | `fake`, `openai`, or `claude` |
 | `AI_TIMEOUT_MS` | `60000` | Recognition request timeout |
+| `AI_PASSES` | `2` | Parallel readings per image; disagreements are flagged for review (cost scales with this) |
 | `AI_MAX_OUTPUT_TOKENS` | provider default | Output token cap |
 | `OPENAI_API_KEY` / `OPENAI_MODEL` | *(empty)* | Required for `openai` (vision-capable model) |
 | `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL` | *(empty)* / `claude-opus-5-5` | Required for `claude` |

@@ -14,6 +14,7 @@ app.http('imports-interpret', {
     return interpretImport(body.body, {
       ai: app.ai,
       timeoutMs: app.aiTimeoutMs,
+      passes: app.aiPasses,
       scenario: app.e2eMode
         ? (req.headers.get('x-gsc-fake-scenario') ?? undefined)
         : undefined,

@@ -11,6 +11,7 @@ import {
   InterpretTabInput,
   RawInterpretResult,
 } from './ai-provider';
+import { disagreements } from './consensus';
 import { AiError } from './errors';
 
 export interface InterpretTabResult {
@@ -22,16 +23,22 @@ export interface InterpretTabResult {
 }
 
 export const DEFAULT_AI_TIMEOUT_MS = 60_000;
+/** Independent readings per image; disagreements are flagged for review. */
+export const DEFAULT_AI_PASSES = 2;
 
 /**
  * Runs a provider and turns its raw output into a safe draft:
  * schema-validated, impossible events removed (and explained), and rhythm
- * never invented. Throws AiError for unrecoverable provider problems.
+ * never invented. With passes > 1 the image is read several times in
+ * parallel; the first valid reading is returned, with columns the others
+ * disagree on flagged as uncertainties. Throws AiError only when no pass
+ * produced a usable draft.
  */
 export async function interpretTab(
   provider: AiProvider,
   input: Omit<InterpretTabInput, 'signal'>,
   timeoutMs = DEFAULT_AI_TIMEOUT_MS,
+  passes = 1,
 ): Promise<InterpretTabResult> {
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -47,21 +54,54 @@ export async function interpretTab(
     }, timeoutMs);
   });
 
-  let raw: RawInterpretResult;
-  try {
-    raw = await Promise.race([
-      provider.interpretTab({ ...input, signal: controller.signal }),
-      timeout,
-    ]);
-  } catch (err) {
+  const settled = await Promise.allSettled(
+    Array.from({ length: Math.max(1, passes) }, () =>
+      Promise.race([
+        provider.interpretTab({ ...input, signal: controller.signal }),
+        timeout,
+      ]).then((raw) => ({ raw, ...toDraft(raw, input.tuningMidi.length) })),
+    ),
+  );
+  clearTimeout(timer);
+
+  const readings = settled.flatMap((r) =>
+    r.status === 'fulfilled' ? [r.value] : [],
+  );
+  if (readings.length === 0) {
+    const err = (settled[0] as PromiseRejectedResult).reason;
     if (err instanceof AiError) throw err;
     throw new AiError('ai_unavailable', 'AI provider request failed', {
       cause: err,
     });
-  } finally {
-    clearTimeout(timer);
   }
 
+  const [first, ...others] = readings;
+  first.draft.uncertainties.push(
+    ...disagreements(
+      first.draft.events,
+      others.map((r) => r.draft.events),
+    ),
+  );
+  const usages = readings.flatMap((r) => (r.raw.usage ? [r.raw.usage] : []));
+  return {
+    draft: first.draft,
+    provider: provider.name,
+    model: first.raw.model,
+    usage: usages.length
+      ? {
+          inputTokens: usages.reduce((n, u) => n + u.inputTokens, 0),
+          outputTokens: usages.reduce((n, u) => n + u.outputTokens, 0),
+        }
+      : undefined,
+    rejectedEventCount: first.rejectedEventCount,
+  };
+}
+
+/** Validates one provider reading into a draft, or throws ai_invalid_output. */
+function toDraft(
+  raw: RawInterpretResult,
+  stringCount: number,
+): { draft: TranscriptionDraft; rejectedEventCount: number } {
   const { draft: screened, dropped } = screenEvents(raw.draft);
   const parsed = TranscriptionDraftSchema.safeParse(screened);
   if (!parsed.success) {
@@ -75,17 +115,8 @@ export async function interpretTab(
   }
 
   parsed.data.uncertainties.push(...dropped);
-  const { draft, rejectedEventCount } = sanitizeDraft(
-    parsed.data,
-    input.tuningMidi.length,
-  );
-  return {
-    draft,
-    provider: provider.name,
-    model: raw.model,
-    usage: raw.usage,
-    rejectedEventCount: rejectedEventCount + dropped.length,
-  };
+  const { draft, rejectedEventCount } = sanitizeDraft(parsed.data, stringCount);
+  return { draft, rejectedEventCount: rejectedEventCount + dropped.length };
 }
 
 /**

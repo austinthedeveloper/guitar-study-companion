@@ -10,6 +10,8 @@ import { sniffImageType } from './image-bytes';
 export interface InterpretDeps {
   ai: AiProvider;
   timeoutMs?: number;
+  /** Independent readings per image (see interpretTab). */
+  passes?: number;
   /** Fake-provider scenario; only passed through when E2E_MODE is enabled. */
   scenario?: string;
   log?: (message: string, data?: Record<string, unknown>) => void;
@@ -88,6 +90,7 @@ export async function interpretImport(
       deps.ai,
       { image: bytes, mimeType: actual, tuningMidi, scenario: deps.scenario },
       deps.timeoutMs,
+      deps.passes,
     );
     // Log usage and counts only, never image bytes or recognized content (copyright/privacy).
     deps.log?.('interpret.ok', {

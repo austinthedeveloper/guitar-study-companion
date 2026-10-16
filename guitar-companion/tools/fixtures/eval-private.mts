@@ -36,21 +36,32 @@ if (!existsSync(root)) {
   process.exit(1);
 }
 
-/** Notes as ordered columns of "string:fret" so spacing differences don't matter. */
-function columns(events: Ev[]): string[] {
-  const byOrder = new Map<number, string[]>();
+/** Ordered columns, each listing its events, so spacing differences don't matter. */
+function groupColumns<E extends Ev>(events: E[]): E[][] {
+  const byOrder = new Map<number, E[]>();
   for (const e of events)
-    byOrder.set(e.order, [
-      ...(byOrder.get(e.order) ?? []),
-      `${e.stringIndex}:${e.fret ?? 'x'}`,
-    ]);
-  return [...byOrder.entries()]
-    .sort(([a], [b]) => a - b)
-    .map(([, v]) => v.sort().join('+'));
+    byOrder.set(e.order, [...(byOrder.get(e.order) ?? []), e]);
+  return [...byOrder.entries()].sort(([a], [b]) => a - b).map(([, v]) => v);
 }
 
-/** Longest common subsequence length: how many columns were read correctly and in order. */
-function lcs(a: string[], b: string[]): number {
+/** Notes as ordered columns of "string:fret". */
+function columns(events: Ev[]): string[] {
+  return groupColumns(events).map((col) =>
+    col
+      .map((e) => `${e.stringIndex}:${e.fret ?? 'x'}`)
+      .sort()
+      .join('+'),
+  );
+}
+
+/**
+ * Longest common subsequence: how many columns were read correctly and in
+ * order, plus which columns of b were part of that match.
+ */
+function lcs(
+  a: string[],
+  b: string[],
+): { length: number; matchedB: Set<number> } {
   const dp = Array.from({ length: a.length + 1 }, () =>
     new Array<number>(b.length + 1).fill(0),
   );
@@ -60,7 +71,16 @@ function lcs(a: string[], b: string[]): number {
         a[i - 1] === b[j - 1]
           ? dp[i - 1][j - 1] + 1
           : Math.max(dp[i - 1][j], dp[i][j - 1]);
-  return dp[a.length][b.length];
+  const matchedB = new Set<number>();
+  for (let i = a.length, j = b.length; i > 0 && j > 0;) {
+    if (a[i - 1] === b[j - 1]) {
+      matchedB.add(j - 1);
+      i--;
+      j--;
+    } else if (dp[i - 1][j] >= dp[i][j - 1]) i--;
+    else j--;
+  }
+  return { length: dp[a.length][b.length], matchedB };
 }
 
 const rows: Record<string, unknown>[] = [];
@@ -87,7 +107,18 @@ for (const id of readdirSync(root).filter((d) => !only || d === only)) {
   }
   const want = columns(expected.events);
   const got = columns(body.draft.events);
-  const matched = lcs(want, got);
+  const { length: matched, matchedB } = lcs(want, got);
+  // Mirrors the editor: a note is highlighted for review when its confidence
+  // is low or an uncertainty names it. A column counts as flagged if any note is.
+  const uncertainIds = new Set<string>(
+    body.draft.uncertainties.flatMap((u: { eventIds: string[] }) => u.eventIds),
+  );
+  const flagged = groupColumns<Ev & { id: string; confidence: number }>(
+    body.draft.events,
+  ).map((col) => col.some((e) => e.confidence < 0.6 || uncertainIds.has(e.id)));
+  const wrongCols = got.map((_, i) => i).filter((i) => !matchedB.has(i));
+  const caught = wrongCols.filter((i) => flagged[i]).length;
+  const falseAlarms = [...matchedB].filter((i) => flagged[i]).length;
   // Keep the full draft and a column diff (private) so misreads can be inspected without re-running.
   writeFileSync(
     join(dir, `draft-${body.provider}.json`),
@@ -98,7 +129,7 @@ for (const id of readdirSync(root).filter((d) => !only || d === only)) {
     Array.from(
       { length: Math.max(want.length, got.length) },
       (_, i) =>
-        `${String(i).padStart(2)}  expected ${(want[i] ?? '-').padEnd(12)} got ${got[i] ?? '-'}${want[i] === got[i] ? '' : '   <--'}`,
+        `${String(i).padStart(2)}  expected ${(want[i] ?? '-').padEnd(12)} got ${(got[i] ?? '-').padEnd(12)}${flagged[i] ? ' [review]' : '         '}${want[i] === got[i] ? '' : '   <--'}`,
     ).join('\n') + '\n',
   );
   rows.push({
@@ -116,9 +147,10 @@ for (const id of readdirSync(root).filter((d) => !only || d === only)) {
         ? null
         : body.draft.rhythmKnown === expected.rhythmKnown,
     rejected: body.rejectedEventCount,
-    needsReview: body.draft.events.filter(
-      (e: { confidence: number }) => e.confidence < 0.6,
-    ).length,
+    // Of the misread columns, how many the editor would highlight for review.
+    errorsCaught: `${caught}/${wrongCols.length}`,
+    // Correctly read columns highlighted anyway (noise for the user).
+    falseAlarms,
     tokens: body.usage
       ? `${body.usage.inputTokens}/${body.usage.outputTokens}`
       : null,
