@@ -81,3 +81,41 @@ export function updateEvent<T extends EventLike>(
 ): T[] {
   return events.map((e) => (e.id === id ? { ...e, ...patch } : e));
 }
+
+/** The nearest earlier (-1) or later (1) note on the same string. */
+export function neighbourOnString<T extends EventLike>(
+  events: readonly T[],
+  event: EventLike,
+  direction: 1 | -1,
+): T | undefined {
+  return events
+    .filter(
+      (p) =>
+        p.stringIndex === event.stringIndex &&
+        (p.order - event.order) * direction > 0,
+    )
+    .sort((a, b) => (a.order - b.order) * direction)[0];
+}
+
+const fretText = (fret: number | null) =>
+  fret === null ? 'x' : fret === 0 ? 'the open string' : `fret ${fret}`;
+
+/**
+ * Where a note's slide or slur goes, in words: "slide from fret 6 to
+ * fret 5", "pull-off from fret 3 to the open string". A slide is marked on
+ * its starting note; hammer-ons and pull-offs on the note the slur sounds.
+ */
+export function describeMoves(
+  events: readonly EventLike[],
+  event: EventLike,
+): string[] {
+  const out: string[] = [];
+  const next = neighbourOnString(events, event, 1);
+  const prev = neighbourOnString(events, event, -1);
+  if (event.techniques.includes('slide') && next)
+    out.push(`slide from ${fretText(event.fret)} to ${fretText(next.fret)}`);
+  for (const t of ['hammer-on', 'pull-off'])
+    if (event.techniques.includes(t) && prev)
+      out.push(`${t} from ${fretText(prev.fret)} to ${fretText(event.fret)}`);
+  return out;
+}

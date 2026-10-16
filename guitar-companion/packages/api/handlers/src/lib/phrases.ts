@@ -7,7 +7,7 @@ import {
   UpdateHarmonyRequestSchema,
 } from '@gsc/contracts';
 import { validateEvents } from '@gsc/music-domain';
-import { apiError, HandlerResponse, zodIssues } from './http';
+import { apiError, HandlerResponse, staleRevision, zodIssues } from './http';
 
 /** Persistence port; implemented by @gsc/api/data-access PhraseRepository. */
 export interface PhraseStore {
@@ -98,11 +98,6 @@ export async function updateHarmony(
   const result = await deps.store.updateHarmony(deps.userId, id, parsed.data);
   if (result === 'not_found')
     return apiError(404, 'not_found', 'Phrase not found.');
-  if (result === 'conflict')
-    return apiError(
-      409,
-      'conflict',
-      'This phrase changed since you opened it. Reload to see the latest version.',
-    );
+  if (result === 'conflict') return staleRevision();
   return { status: 200, body: result };
 }

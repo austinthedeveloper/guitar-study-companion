@@ -1,7 +1,9 @@
 import {
   deleteSlice,
+  describeMoves,
   insertSliceBefore,
   moveSlice,
+  neighbourOnString,
   nextEventId,
   setNote,
   sliceOrders,
@@ -70,5 +72,44 @@ describe('tab editing', () => {
         (e) => e.id === 'e2',
       )?.techniques,
     ).toEqual(['vibrato']);
+  });
+});
+
+describe('describeMoves', () => {
+  const at = (
+    id: string,
+    order: number,
+    fret: number,
+    techniques: string[] = [],
+  ) => ({
+    id,
+    order,
+    stringIndex: 4,
+    fret,
+    durationTicks: null,
+    techniques,
+  });
+  const events = [
+    at('a', 0, 6, ['slide']),
+    at('b', 1, 5),
+    at('c', 2, 3, ['pull-off']),
+    at('d', 3, 0, ['pull-off']),
+    { ...at('e', 1, 7), stringIndex: 3 },
+  ];
+
+  it('spells out slides from their start and slurs into their note', () => {
+    expect(events.map((e) => describeMoves(events, e))).toEqual([
+      ['slide from fret 6 to fret 5'],
+      [],
+      ['pull-off from fret 5 to fret 3'],
+      ['pull-off from fret 3 to the open string'],
+      [],
+    ]);
+  });
+
+  it('finds neighbours on the same string only', () => {
+    expect(neighbourOnString(events, events[1], -1)?.id).toBe('a');
+    expect(neighbourOnString(events, events[1], 1)?.id).toBe('c');
+    expect(neighbourOnString(events, events[4], 1)).toBeUndefined();
   });
 });

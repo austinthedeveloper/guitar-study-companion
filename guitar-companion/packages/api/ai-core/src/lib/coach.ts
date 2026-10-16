@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { AiProvider } from './ai-provider';
 import { AiError } from './errors';
 import { buildExplainFacts } from './explain';
+import { DEFAULT_AI_TIMEOUT_MS } from './interpret';
 import { withAiTimeout } from './with-timeout';
 
 /**
@@ -142,17 +143,19 @@ export async function coachExercises(
   options: { timeoutMs?: number; scenario?: string } = {},
 ): Promise<CoachResult> {
   const facts = buildCoachFacts(phrase, exercises);
-  const raw = await withAiTimeout(options.timeoutMs ?? 60_000, (signal) =>
-    provider.generateJson({
-      task: 'coach-exercises',
-      system: COACH_SYSTEM_PROMPT,
-      prompt: coachUserPrompt(facts),
-      schemaName: 'exercise_coaching',
-      schema: COACHING_WIRE_JSON_SCHEMA as unknown as Record<string, unknown>,
-      data: facts,
-      signal,
-      scenario: options.scenario,
-    }),
+  const raw = await withAiTimeout(
+    options.timeoutMs ?? DEFAULT_AI_TIMEOUT_MS,
+    (signal) =>
+      provider.generateJson({
+        task: 'coach-exercises',
+        system: COACH_SYSTEM_PROMPT,
+        prompt: coachUserPrompt(facts),
+        schemaName: 'exercise_coaching',
+        schema: COACHING_WIRE_JSON_SCHEMA as unknown as Record<string, unknown>,
+        data: facts,
+        signal,
+        scenario: options.scenario,
+      }),
   );
   const wire = WireSchema.safeParse(raw.json);
   if (!wire.success)

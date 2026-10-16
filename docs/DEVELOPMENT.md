@@ -17,6 +17,9 @@ The Nx workspace lives in [`guitar-companion/`](../guitar-companion). Run all co
 | `npm run e2e:all-browsers` | The same suite on Chromium, Firefox, and WebKit. |
 | `npm run e2e:ui` | Playwright UI mode. |
 | `npm run verify` | Everything CI runs: format check, lint, unit tests, typecheck, build, e2e. |
+| `npm run dev:real-ai` | The API against a real AI provider (`-- --provider openai\|claude\|fake`) with a throwaway MongoDB on :27999. Costs money per AI call. It doesn't reload on code changes, so restart it after editing API or shared code. |
+| `node tools/fixtures/phrase-from-fixture.mts <case>` | Saves a private verified fixture as a phrase on the running API and prints its id. |
+| `node tools/fixtures/eval-private.mts` | Scores AI recognition against private fixtures (see DECISIONS.md for past results). |
 | `npx nx test <project>` | Unit tests for one project (Vitest). |
 | `npx nx graph` | Project dependency graph. |
 
@@ -35,17 +38,21 @@ apps/
   api/          thin Azure Functions shell (v4 model): registers triggers that call @gsc/api/handlers
 packages/
   shared/contracts      @gsc/contracts        zod schemas + DTOs + API paths
-  shared/music-domain   @gsc/music-domain     pure music logic (pitch, intervals, transposition)
+  shared/music-domain   @gsc/music-domain     pure music logic: pitch, spelling, intervals, chords, roles, scales, practice plans
   api/ai-core           @gsc/api/ai-core      AI provider interface, registry, fake provider
   api/data-access       @gsc/api/data-access  MongoDB connection + repositories
   api/handlers          @gsc/api/handlers     endpoint logic, runtime-agnostic and unit-testable
   web/routes            @gsc/web/routes       route manifest (used by app + e2e coverage guard)
   web/ui                @gsc/web/ui           presentational components only (inputs/outputs, no services)
+  web/audio             @gsc/web/audio        playback: plucked-string synth, metronome, MIDI export/out
   web/data-access       @gsc/web/data-access  HTTP clients/state
   web/feature-*         @gsc/web/feature-*    routed pages that connect ui ↔ data-access
 tools/
   e2e/start-stack.mjs             e2e stack launcher
   scripts/write-local-settings.mjs  .env → Functions local.settings.json
+  scripts/real-ai-stack.mjs         npm run dev:real-ai
+  fixtures/eval-private.mts         recognition accuracy on private fixtures
+  fixtures/phrase-from-fixture.mts  private fixture → saved phrase
 fixtures/
   synthetic/   safe to commit, used in CI
   private/     gitignored real book scans

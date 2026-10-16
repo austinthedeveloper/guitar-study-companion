@@ -21,13 +21,9 @@ export class FakeAiProvider implements AiProvider {
       ? input.scenario
       : 'default';
     const behaviour = FAKE_SCENARIOS[scenario];
-    if (behaviour.kind === 'throw') throw new Error(behaviour.message);
-    if (behaviour.kind === 'hang') {
-      await new Promise<void>((resolve) =>
-        input.signal?.addEventListener('abort', () => resolve()),
-      );
-      throw new Error('aborted');
-    }
+    await failIfAsked(behaviour, input.signal);
+    // failIfAsked has thrown for every other kind; this narrows the type.
+    if (behaviour.kind !== 'draft') throw new Error('unreachable');
     return {
       draft: structuredClone(behaviour.draft),
       model: `fake-${scenario}`,
@@ -36,16 +32,8 @@ export class FakeAiProvider implements AiProvider {
   }
 
   async generateJson(input: GenerateJsonInput): Promise<RawJsonResult> {
-    const behaviour = isFakeScenario(input.scenario)
-      ? FAKE_SCENARIOS[input.scenario]
-      : null;
-    if (behaviour?.kind === 'throw') throw new Error(behaviour.message);
-    if (behaviour?.kind === 'hang') {
-      await new Promise<void>((resolve) =>
-        input.signal?.addEventListener('abort', () => resolve()),
-      );
-      throw new Error('aborted');
-    }
+    if (isFakeScenario(input.scenario))
+      await failIfAsked(FAKE_SCENARIOS[input.scenario], input.signal);
     if (input.task === 'coach-exercises')
       return {
         json: fakeCoaching(input.data as CoachFacts),
@@ -57,6 +45,20 @@ export class FakeAiProvider implements AiProvider {
       model: 'fake-explain',
       usage: { inputTokens: 0, outputTokens: 0 },
     };
+  }
+}
+
+/** Throws (or hangs until aborted) for the failure scenarios; otherwise returns. */
+async function failIfAsked(
+  behaviour: (typeof FAKE_SCENARIOS)[FakeScenario],
+  signal?: AbortSignal,
+): Promise<void> {
+  if (behaviour.kind === 'throw') throw new Error(behaviour.message);
+  if (behaviour.kind === 'hang') {
+    await new Promise<void>((resolve) =>
+      signal?.addEventListener('abort', () => resolve()),
+    );
+    throw new Error('aborted');
   }
 }
 

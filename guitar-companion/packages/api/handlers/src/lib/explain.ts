@@ -1,6 +1,6 @@
 import { ExplainRequestSchema, Explanation } from '@gsc/contracts';
 import { AiError, AiProvider, explainPhrase } from '@gsc/api/ai-core';
-import { apiError, HandlerResponse, zodIssues } from './http';
+import { apiError, HandlerResponse, staleRevision, zodIssues } from './http';
 import { PhraseStore } from './phrases';
 
 export interface ExplainDeps {
@@ -31,9 +31,6 @@ const AI_STATUS: Record<AiError['code'], { status: number; message: string }> =
     },
   };
 
-const STALE_MESSAGE =
-  'This phrase changed since you opened it. Reload to see the latest version.';
-
 /**
  * Explains the stored phrase (never client-sent notes) at the revision the
  * user is looking at, and stores the result against that revision.
@@ -50,8 +47,7 @@ export async function explainPhraseHandler(
     });
   const phrase = await deps.store.get(deps.userId, id);
   if (!phrase) return apiError(404, 'not_found', 'Phrase not found.');
-  if (phrase.revision !== parsed.data.revision)
-    return apiError(409, 'conflict', STALE_MESSAGE);
+  if (phrase.revision !== parsed.data.revision) return staleRevision();
 
   try {
     const result = await explainPhrase(deps.ai, phrase, {
@@ -82,7 +78,7 @@ export async function explainPhraseHandler(
     );
     if (saved === 'not_found')
       return apiError(404, 'not_found', 'Phrase not found.');
-    if (saved === 'conflict') return apiError(409, 'conflict', STALE_MESSAGE);
+    if (saved === 'conflict') return staleRevision();
     return { status: 200, body: saved };
   } catch (err) {
     if (err instanceof AiError) {

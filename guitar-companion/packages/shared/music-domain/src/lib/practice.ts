@@ -1,5 +1,6 @@
 import { analyzeNotes, ColumnFact, NoteAnalysis } from './analyze-notes';
 import { ChordChange } from './chords';
+import { neighbourOnString } from './editing';
 import { Harmony, harmonize } from './harmony';
 import { parseKey } from './keys';
 import { MAX_FRET } from './pitch';
@@ -16,6 +17,15 @@ export type Difficulty = 'easy' | 'medium' | 'hard';
 export type Focus = 'balanced' | 'technique' | 'accuracy' | 'harmony';
 export type ExerciseKind =
   'isolate' | 'technique' | 'slow' | 'connect' | 'apply';
+/** Techniques that get their own drill. */
+export type DrillTechnique =
+  | 'bend'
+  | 'hammer-on'
+  | 'pull-off'
+  | 'slide'
+  | 'vibrato'
+  | 'dead-note'
+  | 'palm-mute';
 
 export interface PlanSettingsLike {
   difficulty: Difficulty;
@@ -30,7 +40,7 @@ export interface ExerciseDraft {
   objective: string;
   eventIds: string[];
   referenceNotes: { stringIndex: number; fret: number; label: string }[];
-  technique?: string;
+  technique?: DrillTechnique;
   chord?: string;
   tempo: {
     startBpm: number;
@@ -190,14 +200,6 @@ export function buildPracticePlan(input: {
     [...new Set(ids)].sort(
       (a, b) => (columnOf.get(a) ?? 0) - (columnOf.get(b) ?? 0),
     );
-  const previousOnString = (e: EventLike) =>
-    input.events
-      .filter((p) => p.stringIndex === e.stringIndex && p.order < e.order)
-      .sort((a, b) => b.order - a.order)[0];
-  const nextOnString = (e: EventLike) =>
-    input.events
-      .filter((p) => p.stringIndex === e.stringIndex && p.order > e.order)
-      .sort((a, b) => a.order - b.order)[0];
   const stepOf = (id: string) => (columnOf.get(id) ?? 0) + 1;
   const drillFocus = settings.focus === 'accuracy' ? ['bend'] : null;
 
@@ -250,7 +252,7 @@ export function buildPracticePlan(input: {
       objective: 'Make the slurred notes as loud and even as the picked ones.',
       eventIds: ordered(
         legato.flatMap((e) => {
-          const prev = previousOnString(e);
+          const prev = neighbourOnString(input.events, e, -1);
           return prev ? [prev.id, e.id] : [e.id];
         }),
       ),
@@ -272,7 +274,7 @@ export function buildPracticePlan(input: {
       objective: 'Arrive exactly on the target fret without overshooting.',
       eventIds: ordered(
         slides.flatMap((e) => {
-          const next = nextOnString(e);
+          const next = neighbourOnString(input.events, e, 1);
           return next ? [e.id, next.id] : [e.id];
         }),
       ),

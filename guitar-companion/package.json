@@ -10,7 +10,8 @@
     "e2e": "nx e2e web-e2e",
     "e2e:all-browsers": "E2E_ALL_BROWSERS=1 nx e2e web-e2e",
     "e2e:ui": "nx e2e web-e2e --ui",
-    "verify": "nx format:check && nx run-many -t lint test typecheck build && nx e2e web-e2e"
+    "verify": "nx format:check && nx run-many -t lint test typecheck build && nx e2e web-e2e",
+    "dev:real-ai": "node tools/scripts/real-ai-stack.mjs"
   },
   "private": true,
   "dependencies": {

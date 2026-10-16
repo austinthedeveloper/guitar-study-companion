@@ -6,6 +6,7 @@ import {
 import {
   analyzeNotes,
   candidateScales,
+  describeMoves,
   describeStep,
   formatKey,
   harmonize,
@@ -80,35 +81,6 @@ export function buildExplainFacts(phrase: Phrase): ExplainFacts {
   });
   const scales = candidateScales({ analysis, key, chords: harmony.chords });
   const byId = new Map(phrase.events.map((e) => [e.id, e]));
-  const onString = (id: string, dir: 1 | -1) => {
-    const e = byId.get(id);
-    if (!e) return undefined;
-    return phrase.events
-      .filter(
-        (p) => p.stringIndex === e.stringIndex && (p.order - e.order) * dir > 0,
-      )
-      .sort((a, b) => (a.order - b.order) * dir)[0];
-  };
-  const fretText = (f: number | null | undefined) =>
-    f === null || f === undefined
-      ? 'x'
-      : f === 0
-        ? 'the open string'
-        : `fret ${f}`;
-  /** Where each slur or slide goes, so the model never infers direction. */
-  const movesOf = (id: string): string[] => {
-    const e = byId.get(id);
-    if (!e) return [];
-    const out: string[] = [];
-    const next = onString(id, 1);
-    const prev = onString(id, -1);
-    if (e.techniques.includes('slide') && next)
-      out.push(`slide from ${fretText(e.fret)} to ${fretText(next.fret)}`);
-    for (const t of ['hammer-on', 'pull-off'] as const)
-      if (e.techniques.includes(t) && prev)
-        out.push(`${t} from ${fretText(prev.fret)} to ${fretText(e.fret)}`);
-    return out;
-  };
   return {
     title: phrase.title,
     rhythmKnown: phrase.rhythmKnown,
@@ -141,7 +113,9 @@ export function buildExplainFacts(phrase: Phrase): ExplainFacts {
           fret: e?.fret ?? null,
           name: n.name,
           techniques: [...(e?.techniques ?? [])],
-          ...(movesOf(n.eventId).length ? { moves: movesOf(n.eventId) } : {}),
+          ...(e && describeMoves(phrase.events, e).length
+            ? { moves: describeMoves(phrase.events, e) }
+            : {}),
           ...(n.bendToName ? { bendTo: n.bendToName } : {}),
           ...(roles?.note ? { role: roleText(roles.note) } : {}),
           ...(roles?.bendTo ? { bendToRole: roleText(roles.bendTo) } : {}),

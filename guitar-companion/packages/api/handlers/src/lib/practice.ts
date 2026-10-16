@@ -8,7 +8,7 @@ import {
 } from '@gsc/contracts';
 import { AiError, AiProvider, coachExercises } from '@gsc/api/ai-core';
 import { planForPhrase } from '@gsc/music-domain';
-import { apiError, HandlerResponse, zodIssues } from './http';
+import { apiError, HandlerResponse, staleRevision, zodIssues } from './http';
 import { PhraseStore } from './phrases';
 
 /** Persistence port; implemented by @gsc/api/data-access PracticeRepository. */
@@ -55,12 +55,7 @@ export async function createPlan(
     });
   const phrase = await deps.phrases.get(deps.userId, phraseId);
   if (!phrase) return apiError(404, 'not_found', 'Phrase not found.');
-  if (phrase.revision !== parsed.data.revision)
-    return apiError(
-      409,
-      'conflict',
-      'This phrase changed since you opened it. Reload to see the latest version.',
-    );
+  if (phrase.revision !== parsed.data.revision) return staleRevision();
 
   const { accepted, rejected } = planForPhrase({
     events: phrase.events,
@@ -74,11 +69,7 @@ export async function createPlan(
       'validation_failed',
       'This phrase has no playable notes to practise.',
     );
-  let exercises: Exercise[] = accepted.map((x) => ({
-    ...x,
-    technique: x.technique as Exercise['technique'],
-    coaching: [],
-  }));
+  let exercises: Exercise[] = accepted.map((x) => ({ ...x, coaching: [] }));
 
   let coachedBy: PracticePlan['coachedBy'] = null;
   try {

@@ -37,3 +37,11 @@ export function zodIssues(
     message: i.message,
   }));
 }
+
+/** 409 for a write based on a phrase revision the user is no longer looking at. */
+export const staleRevision = () =>
+  apiError(
+    409,
+    'conflict',
+    'This phrase changed since you opened it. Reload to see the latest version.',
+  );
