@@ -28,6 +28,7 @@ export interface CoachFacts {
       fret: number | null;
       name: string | null;
       techniques: string[];
+      moves?: string[];
       role?: string;
       bendTo?: string;
     }[];
@@ -68,6 +69,7 @@ export function buildCoachFacts(
             fret: n.fret,
             name: n.name,
             techniques: n.techniques,
+            ...(n.moves ? { moves: n.moves } : {}),
             ...(n.role ? { role: n.role } : {}),
             ...(n.bendTo ? { bendTo: n.bendTo } : {}),
           },
@@ -90,6 +92,7 @@ Rules
 - Tips are practical and specific to the exercise's notes and technique: fingering, picking, muting, listening for pitch, relaxation, what usually goes wrong.
 - Never change or add notes, frets, tempos, or repetitions, and never contradict the exercise's steps. Mention a fret only if it is in that exercise's notes or referenceFrets.
 - If rhythmKnown is false, don't describe rhythm or note lengths.
+- Slides, hammer-ons, and pull-offs go exactly as written in a note's "moves" (e.g. "slide from fret 6 to fret 5"); never reverse or re-target them. A bend goes from its fret up to bendTo.
 - No medical or injury claims. One sentence per tip, at most 200 characters.
 - Return every exercise id exactly as given.
 

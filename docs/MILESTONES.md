@@ -55,15 +55,15 @@
 
 **Goal:** Turn the lick into a useful, achievable lesson.
 
-- [ ] Define exercise schema: objective, notes, tempo, repetitions, success condition.
-- [ ] Generate a sequence: isolate → slow practice → connect phrases → apply over chords.
-- [ ] Include technique-specific drills where justified by the passage.
-- [ ] Add metronome/playback MVP (simple synthesized notes or MIDI acceptable).
-- [ ] Let users adjust difficulty, session duration, and focus.
-- [ ] Track completion and notes without requiring audio performance grading.
-- [ ] Add a review step to reject exercises with incorrect notes or impossible fingerings.
-- [ ] Test one complete learning plan end-to-end with a real fixture.
-- [ ] E2E: M3 journey and page specs pass (stubbed audio and clock; progress persists across reload).
+- [x] Define exercise schema: objective, notes, tempo, repetitions, success condition. *(`contracts/practice.ts`. Notes are phrase event ids plus reference notes; there's a tempo ramp (start, target, step, and whether rhythm is real); rule steps and AI `coaching` are kept apart.)*
+- [x] Generate a sequence: isolate → slow practice → connect phrases → apply over chords. *(`buildPracticePlan`. Figures of at most 4 notes break at chord changes and leaps; "apply" targets chord tones, using where bends land; the plan fits the session by focus priority.)*
+- [x] Include technique-specific drills where justified by the passage. *(Only for techniques present: bends get a reference fret at the target pitch; legato, slides, vibrato and muted notes each have a drill.)*
+- [x] Add metronome/playback MVP (simple synthesized notes or MIDI acceptable). *(`@gsc/web/audio`: a Karplus-Strong synth for MIDI notes, with bends and dead notes; a lookahead metronome with accents; `.mid` export; optional Web MIDI output.)*
+- [x] Let users adjust difficulty, session duration, and focus.
+- [x] Track completion and notes without requiring audio performance grading. *(Separate `practiceSessions`, one per plan; completion and best bpm are self-reported; session notes.)*
+- [x] Add a review step to reject exercises with incorrect notes or impossible fingerings. *(`reviewExercises`: unknown notes, frets off the neck, chord stretches over 5 frets. Rejected exercises are listed on the page. AI tips naming frets the exercise doesn't use are dropped.)*
+- [x] Test one complete learning plan end-to-end with a real fixture. *(The owner-verified scan05 riff with `gpt-6-luna` coaching, through the local API and a real database: 10 exercises, nothing rejected, all completed and saved. This found and fixed backwards slide tips; see DECISIONS.md.)*
+- [x] E2E: M3 journey and page specs pass (stubbed audio and clock; progress persists across reload). *(`pages/practice.spec.ts`, `journeys/phrase-to-practice.spec.ts`, using a fake AudioContext tied to Playwright's clock.)*
 
 **Exit criteria:** User can complete and track a short practice plan derived from a scanned passage.
 

@@ -44,6 +44,8 @@ export interface ExplainFacts {
       fret: number | null;
       name: string | null;
       techniques: string[];
+      /** Slurs and slides spelled out, e.g. "slide from fret 6 to fret 5". */
+      moves?: string[];
       bendTo?: string;
       role?: string;
       bendToRole?: string;
@@ -78,6 +80,35 @@ export function buildExplainFacts(phrase: Phrase): ExplainFacts {
   });
   const scales = candidateScales({ analysis, key, chords: harmony.chords });
   const byId = new Map(phrase.events.map((e) => [e.id, e]));
+  const onString = (id: string, dir: 1 | -1) => {
+    const e = byId.get(id);
+    if (!e) return undefined;
+    return phrase.events
+      .filter(
+        (p) => p.stringIndex === e.stringIndex && (p.order - e.order) * dir > 0,
+      )
+      .sort((a, b) => (a.order - b.order) * dir)[0];
+  };
+  const fretText = (f: number | null | undefined) =>
+    f === null || f === undefined
+      ? 'x'
+      : f === 0
+        ? 'the open string'
+        : `fret ${f}`;
+  /** Where each slur or slide goes, so the model never infers direction. */
+  const movesOf = (id: string): string[] => {
+    const e = byId.get(id);
+    if (!e) return [];
+    const out: string[] = [];
+    const next = onString(id, 1);
+    const prev = onString(id, -1);
+    if (e.techniques.includes('slide') && next)
+      out.push(`slide from ${fretText(e.fret)} to ${fretText(next.fret)}`);
+    for (const t of ['hammer-on', 'pull-off'] as const)
+      if (e.techniques.includes(t) && prev)
+        out.push(`${t} from ${fretText(prev.fret)} to ${fretText(e.fret)}`);
+    return out;
+  };
   return {
     title: phrase.title,
     rhythmKnown: phrase.rhythmKnown,
@@ -110,6 +141,7 @@ export function buildExplainFacts(phrase: Phrase): ExplainFacts {
           fret: e?.fret ?? null,
           name: n.name,
           techniques: [...(e?.techniques ?? [])],
+          ...(movesOf(n.eventId).length ? { moves: movesOf(n.eventId) } : {}),
           ...(n.bendToName ? { bendTo: n.bendToName } : {}),
           ...(roles?.note ? { role: roleText(roles.note) } : {}),
           ...(roles?.bendTo ? { bendToRole: roleText(roles.bendTo) } : {}),
@@ -145,6 +177,7 @@ Rules
   - "interpretation": what the phrase does musically (tension and release, targeting, phrasing intent, how it implies the harmony). Put what it takes for granted in "assumption", e.g. "the band plays E7 under the whole phrase". Cite note ids when it is about specific notes.
 - If chord placement is "assumed", say so in the assumption of any claim that depends on it. If it is "unknown", don't claim chord tones; you may say which chord information would sharpen the explanation.
 - If rhythmKnown is false, say nothing about rhythm, timing, or note lengths.
+- Slides, hammer-ons, and pull-offs go exactly as written in a note's "moves" (e.g. "slide from fret 6 to fret 5"); never reverse or re-target them. A bend goes from its fret up to bendTo.
 - If the scale certainty is "ambiguous" or "insufficient", don't present any one scale as the answer.
 - Be specific ("the bend lands on the b7 of A7") instead of vague ("sounds bluesy").
 - 3 to 6 points, most important first. Summary: one or two plain sentences.

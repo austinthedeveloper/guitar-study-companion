@@ -83,6 +83,37 @@ describe('buildExplainFacts', () => {
     });
   });
 
+  it('spells out where slides and slurs go', () => {
+    const at = (
+      id: string,
+      order: number,
+      fret: number,
+      techniques: string[] = [],
+    ) => ({
+      id,
+      order,
+      stringIndex: 4,
+      fret,
+      durationTicks: null,
+      techniques: techniques as Phrase['events'][number]['techniques'],
+    });
+    const facts = buildExplainFacts({
+      ...phrase,
+      events: [
+        at('s1', 0, 6, ['slide']),
+        at('s2', 1, 5),
+        at('s3', 2, 3, ['pull-off']),
+        at('s4', 3, 0, ['pull-off']),
+      ],
+    });
+    expect(facts.steps.map((s) => s.notes[0].moves)).toEqual([
+      ['slide from fret 6 to fret 5'],
+      undefined,
+      ['pull-off from fret 5 to fret 3'],
+      ['pull-off from fret 3 to the open string'],
+    ]);
+  });
+
   it('marks placement as assumed or unknown', () => {
     const ctx = { ...phrase.context, chordChanges: undefined };
     expect(
