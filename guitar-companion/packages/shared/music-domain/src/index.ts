@@ -8,3 +8,4 @@ export * from './lib/chords';
 export * from './lib/scales';
 export * from './lib/harmony';
 export * from './lib/practice';
+export * from './lib/transpose';

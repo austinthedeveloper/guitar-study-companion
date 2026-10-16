@@ -107,7 +107,7 @@ export function interval(fromMidi: number, toMidi: number): Interval {
 }
 
 /** Semitones above the open string for natural harmonics at common nodes. */
-const NATURAL_HARMONICS: Record<number, number> = {
+export const NATURAL_HARMONICS: Readonly<Record<number, number>> = {
   12: 12,
   7: 19,
   19: 19,
@@ -118,21 +118,27 @@ const NATURAL_HARMONICS: Record<number, number> = {
   16: 28,
 };
 
+/** Sounding pitch of an event (natural harmonics included); null for dead notes and unknown harmonic nodes. */
+export function soundingPitch(
+  e: EventLike,
+  tuningMidi: readonly number[],
+  capo: number,
+): number | null {
+  const open = tuningMidi[e.stringIndex];
+  if (e.fret === null || open === undefined || e.fret + capo > MAX_FRET)
+    return null;
+  if (!e.techniques.includes('harmonic')) return open + capo + e.fret;
+  const above = NATURAL_HARMONICS[e.fret];
+  return above === undefined ? null : open + capo + above;
+}
+
 function noteFact(
   e: EventLike,
   tuningMidi: readonly number[],
   capo: number,
   key: Key | null,
 ): NoteFact {
-  const open = tuningMidi[e.stringIndex];
-  let midi: number | null = null;
-  if (e.fret !== null && open !== undefined && e.fret + capo <= MAX_FRET) {
-    midi = e.techniques.includes('harmonic')
-      ? NATURAL_HARMONICS[e.fret] !== undefined
-        ? open + capo + NATURAL_HARMONICS[e.fret]
-        : null
-      : open + capo + e.fret;
-  }
+  const midi = soundingPitch(e, tuningMidi, capo);
   const fact: NoteFact = {
     eventId: e.id,
     dead: e.fret === null,
