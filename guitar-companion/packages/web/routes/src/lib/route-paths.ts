@@ -9,6 +9,7 @@ export const ROUTE_PATHS = {
   phrases: '/phrases',
   phrase: '/phrases/:id',
   practice: '/phrases/:id/practice',
+  transpose: '/phrases/:id/transpose',
   notFound: '/**',
 } as const;
 

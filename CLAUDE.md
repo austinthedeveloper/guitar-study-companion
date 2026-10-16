@@ -18,6 +18,7 @@ The product and decisions live in `docs/`: MILESTONES (what's next), DECISIONS (
 - **Facts vs interpretation.** Code computes the musical facts. AI only explains or coaches from facts built in code (`buildExplainFacts`, `buildCoachFacts`), never from raw tab. Show AI text apart from facts, labelled as AI, and validate it: cited note ids must exist, and frets mentioned must be in the exercise. Spell out anything directional in the facts (e.g. "slide from fret 6 to fret 5"); the model gets direction wrong if left to infer it.
 - **Revisions.** Writes derived from a phrase send the `revision` the user saw; a mismatch gets a 409 (`staleRevision()` in handlers/http). Derived data (explanations, plans) stores the `phraseRevision` it was built from, and the UI marks it stale when that's older than the phrase.
 - **Contracts:** optional fields are `.optional()`, not nullable. AI wire schemas are strict-mode (every field required, optional = nullable) and get converted. MongoDB uses `ignoreUndefined: true`; without it, undefined fields are stored as null and fail parsing on read.
+- **Playback** on a page: provide `ExercisePlayback` (web/data-access) in the component and feed it `phraseNoteEvents(...)` (web/audio). `AUDIO_ENGINE` is the injectable factory that tests replace.
 - **AI providers** implement `interpretTab` and `generateJson`. Add a new text task to `GenerateJsonInput['task']` and give the fake provider a deterministic answer built from `input.data`. Wrap calls in `withAiTimeout`.
 
 ## Testing recipes
@@ -52,4 +53,6 @@ node tools/fixtures/eval-private.mts      # recognition accuracy on private fixt
 - The Nx daemon is off (`useDaemonProcess: false`); with it on, the graph fails about half the time (listr2 `ERR_REQUIRE_ESM`). If "Failed to process project graph" comes back, check whether the daemon was re-enabled.
 - macOS has no `timeout` command. Never leave a bare `cat > file` without a heredoc, because it waits on stdin forever.
 - Kill background servers when done: `pkill -f "nx serve api"; pkill -f "func start"`.
+- Python `str.replace` edits that skip their assertion silently no-op once Prettier has re-wrapped the code. Always `assert old in s`, and re-read the target after formatting. A global `sed` hits the same line in every test in a file; scope it.
+- Pages showing several tabs have duplicate `cell-*` test ids; scope locators (e.g. `getByTestId('transposed-tab').getByTestId('cell-0-2')`).
 - Playwright reports a failed e2e run only as "Running target e2e ... failed". Grep the log for `✘` or `failed` before trusting the run.

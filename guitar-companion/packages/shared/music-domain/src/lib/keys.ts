@@ -137,15 +137,40 @@ function signatureSpellings(key: Key): Map<number, string> {
 }
 
 /**
+ * Letter steps above the tonic for notes outside the key, by semitones
+ * above it: b2, b3, b6, and b7 spell as flats (Eb in C, not D#); the
+ * tritone is #4 in major keys and b5 in minor (the blues b5).
+ */
+const OUTSIDE_DEGREE: Record<Mode, readonly number[]> = {
+  major: [0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 6, 6],
+  minor: [0, 1, 1, 2, 2, 3, 4, 4, 5, 5, 6, 6],
+};
+
+/**
  * Spells a pitch class. In a key, notes of the key signature use its
- * spelling and other notes follow the signature's direction (flats in flat
- * keys, sharps otherwise). Without a key, sharps.
+ * spelling; other notes are spelled by scale degree from the tonic (see
+ * OUTSIDE_DEGREE), falling back to the signature's direction when that
+ * would need a double accidental or a white-key enharmonic (Fb, Cb, E#,
+ * B#). Without a key, sharps.
  */
 export function spellPitchClass(pc: number, key?: Key | null): string {
   const p = mod12(pc);
   if (!key) return SHARP_NAMES[p];
   const inKey = signatureSpellings(key).get(p);
   if (inKey) return inKey;
+  const offset = mod12(p - key.tonicPc);
+  const byDegree = spellFromRoot(
+    key.tonic,
+    offset,
+    OUTSIDE_DEGREE[key.mode][offset],
+  );
+  // Outside the signature, prefer plain names over double accidentals and
+  // white-key enharmonics (E, not Fb).
+  if (
+    !/##|bb/.test(byDegree.slice(1)) &&
+    !['Fb', 'Cb', 'E#', 'B#'].includes(byDegree)
+  )
+    return byDegree;
   return FLAT_MAJOR_TONICS.has(signatureTonic(key))
     ? FLAT_NAMES[p]
     : SHARP_NAMES[p];

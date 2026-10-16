@@ -13,6 +13,17 @@ export const CreatePhraseRequestSchema = z.object({
   notes: z.string().max(5000).optional(),
   /** Which provider produced the draft the user corrected, if any. */
   draftProvider: z.string().max(40).optional(),
+  /** Set when this phrase was made from another (transposed or varied). */
+  derivedFrom: z
+    .object({
+      phraseId: z.string().min(1).max(64),
+      revision: z.number().int().min(1),
+      /** Semitones it was moved by (0 for a variation in the same key). */
+      semitones: z.number().int().min(-24).max(24),
+      /** What was done, e.g. "Transposed to C major" or "Hold the targets". */
+      change: z.string().trim().min(1).max(200),
+    })
+    .optional(),
 });
 export type CreatePhraseRequest = z.infer<typeof CreatePhraseRequestSchema>;
 

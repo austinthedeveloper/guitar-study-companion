@@ -114,11 +114,21 @@ import { firstValueFrom } from 'rxjs';
           </dd>
           <dt class="text-stone-600">Origin</dt>
           <dd data-testid="phrase-origin">
-            {{
-              p.draftProvider
-                ? 'AI draft (' + p.draftProvider + '), corrected by you'
-                : 'Entered manually'
-            }}
+            @if (p.derivedFrom; as d) {
+              {{ d.change }} from
+              <a
+                [routerLink]="['/phrases', d.phraseId]"
+                class="text-brand-700 underline"
+                data-testid="phrase-derived-from"
+                >the original phrase</a
+              >
+            } @else {
+              {{
+                p.draftProvider
+                  ? 'AI draft (' + p.draftProvider + '), corrected by you'
+                  : 'Entered manually'
+              }}
+            }
           </dd>
           <dt class="text-stone-600">Saved</dt>
           <dd>{{ p.createdAt | date: 'medium' }}</dd>
@@ -186,6 +196,12 @@ import { firstValueFrom } from 'rxjs';
             class="btn-primary"
             data-testid="practice-link"
             >Practice this phrase</a
+          >
+          <a
+            [routerLink]="['/phrases', p.id, 'transpose']"
+            class="btn-secondary"
+            data-testid="transpose-link"
+            >Transpose and vary</a
           >
           <a routerLink="/phrases" class="self-center text-brand-700 underline"
             >All phrases</a

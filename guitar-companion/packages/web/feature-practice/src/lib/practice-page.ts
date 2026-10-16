@@ -2,10 +2,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
   effect,
   inject,
-  InjectionToken,
   input,
   signal,
 } from '@angular/core';
@@ -17,14 +15,13 @@ import {
   PlanSettings,
   PracticePlan,
 } from '@gsc/contracts';
+import { encodeMidiFile, NoteEvent, phraseNoteEvents } from '@gsc/web/audio';
 import {
-  encodeMidiFile,
-  NoteEvent,
-  PlayableColumn,
-  PracticeAudio,
-  toNoteEvents,
-} from '@gsc/web/audio';
-import { PhrasesApi, PracticeApi, toClientError } from '@gsc/web/data-access';
+  ExercisePlayback,
+  PhrasesApi,
+  PracticeApi,
+  toClientError,
+} from '@gsc/web/data-access';
 import { analyzeNotes, midiToNoteName, parseKey } from '@gsc/music-domain';
 import {
   AlertComponent,
@@ -32,12 +29,6 @@ import {
   PlanSettingsComponent,
 } from '@gsc/web/ui';
 import { catchError, firstValueFrom, of, throwError } from 'rxjs';
-
-/** Creates the audio engine on first use (after a user gesture). */
-export const PRACTICE_AUDIO = new InjectionToken<() => PracticeAudio>(
-  'PRACTICE_AUDIO',
-  { providedIn: 'root', factory: () => () => new PracticeAudio() },
-);
 
 @Component({
   selector: 'gsc-practice-page',
@@ -48,6 +39,7 @@ export const PRACTICE_AUDIO = new InjectionToken<() => PracticeAudio>(
     RouterLink,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [ExercisePlayback],
   template: `
     @if (phrase.isLoading()) {
       <p class="text-stone-600" role="status">Loading…</p>
@@ -144,15 +136,15 @@ export const PRACTICE_AUDIO = new InjectionToken<() => PracticeAudio>(
                 [noteNumbers]="noteNumbersFor(x)"
                 [stringCount]="p.context.tuningMidi.length"
                 [stringLabels]="stringLabels()"
-                [bpm]="bpmOf(x)"
-                [playing]="playingId() === x.id"
-                [metronomeOn]="metronomeId() === x.id"
-                [beat]="beat()"
+                [bpm]="playback.bpmOf(x)"
+                [playing]="playback.playingId() === x.id"
+                [metronomeOn]="playback.metronomeId() === x.id"
+                [beat]="playback.beat()"
                 [progress]="progressOf(x)"
                 (playExercise)="play(x)"
-                (stopPlayback)="stop()"
-                (toggleMetronome)="toggleMetronome(x)"
-                (tempoChange)="setTempo(x, $event)"
+                (stopPlayback)="playback.stop()"
+                (toggleMetronome)="playback.toggleMetronome(x)"
+                (tempoChange)="playback.setTempo(x, $event)"
                 (playReference)="playReference(x, $event)"
                 (downloadMidi)="downloadMidi(x)"
                 (complete)="complete(x, $event)"
@@ -185,8 +177,7 @@ export class PracticePage {
   readonly id = input.required<string>();
   private readonly phrases = inject(PhrasesApi);
   private readonly practice = inject(PracticeApi);
-  private readonly createAudio = inject(PRACTICE_AUDIO);
-  private audio: PracticeAudio | null = null;
+  protected readonly playback = inject(ExercisePlayback);
 
   protected readonly defaults: PlanSettings = {
     difficulty: 'medium',
@@ -240,10 +231,6 @@ export class PracticePage {
 
   protected readonly building = signal(false);
   protected readonly buildError = signal<string | null>(null);
-  private readonly bpm = signal<Record<string, number>>({});
-  protected readonly playingId = signal<string | null>(null);
-  protected readonly metronomeId = signal<string | null>(null);
-  protected readonly beat = signal(0);
 
   private readonly analysis = computed(() => {
     const p = this.loaded();
@@ -266,7 +253,6 @@ export class PracticePage {
       this.progress.set(s?.progress ?? {});
       this.notes.set(s?.notes ?? '');
     });
-    inject(DestroyRef).onDestroy(() => this.audio?.dispose());
   }
 
   protected eventsFor(x: Exercise) {
@@ -286,44 +272,25 @@ export class PracticePage {
     return this.progress()[x.id] ?? null;
   }
 
-  protected bpmOf(x: Exercise): number {
-    return this.bpm()[x.id] ?? x.tempo.startBpm;
-  }
-
-  private engine(): PracticeAudio {
-    this.audio ??= this.createAudio();
-    return this.audio;
-  }
-
   /** The exercise's notes as timed sound events at its current tempo. */
   private noteEvents(x: Exercise): NoteEvent[] {
-    const ids = new Set(x.eventIds);
-    const byId = new Map((this.loaded()?.events ?? []).map((e) => [e.id, e]));
-    const columns: PlayableColumn[] = this.analysis()
-      .columns.map((c) => {
-        const notes = c.notes.filter((n) => ids.has(n.eventId));
-        return {
-          notes: notes.map((n) => ({
-            midi: n.midi,
-            dead: n.dead,
-            ...(n.bendToMidi !== undefined && n.midi !== null
-              ? { bendSemitones: n.bendToMidi - n.midi }
-              : {}),
-          })),
-          durationTicks: byId.get(notes[0]?.eventId ?? '')?.durationTicks,
-        };
-      })
-      .filter((c) => c.notes.length);
-    return toNoteEvents(columns, {
-      bpm: this.bpmOf(x),
-      rhythmic: x.tempo.rhythmic,
-    });
+    return phraseNoteEvents(
+      this.analysis(),
+      new Map(
+        (this.loaded()?.events ?? []).map((e) => [e.id, e.durationTicks]),
+      ),
+      {
+        bpm: this.playback.bpmOf(x),
+        rhythmic: x.tempo.rhythmic,
+        only: new Set(x.eventIds),
+      },
+    );
   }
 
   protected async build(settings: PlanSettings): Promise<void> {
     const p = this.loaded();
     if (!p) return;
-    this.stop();
+    this.playback.stop();
     this.building.set(true);
     this.buildError.set(null);
     try {
@@ -331,7 +298,7 @@ export class PracticePage {
         this.practice.createPlan(p.id, p.revision, settings),
       );
       this.latest.value.set(plan);
-      this.bpm.set({});
+      this.playback.resetTempos();
     } catch (err) {
       this.buildError.set(toClientError(err).message);
     } finally {
@@ -340,15 +307,7 @@ export class PracticePage {
   }
 
   protected play(x: Exercise): void {
-    this.playingId.set(x.id);
-    this.engine().play(this.noteEvents(x), () => this.playingId.set(null));
-  }
-
-  protected stop(): void {
-    this.audio?.stopNotes();
-    this.audio?.stopMetronome();
-    this.playingId.set(null);
-    this.metronomeId.set(null);
+    this.playback.play(x.id, this.noteEvents(x));
   }
 
   protected playReference(x: Exercise, index: number): void {
@@ -356,39 +315,15 @@ export class PracticePage {
     const r = x.referenceNotes[index];
     if (!p || !r) return;
     const midi = p.context.tuningMidi[r.stringIndex] + p.context.capo + r.fret;
-    this.engine().play([{ midi, start: 0, duration: 1.5, bendCents: 0 }]);
-  }
-
-  protected toggleMetronome(x: Exercise): void {
-    if (this.metronomeId() === x.id) {
-      this.engine().stopMetronome();
-      this.metronomeId.set(null);
-      return;
-    }
-    this.startMetronome(x);
-  }
-
-  private startMetronome(x: Exercise): void {
-    this.metronomeId.set(x.id);
-    this.beat.set(0);
-    this.engine().startMetronome(this.bpmOf(x), (beat) => this.beat.set(beat));
-  }
-
-  protected setTempo(x: Exercise, bpm: number): void {
-    const clamped = Math.min(
-      x.tempo.targetBpm,
-      Math.max(x.tempo.startBpm, bpm),
-    );
-    this.bpm.update((m) => ({ ...m, [x.id]: clamped }));
-    if (this.metronomeId() === x.id) this.startMetronome(x);
+    this.playback.playOnce([{ midi, start: 0, duration: 1.5, bendCents: 0 }]);
   }
 
   protected downloadMidi(x: Exercise): void {
-    const bytes = encodeMidiFile(this.noteEvents(x), this.bpmOf(x));
+    const bytes = encodeMidiFile(this.noteEvents(x), this.playback.bpmOf(x));
     const url = URL.createObjectURL(new Blob([bytes], { type: 'audio/midi' }));
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${slug(this.loaded()?.title ?? 'phrase')}-${x.id}-${this.bpmOf(x)}bpm.mid`;
+    a.download = `${slug(this.loaded()?.title ?? 'phrase')}-${x.id}-${this.playback.bpmOf(x)}bpm.mid`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
@@ -399,7 +334,7 @@ export class PracticePage {
       ...m,
       [x.id]: {
         completedAt: done ? new Date().toISOString() : null,
-        bestBpm: Math.max(prev?.bestBpm ?? 0, this.bpmOf(x)) || null,
+        bestBpm: Math.max(prev?.bestBpm ?? 0, this.playback.bpmOf(x)) || null,
       },
     }));
     void this.save();

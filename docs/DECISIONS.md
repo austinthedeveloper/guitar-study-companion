@@ -106,6 +106,18 @@ Record consequential choices here. Status values: `Proposed`, `Accepted`, `Super
 **Tradeoff:** Two generation paths to test. A plan built on an older phrase revision must be marked stale, the same way explanations are.
 
 
+## ADR-012 — Transposition is exact; fingering is searched
+
+**Status:** Accepted
+
+**Decision (2026-10-16):** Transposition moves every pitch by the same number of semitones; nothing is re-voiced or approximated, and no AI is involved. Fingering is a least-cost search over the phrase's columns. The costs are hand moves beyond a four-fret span, distance from the original string (which keeps the shape by default), and distance outside a chosen position. The hard constraints are reach (5 frets in a chord), slurs and slides on one string, no open-string bends, natural harmonics only at real nodes, and the fret limit. An independent `validateTransposition`, plus a check that roles are unchanged, guards the result. Variations are rule-made and state what they changed. Transposed phrases and variations can be saved as new phrases with `derivedFrom` provenance, so M3 practice works on them unchanged.
+
+**Why:** Pitch arithmetic is verifiable, so code is the authority (AI_CONTRACTS). The playability rules are what makes a transposition usable.
+
+**Also changed:** notes outside the key are now spelled by scale degree from the tonic: b2, b3, b6 and b7 as flats; the tritone as #4 in major keys and b5 in minor. The b3 of C is now Eb (it was D#), matching how scales were already spelled. Where the degree spelling would need a double accidental or a white-key enharmonic (Fb, Cb, E#, B#), the plain name is used instead, so the b5 of Bb minor stays E.
+
+## Open decisions
+
 - [ ] Choose initial authentication method (defer until hosted multi-user milestone if local-only).
 - [x] Image upload path: the **request body**, carrying a base64 JPEG/PNG/WebP crop of at most 4 MB and 2048 px on the longest side. The full page never leaves the browser and nothing is stored. Revisit if retention becomes opt-in (M5).
 - [ ] Select the default AI provider/model from private fixture evaluation, cost, and privacy terms. OpenAI and Claude adapters both exist; run `tools/fixtures/eval-private.mts` against each.

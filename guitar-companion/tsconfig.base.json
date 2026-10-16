@@ -29,6 +29,9 @@
       "@gsc/web/feature-practice": [
         "./packages/web/feature-practice/src/index.ts"
       ],
+      "@gsc/web/feature-transpose": [
+        "./packages/web/feature-transpose/src/index.ts"
+      ],
       "@gsc/web/feature-phrases": [
         "./packages/web/feature-phrases/src/index.ts"
       ]

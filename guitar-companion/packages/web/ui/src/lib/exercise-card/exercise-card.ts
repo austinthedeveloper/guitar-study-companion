@@ -60,6 +60,7 @@ const KIND_LABELS: Record<Exercise['kind'], string> = {
         [stringCount]="stringCount()"
         [stringLabels]="stringLabels()"
         [columnLabels]="noteNumbers()"
+        [highlightIds]="highlightIds()"
         [readonly]="true"
       />
 
@@ -207,20 +208,22 @@ const KIND_LABELS: Record<Exercise['kind'], string> = {
         </div>
       }
 
-      <label class="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          [checked]="done()"
-          (change)="complete.emit($any($event.target).checked)"
-          data-testid="exercise-done"
-        />
-        Done
-        @if (progress()?.bestBpm; as best) {
-          <span class="text-stone-600" data-testid="exercise-best"
-            >· best {{ best }} bpm</span
-          >
-        }
-      </label>
+      @if (trackable()) {
+        <label class="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            [checked]="done()"
+            (change)="complete.emit($any($event.target).checked)"
+            data-testid="exercise-done"
+          />
+          Done
+          @if (progress()?.bestBpm; as best) {
+            <span class="text-stone-600" data-testid="exercise-best"
+              >· best {{ best }} bpm</span
+            >
+          }
+        </label>
+      }
     </article>
   `,
 })
@@ -238,6 +241,12 @@ export class ExerciseCardComponent {
   readonly metronomeOn = input(false);
   readonly beat = input(0);
   readonly progress = input<ExerciseProgress | null>(null);
+  /** Show the "Done" checkbox; off for exercises that aren't saved. */
+  readonly trackable = input(true);
+  /** Badge text instead of the exercise kind (e.g. "Variation"). */
+  readonly label = input<string | null>(null);
+  /** Notes to highlight in the tab, e.g. what a variation changed. */
+  readonly highlightIds = input<readonly string[]>([]);
 
   readonly playExercise = output<void>();
   readonly stopPlayback = output<void>();
@@ -249,6 +258,6 @@ export class ExerciseCardComponent {
 
   protected readonly done = computed(() => !!this.progress()?.completedAt);
   protected readonly kindLabel = computed(
-    () => KIND_LABELS[this.exercise().kind],
+    () => this.label() ?? KIND_LABELS[this.exercise().kind],
   );
 }

@@ -6,7 +6,8 @@ import {
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Phrase, PracticePlan } from '@gsc/contracts';
-import { PRACTICE_AUDIO, PracticePage } from './practice-page';
+import { AUDIO_ENGINE } from '@gsc/web/data-access';
+import { PracticePage } from './practice-page';
 
 const phrase: Phrase = {
   id: 'abc',
@@ -65,7 +66,7 @@ beforeEach(() => {
       provideHttpClientTesting(),
       provideRouter([]),
       {
-        provide: PRACTICE_AUDIO,
+        provide: AUDIO_ENGINE,
         useValue: () => ({
           play: (events: unknown) => played.push(events),
           stopNotes: () => undefined,

@@ -41,11 +41,19 @@ describe('spelling', () => {
     expect(spellPitchClass(11, key('Gb'))).toBe('Cb');
   });
 
-  it('follows the signature direction for notes outside the key', () => {
-    // Blue notes: b5 of D minor is Ab, of A minor is D#.
+  it('spells notes outside the key by scale degree from the tonic', () => {
+    // Blue notes: b5 of D minor is Ab, of A minor is Eb.
     expect(spellPitchClass(8, key('Dm'))).toBe('Ab');
-    expect(spellPitchClass(3, key('Am'))).toBe('D#');
+    expect(spellPitchClass(3, key('Am'))).toBe('Eb');
+    // In major keys the tritone is #4; b3 and b7 are flats, even in C.
     expect(spellPitchClass(3, key('A'))).toBe('D#');
+    expect(spellPitchClass(3, key('C'))).toBe('Eb');
+    expect(spellPitchClass(10, key('C'))).toBe('Bb');
+    expect(spellPitchClass(6, key('C'))).toBe('F#');
+    // Double accidentals and white-key enharmonics fall back to plain names:
+    // Abb in Gb is G; the b5 of Bb minor is E, not Fb.
+    expect(spellPitchClass(7, key('Gb'))).toBe('G');
+    expect(spellPitchClass(4, key('Bbm'))).toBe('E');
   });
 
   it('keeps the octave with the letter', () => {

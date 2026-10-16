@@ -36,5 +36,11 @@ export const appRoutes: Route[] = [
     loadComponent: () =>
       import('@gsc/web/feature-practice').then((m) => m.PracticePage),
   },
+  {
+    path: routerPath(ROUTE_PATHS.transpose),
+    title: title('Transpose'),
+    loadComponent: () =>
+      import('@gsc/web/feature-transpose').then((m) => m.TransposePage),
+  },
   { path: '**', title: title('Not found'), component: NotFoundComponent },
 ];

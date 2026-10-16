@@ -71,14 +71,14 @@
 
 **Goal:** Help transfer the idea beyond the original passage.
 
-- [ ] Transpose note pitches into a selected key while preserving intervals.
-- [ ] Generate at least one playable guitar fingering for the new key.
-- [ ] Allow selection of preferred fretboard position and range.
-- [ ] Show chord-tone function before and after transposition.
-- [ ] Generate two controlled variations (e.g., rhythm change, alternate ending).
-- [ ] Offer an application exercise over a user-entered chord progression.
-- [ ] Validate fret limits, tuning, playability constraints, and preserved musical intent.
-- [ ] E2E: M4 journey and page specs pass.
+- [x] Transpose note pitches into a selected key while preserving intervals. *(`transposePhrase`: one shift for every pitch, with nearest, up or down octave; chords and slash basses are respelled in the new key.)*
+- [x] Generate at least one playable guitar fingering for the new key. *(A least-movement search over columns that keeps the original shape by default. Slurs and slides stay on one string, open strings are never bent, chords stay within reach, and natural harmonics move to a node that sounds the new pitch. When no fingering exists, it names the note that can't be played.)*
+- [x] Allow selection of preferred fretboard position and range. *(Position: keep the shape, open, or 3rd–12th position; highest fret 12–22; octave nearest/up/down.)*
+- [x] Show chord-tone function before and after transposition. *(Before/after table and roles on the transposed tab; a role change counts as a failed check.)*
+- [x] Generate two controlled variations (e.g., rhythm change, alternate ending). *("Hold the targets": chord tones get two beats. Alternate ending: resolve to the root, or the 3rd if already on the root. Each says what changed, or why it doesn't apply.)*
+- [x] Offer an application exercise over a user-entered chord progression. *(For each chord: how many notes are chord tones, plus an ending resolved to it, playable with the tempo ramp and metronome.)*
+- [x] Validate fret limits, tuning, playability constraints, and preserved musical intent. *(`validateTransposition` checks the shift, frets, strings, slurs and slides, open-string bends and reach; the page also checks that every note keeps its role.)*
+- [x] E2E: M4 journey and page specs pass. *(`pages/transpose.spec.ts`; `journeys/phrase-to-transfer.spec.ts`: import → key and chords → E in 5th position within fret 12 → progression → save a variation → practice plan.)*
 
 **Exit criteria:** A user can take one lick into another key and practice applying a variation over chords.
 
