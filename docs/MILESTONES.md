@@ -47,7 +47,7 @@
 - [x] Highlight note roles on the tablature/fretboard display. *(Tablature: each fret shows its role, with chord tones in bold and bends as `b7→R`; chord names appear where they change; explanation citations highlight their notes in the tab. A fretboard diagram isn't built yet; it belongs with M4 transposition.)*
 - [x] Validate analysis against hand-authored examples, including ambiguous cases. *(`analysis-examples.spec.ts`: 9 invented phrases worked out by hand, run through notes, roles and scales. They include an ambiguous pentatonic, the same run resolved by a chord, too few pitches, N.C. and slash chords, unknown chord symbols, flat-key spelling, drop D harmonics and capo.)*
 - [x] Allow user feedback/correction of harmonic assumptions. *(Harmony panel: key, chords and placement are editable; roles, spelling and scales update live; saving bumps the revision and marks the explanation stale until it is updated.)*
-- [ ] E2E: M2 journey and page specs pass (including stale-analysis invalidation).
+- [x] E2E: M2 journey and page specs pass (including stale-analysis invalidation). *(`journeys/phrase-to-analysis.spec.ts`: import → save → harmony → roles on the tab → explanation → correct a placement → stale → re-explain → persisted. Phrase-page specs cover each panel's states.)*
 
 **Exit criteria:** A verified lick can be explained in musical context without pretending that key or harmony is always knowable from tab alone.
 
