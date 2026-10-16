@@ -2,3 +2,5 @@ export * from './lib/editing';
 export * from './lib/pitch';
 export * from './lib/validate-events';
 export * from './lib/tunings';
+export * from './lib/keys';
+export * from './lib/analyze-notes';
