@@ -39,9 +39,15 @@ export function rotatedSize(size: Size, rotation: Rotation, tilt = 0): Size {
   };
 }
 
-/** Scales to fit within maxDim on the longest side, never upscaling. */
-export function fitWithin(size: Size, maxDim: number): Size {
-  const scale = Math.min(1, maxDim / Math.max(size.width, size.height));
+/**
+ * Scales to fit within maxDim on the longest side. Never upscales unless
+ * maxUpscale > 1, and then by at most that factor (still within maxDim).
+ */
+export function fitWithin(size: Size, maxDim: number, maxUpscale = 1): Size {
+  const scale = Math.min(
+    maxUpscale,
+    maxDim / Math.max(size.width, size.height),
+  );
   return {
     width: Math.max(1, Math.round(size.width * scale)),
     height: Math.max(1, Math.round(size.height * scale)),

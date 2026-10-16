@@ -72,12 +72,13 @@ export interface CropResult {
 /**
  * Crops the selection from the rotated image to a JPEG no larger than
  * maxDim on its longest side, lowering quality until under maxBytes.
+ * Small selections are enlarged by up to maxUpscale (default none).
  */
 export async function cropToJpeg(
   image: ImageBitmap,
   rotation: Rotation,
   rect: NormalizedRect,
-  options: { maxDim: number; maxBytes: number },
+  options: { maxDim: number; maxBytes: number; maxUpscale?: number },
   tilt = 0,
 ): Promise<CropResult> {
   const rotated = rotatedSize(
@@ -86,7 +87,11 @@ export async function cropToJpeg(
     tilt,
   );
   const px = toPixelRect(rect, rotated);
-  const out = fitWithin({ width: px.width, height: px.height }, options.maxDim);
+  const out = fitWithin(
+    { width: px.width, height: px.height },
+    options.maxDim,
+    options.maxUpscale,
+  );
   const canvas = document.createElement('canvas');
   canvas.width = out.width;
   canvas.height = out.height;
@@ -94,6 +99,7 @@ export async function cropToJpeg(
   if (!ctx) throw new Error('Canvas is not available');
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, out.width, out.height);
+  ctx.imageSmoothingQuality = 'high';
   ctx.scale(out.width / px.width, out.height / px.height);
   ctx.translate(-px.x, -px.y);
   drawTransformed(ctx, image, rotation, tilt, rotated);

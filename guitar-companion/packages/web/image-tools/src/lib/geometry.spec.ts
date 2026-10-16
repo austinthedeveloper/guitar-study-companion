@@ -39,6 +39,21 @@ describe('geometry', () => {
     });
   });
 
+  it('upscales small crops by at most maxUpscale, within maxDim', () => {
+    expect(fitWithin({ width: 900, height: 360 }, 2048, 2)).toEqual({
+      width: 1800,
+      height: 720,
+    });
+    expect(fitWithin({ width: 1260, height: 380 }, 2048, 2)).toEqual({
+      width: 2048,
+      height: 618,
+    });
+    expect(fitWithin({ width: 4032, height: 3024 }, 2048, 2)).toEqual({
+      width: 2048,
+      height: 1536,
+    });
+  });
+
   it('fits within a max dimension without upscaling', () => {
     expect(fitWithin({ width: 4032, height: 3024 }, 2048)).toEqual({
       width: 2048,

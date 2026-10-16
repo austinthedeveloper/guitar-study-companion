@@ -48,6 +48,9 @@ import {
 import { firstValueFrom } from 'rxjs';
 
 const STEPS = ['Upload', 'Select passage', 'Details', 'Review & correct'];
+// Small tab digits and "x" marks read more reliably when the crop is enlarged
+// (fixture eval 2026-10-16: tilted riff went from 2/3 to 3/3 exact).
+const CROP_UPSCALE = 2;
 const PROVIDER_LABELS: Record<string, string> = {
   openai: 'OpenAI',
   claude: 'Anthropic (Claude)',
@@ -221,7 +224,11 @@ export class ImportPage {
         img,
         this.rotation(),
         sel,
-        { maxDim: MAX_CROP_DIMENSION, maxBytes: MAX_CROP_BYTES },
+        {
+          maxDim: MAX_CROP_DIMENSION,
+          maxBytes: MAX_CROP_BYTES,
+          maxUpscale: CROP_UPSCALE,
+        },
         this.tilt(),
       );
       const previous = this.crop();
