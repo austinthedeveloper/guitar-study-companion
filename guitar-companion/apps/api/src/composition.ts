@@ -4,7 +4,11 @@ import {
   DEFAULT_AI_PASSES,
   DEFAULT_AI_TIMEOUT_MS,
 } from '@gsc/api/ai-core';
-import { MongoConnection, PhraseRepository } from '@gsc/api/data-access';
+import {
+  MongoConnection,
+  PhraseRepository,
+  PracticeRepository,
+} from '@gsc/api/data-access';
 
 /** Per-worker singletons built from app settings. */
 export interface AppContext {
@@ -15,6 +19,7 @@ export interface AppContext {
   mongo: MongoConnection;
   e2eMode: boolean;
   phrases(): Promise<PhraseRepository>;
+  practice(): Promise<PracticeRepository>;
 }
 
 let context: AppContext | null = null;
@@ -26,6 +31,7 @@ export function appContext(): AppContext {
     process.env['MONGODB_DB'] || 'gsc',
   );
   let repo: PhraseRepository | null = null;
+  let practiceRepo: PracticeRepository | null = null;
   context = {
     version: process.env['APP_VERSION'] || 'dev',
     ai: createAiProviderSafely(process.env, (reason) =>
@@ -41,6 +47,13 @@ export function appContext(): AppContext {
       if (!db) throw new Error('MONGODB_URI is not configured');
       repo = new PhraseRepository(db);
       return repo;
+    },
+    async practice() {
+      if (practiceRepo) return practiceRepo;
+      const db = await mongo.db();
+      if (!db) throw new Error('MONGODB_URI is not configured');
+      practiceRepo = new PracticeRepository(db);
+      return practiceRepo;
     },
   };
   return context;

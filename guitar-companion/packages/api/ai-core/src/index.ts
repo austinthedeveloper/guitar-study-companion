@@ -1,4 +1,5 @@
 export * from './lib/ai-provider';
+export * from './lib/coach';
 export * from './lib/draft-wire-schema';
 export * from './lib/errors';
 export * from './lib/fake/fake-provider';

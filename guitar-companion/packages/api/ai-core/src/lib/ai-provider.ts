@@ -19,7 +19,7 @@ export interface RawInterpretResult {
 /** A text-only task answered as JSON matching `schema`. */
 export interface GenerateJsonInput {
   /** Identifies the task for logs and the fake provider. */
-  task: 'explain-phrase';
+  task: 'explain-phrase' | 'coach-exercises';
   system: string;
   prompt: string;
   schemaName: string;

@@ -5,6 +5,7 @@ import {
   RawInterpretResult,
   RawJsonResult,
 } from '../ai-provider';
+import type { CoachFacts } from '../coach';
 import type { ExplainFacts } from '../explain';
 import { FAKE_SCENARIOS, FakeScenario, isFakeScenario } from './scenarios';
 
@@ -45,6 +46,12 @@ export class FakeAiProvider implements AiProvider {
       );
       throw new Error('aborted');
     }
+    if (input.task === 'coach-exercises')
+      return {
+        json: fakeCoaching(input.data as CoachFacts),
+        model: 'fake-coach',
+        usage: { inputTokens: 0, outputTokens: 0 },
+      };
     return {
       json: fakeExplanation(input.data as ExplainFacts),
       model: 'fake-explain',
@@ -78,5 +85,17 @@ function fakeExplanation(facts: ExplainFacts) {
   return {
     summary: `Synthetic explanation of "${facts.title}" (fake provider).`,
     points,
+  };
+}
+
+/** One deterministic tip per exercise, naming its first note. */
+function fakeCoaching(facts: CoachFacts) {
+  return {
+    exercises: facts.exercises.map((x) => ({
+      id: x.id,
+      tips: [
+        `Synthetic tip: start from ${x.notes[0]?.name ?? 'the first note'} and stay relaxed.`,
+      ],
+    })),
   };
 }

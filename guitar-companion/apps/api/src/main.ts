@@ -2,3 +2,4 @@
 import './functions/health';
 import './functions/imports';
 import './functions/phrases';
+import './functions/practice';

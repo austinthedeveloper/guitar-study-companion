@@ -1,5 +1,7 @@
-import { ColumnFact, NoteAnalysis } from './analyze-notes';
-import { Harmony } from './harmony';
+import { analyzeNotes, ColumnFact, NoteAnalysis } from './analyze-notes';
+import { ChordChange } from './chords';
+import { Harmony, harmonize } from './harmony';
+import { parseKey } from './keys';
 import { MAX_FRET } from './pitch';
 import { EventLike } from './validate-events';
 
@@ -476,4 +478,45 @@ export function reviewExercises(
     else accepted.push(x);
   }
   return { accepted, rejected };
+}
+
+/** Builds and reviews a plan straight from a stored phrase's fields. */
+export function planForPhrase(input: {
+  events: readonly EventLike[];
+  rhythmKnown: boolean;
+  context: {
+    tuningMidi: readonly number[];
+    capo: number;
+    key?: string;
+    chords?: string;
+    chordChanges?: readonly ChordChange[];
+    tempoBpm?: number;
+  };
+  settings: PlanSettingsLike;
+}): ExerciseReview {
+  const ctx = input.context;
+  const analysis = analyzeNotes({
+    events: input.events,
+    tuningMidi: ctx.tuningMidi,
+    capo: ctx.capo,
+    key: parseKey(ctx.key),
+  });
+  const harmony = harmonize({
+    analysis,
+    chords: ctx.chords,
+    chordChanges: ctx.chordChanges,
+  });
+  const drafts = buildPracticePlan({
+    events: input.events,
+    analysis,
+    harmony,
+    rhythmKnown: input.rhythmKnown,
+    tempoBpm: ctx.tempoBpm,
+    settings: input.settings,
+  });
+  return reviewExercises(drafts, {
+    events: input.events,
+    stringCount: ctx.tuningMidi.length,
+    capo: ctx.capo,
+  });
 }

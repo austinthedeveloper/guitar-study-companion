@@ -6,6 +6,11 @@ export const API_PATHS = {
   phrase: (id: string) => `/api/phrases/${encodeURIComponent(id)}`,
   phraseExplanation: (id: string) =>
     `/api/phrases/${encodeURIComponent(id)}/explanation`,
+  phrasePlans: (id: string) => `/api/phrases/${encodeURIComponent(id)}/plans`,
+  phraseLatestPlan: (id: string) =>
+    `/api/phrases/${encodeURIComponent(id)}/plans/latest`,
+  planSession: (planId: string) =>
+    `/api/plans/${encodeURIComponent(planId)}/session`,
   phraseHarmony: (id: string) =>
     `/api/phrases/${encodeURIComponent(id)}/harmony`,
 } as const;

@@ -55,7 +55,10 @@ export const ExerciseSchema = z.object({
   tempo: TempoRampSchema,
   repetitions: z.number().int().min(1).max(50),
   successCriterion: z.string().trim().min(1).max(200),
+  /** Rule-written steps; always shown. */
   instructions: z.array(z.string().trim().min(1).max(300)).max(6),
+  /** AI coaching tips, shown apart from the rule steps; empty without AI. */
+  coaching: z.array(z.string().trim().min(1).max(300)).max(4).default([]),
   minutes: z.number().int().min(1).max(30),
 });
 export type Exercise = z.infer<typeof ExerciseSchema>;

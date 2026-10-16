@@ -1,5 +1,6 @@
-import { Phrase } from '@gsc/contracts';
+import { Phrase, PracticePlan, PracticeSession } from '@gsc/contracts';
 import { PhraseStore } from './phrases';
+import { PracticeStore } from './practice';
 
 /** In-memory PhraseStore for handler tests. */
 export function memoryStore(): PhraseStore {
@@ -56,6 +57,44 @@ export function memoryStore(): PhraseStore {
           source,
           createdAt,
         }));
+    },
+  };
+}
+
+/** In-memory PracticeStore for handler tests. */
+export function memoryPracticeStore(): PracticeStore {
+  const plans: (PracticePlan & { userId: string })[] = [];
+  const sessions = new Map<string, PracticeSession>();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const strip = ({ userId, ...p }: PracticePlan & { userId: string }) => p;
+  return {
+    async createPlan(userId, plan) {
+      const p = {
+        ...plan,
+        id: `plan${plans.length + 1}`,
+        createdAt: '2026-10-16T00:00:00.000Z',
+        userId,
+      };
+      plans.push(p);
+      return strip(p);
+    },
+    async getPlan(userId, planId) {
+      const p = plans.find((x) => x.id === planId && x.userId === userId);
+      return p ? strip(p) : null;
+    },
+    async latestPlan(userId, phraseId) {
+      const p = plans
+        .filter((x) => x.phraseId === phraseId && x.userId === userId)
+        .at(-1);
+      return p ? strip(p) : null;
+    },
+    async getSession(userId, planId) {
+      return sessions.get(`${userId}:${planId}`) ?? null;
+    },
+    async saveSession(userId, planId, update) {
+      const s = { planId, ...update, updatedAt: '2026-10-16T00:00:00.000Z' };
+      sessions.set(`${userId}:${planId}`, s);
+      return s;
     },
   };
 }
