@@ -116,6 +116,9 @@ describe('interpretTab', () => {
           usage: { inputTokens: 100, outputTokens: 10 },
         };
       },
+      generateJson: async () => {
+        throw new Error('unused');
+      },
     });
     const input = {
       image: new Uint8Array([1]),

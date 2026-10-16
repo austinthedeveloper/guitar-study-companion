@@ -188,6 +188,78 @@ test.describe(
       await expectNoA11yViolations(page);
     });
 
+    test('explains a phrase with cited notes, kept apart from assumptions', async ({
+      page,
+      request,
+    }) => {
+      const phrase = await createPhrase(request, `Explain ${Date.now()}`, {
+        chords: 'E7',
+      });
+      await page.goto(`/phrases/${phrase.id}`);
+      await page.getByTestId('explain').click();
+      await expect(page.getByTestId('explanation-summary')).toContainText(
+        'Synthetic explanation',
+      );
+      await expect(page.getByTestId('explanation-observation')).toHaveText(
+        'Opens on E5, the R (chord tone) of E7. (note 1)',
+      );
+      await expect(
+        page.getByTestId('explanation-interpretation'),
+      ).toContainText('Assumes: Chord placement is assumed.');
+      await expect(page.getByTestId('explain')).toHaveCount(0);
+      await expectNoA11yViolations(page);
+
+      // Persisted with the phrase.
+      await page.reload();
+      await expect(page.getByTestId('explanation-summary')).toBeVisible();
+    });
+
+    test('marks the explanation stale when harmony changes', async ({
+      page,
+      request,
+    }) => {
+      const phrase = await createPhrase(request, `Stale ex ${Date.now()}`, {
+        chords: 'E7',
+      });
+      await page.goto(`/phrases/${phrase.id}`);
+      await page.getByTestId('explain').click();
+      await expect(page.getByTestId('explanation-summary')).toBeVisible();
+
+      await page.getByTestId('harmony-key').fill('E');
+      // Unsaved edits: the server would explain the saved phrase instead.
+      await expect(page.getByTestId('explanation-blocked')).toContainText(
+        'Save your harmony changes first',
+      );
+      await page.getByTestId('harmony-save').click();
+      await expect(page.getByTestId('explanation-stale')).toBeVisible();
+      await expect(page.getByTestId('explain')).toHaveText(
+        'Update explanation',
+      );
+      await page.getByTestId('explain').click();
+      await expect(page.getByTestId('explanation-stale')).toHaveCount(0);
+    });
+
+    test('recovers from an explanation failure', async ({ page, request }) => {
+      const phrase = await createPhrase(request, `Ex fail ${Date.now()}`);
+      let fail = true;
+      await page.route('**/api/phrases/*/explanation', (route) =>
+        route.continue({
+          headers: {
+            ...route.request().headers(),
+            ...(fail ? { 'x-gsc-fake-scenario': 'unavailable' } : {}),
+          },
+        }),
+      );
+      await page.goto(`/phrases/${phrase.id}`);
+      await page.getByTestId('explain').click();
+      await expect(page.getByTestId('explanation')).toContainText(
+        'The explanation service is unavailable',
+      );
+      fail = false;
+      await page.getByTestId('explain').click();
+      await expect(page.getByTestId('explanation-summary')).toBeVisible();
+    });
+
     test('spells notes in the phrase key, or says when the key is unclear', async ({
       page,
       request,

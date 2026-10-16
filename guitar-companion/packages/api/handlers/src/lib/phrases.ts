@@ -1,5 +1,6 @@
 import {
   CreatePhraseRequestSchema,
+  Explanation,
   Phrase,
   PhraseSummary,
   UpdateHarmonyRequest,
@@ -20,6 +21,12 @@ export interface PhraseStore {
     userId: string,
     id: string,
     update: UpdateHarmonyRequest,
+  ): Promise<Phrase | 'not_found' | 'conflict'>;
+  /** Stores an explanation if the phrase is still at explanation.phraseRevision. */
+  saveExplanation(
+    userId: string,
+    id: string,
+    explanation: Explanation,
   ): Promise<Phrase | 'not_found' | 'conflict'>;
 }
 

@@ -2,8 +2,10 @@ import Anthropic from '@anthropic-ai/sdk';
 import {
   AiEnv,
   AiProvider,
+  GenerateJsonInput,
   InterpretTabInput,
   RawInterpretResult,
+  RawJsonResult,
 } from '../ai-provider';
 import { DRAFT_WIRE_JSON_SCHEMA, wireToDraft } from '../draft-wire-schema';
 import { AiError } from '../errors';
@@ -100,39 +102,68 @@ export class ClaudeProvider implements AiProvider {
       { signal: input.signal },
     );
 
-    if (response.stop_reason === 'refusal') {
-      throw new AiError(
-        'ai_unavailable',
-        `Claude declined to transcribe this image (${response.stop_details?.category ?? 'unspecified'})`,
-      );
-    }
-    if (response.stop_reason === 'max_tokens') {
-      throw new AiError(
-        'ai_invalid_output',
-        'Claude response was cut off at the output token limit',
-      );
-    }
-
-    const text = response.content
-      .flatMap((b) => (b.type === 'text' ? [b.text] : []))
-      .join('');
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(text);
-    } catch (err) {
-      throw new AiError(
-        'ai_invalid_output',
-        'Claude returned non-JSON output',
-        { cause: err },
-      );
-    }
-    return {
-      draft: wireToDraft(parsed),
-      model: response.model,
-      usage: {
-        inputTokens: response.usage.input_tokens,
-        outputTokens: response.usage.output_tokens,
-      },
-    };
+    const { json, model, usage } = parseMessage(
+      response,
+      'transcribe this image',
+    );
+    return { draft: wireToDraft(json), model, usage };
   }
+
+  async generateJson(input: GenerateJsonInput): Promise<RawJsonResult> {
+    const response = await this.client.beta.messages.create(
+      {
+        model: this.model,
+        max_tokens: this.options.maxOutputTokens ?? 16000,
+        betas: ['server-side-fallback-2026-07-01'],
+        fallbacks: 'default',
+        output_config: {
+          format: { type: 'json_schema', schema: input.schema },
+        },
+        system: input.system,
+        messages: [{ role: 'user', content: input.prompt }],
+      },
+      { signal: input.signal },
+    );
+    return parseMessage(response, 'answer');
+  }
+}
+
+type ClaudeMessage = Awaited<
+  ReturnType<Pick<Anthropic, 'beta'>['beta']['messages']['create']>
+>;
+
+function parseMessage(response: ClaudeMessage, task: string): RawJsonResult {
+  if (!('content' in response))
+    throw new AiError('ai_invalid_output', 'Claude returned a stream');
+  if (response.stop_reason === 'refusal') {
+    throw new AiError(
+      'ai_unavailable',
+      `Claude declined to ${task} (${response.stop_details?.category ?? 'unspecified'})`,
+    );
+  }
+  if (response.stop_reason === 'max_tokens') {
+    throw new AiError(
+      'ai_invalid_output',
+      'Claude response was cut off at the output token limit',
+    );
+  }
+  const text = response.content
+    .flatMap((b) => (b.type === 'text' ? [b.text] : []))
+    .join('');
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch (err) {
+    throw new AiError('ai_invalid_output', 'Claude returned non-JSON output', {
+      cause: err,
+    });
+  }
+  return {
+    json,
+    model: response.model,
+    usage: {
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+    },
+  };
 }

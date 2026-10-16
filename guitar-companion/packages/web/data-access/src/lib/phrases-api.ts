@@ -27,6 +27,12 @@ export class PhrasesApi {
       .pipe(map((b) => PhraseSchema.parse(b)));
   }
 
+  explain(id: string, revision: number): Observable<Phrase> {
+    return this.http
+      .post<unknown>(API_PATHS.phraseExplanation(id), { revision })
+      .pipe(map((b) => PhraseSchema.parse(b)));
+  }
+
   updateHarmony(id: string, request: UpdateHarmonyRequest): Observable<Phrase> {
     return this.http
       .put<unknown>(API_PATHS.phraseHarmony(id), request)

@@ -1,4 +1,9 @@
-import { AiEnv, AiProvider, RawInterpretResult } from './ai-provider';
+import {
+  AiEnv,
+  AiProvider,
+  RawInterpretResult,
+  RawJsonResult,
+} from './ai-provider';
 import { AiError } from './errors';
 import { createAiProvider } from './registry';
 
@@ -18,7 +23,15 @@ export class MisconfiguredAiProvider implements AiProvider {
   }
 
   async interpretTab(): Promise<RawInterpretResult> {
-    throw new AiError(
+    throw this.error();
+  }
+
+  async generateJson(): Promise<RawJsonResult> {
+    throw this.error();
+  }
+
+  private error(): AiError {
+    return new AiError(
       'ai_unavailable',
       `AI provider is misconfigured: ${this.reason}`,
     );

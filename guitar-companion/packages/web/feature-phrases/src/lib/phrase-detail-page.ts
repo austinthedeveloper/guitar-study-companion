@@ -13,15 +13,11 @@ import { RouterLink } from '@angular/router';
 import { ChordChange, Phrase } from '@gsc/contracts';
 import {
   analyzeNotes,
-  assumedChordChanges,
   candidateScales,
-  Chord,
-  chordAt,
   findTuningPreset,
   formatKey,
+  harmonize,
   midiToNoteName,
-  noteRole,
-  parseChord,
   parseKey,
   parseProgression,
 } from '@gsc/music-domain';
@@ -33,8 +29,8 @@ import {
 } from '@gsc/web/data-access';
 import {
   AlertComponent,
+  ExplanationComponent,
   NoteFactsComponent,
-  NoteRoles,
   ScaleCandidatesComponent,
   TabEditorComponent,
 } from '@gsc/web/ui';
@@ -44,6 +40,7 @@ import { firstValueFrom } from 'rxjs';
   selector: 'gsc-phrase-detail-page',
   imports: [
     AlertComponent,
+    ExplanationComponent,
     NoteFactsComponent,
     ScaleCandidatesComponent,
     TabEditorComponent,
@@ -220,6 +217,21 @@ import { firstValueFrom } from 'rxjs';
           (chordChange)="placeChord($event.order, $event.chord)"
         />
         <gsc-scale-candidates [analysis]="scales()" />
+        <gsc-explanation
+          [explanation]="p.explanation ?? null"
+          [stale]="
+            !!p.explanation && p.explanation.phraseRevision !== p.revision
+          "
+          [busy]="explaining()"
+          [error]="explainError()"
+          [blockedReason]="
+            dirty()
+              ? 'Save your harmony changes first; the explanation uses the saved phrase.'
+              : null
+          "
+          [stepOf]="stepOf()"
+          (explain)="explain(p)"
+        />
         <a routerLink="/phrases" class="text-brand-700 underline"
           >All phrases</a
         >
@@ -272,11 +284,12 @@ export class PhraseDetailPage {
       ...this.changes().map((c) => c.chord),
     ]),
   ]);
-  /** User placement, or the one-chord assumption when nothing is placed. */
-  private readonly effectiveChanges = computed(() =>
-    this.changes().length
-      ? this.changes()
-      : assumedChordChanges(this.progression()),
+  private readonly harmony = computed(() =>
+    harmonize({
+      analysis: this.noteAnalysis(),
+      chords: this.chordsText(),
+      chordChanges: this.changes(),
+    }),
   );
   protected readonly chordStarts = computed(() =>
     Object.fromEntries(this.changes().map((c) => [c.fromOrder, c.chord])),
@@ -286,41 +299,44 @@ export class PhraseDetailPage {
       return 'Add chords to see what role each note plays.';
     if (this.changes().length)
       return 'Each chord lasts until the next one you place.';
-    const assumed = this.effectiveChanges()[0];
+    const assumed = this.harmony().assumed && this.harmony().changes[0];
     return assumed
       ? `Assumed: the whole phrase is over ${assumed.chord}. Place chords below to change this.`
       : 'Use the Chord column below to show where each chord starts.';
   });
-  protected readonly columnChords = computed(() =>
-    this.noteAnalysis().columns.map((c) =>
-      chordAt(this.effectiveChanges(), c.order),
-    ),
-  );
-  protected readonly roles = computed(() => {
-    const out: Record<string, NoteRoles> = {};
-    this.noteAnalysis().columns.forEach((col, i) => {
-      const symbol = this.columnChords()[i];
-      const chord = symbol ? parseChord(symbol) : null;
-      if (!chord) return;
-      for (const n of col.notes)
-        out[n.eventId] = {
-          note: n.midi === null ? null : noteRole(n.midi, chord),
-          bendTo:
-            n.bendToMidi === undefined ? null : noteRole(n.bendToMidi, chord),
-        };
-    });
-    return out;
-  });
+  protected readonly columnChords = computed(() => this.harmony().columnChords);
+  protected readonly roles = computed(() => this.harmony().roles);
   protected readonly scales = computed(() =>
     candidateScales({
       analysis: this.noteAnalysis(),
       key: this.key(),
-      chords: [...this.effectiveChanges()]
-        .sort((a, b) => a.fromOrder - b.fromOrder)
-        .map((c) => parseChord(c.chord))
-        .filter((c): c is Chord => c !== null),
+      chords: this.harmony().chords,
     }),
   );
+  protected readonly explaining = signal(false);
+  protected readonly explainError = signal<string | null>(null);
+  protected readonly stepOf = computed(() =>
+    Object.fromEntries(
+      this.noteAnalysis().columns.flatMap((col, i) =>
+        col.notes.map((n) => [n.eventId, i + 1]),
+      ),
+    ),
+  );
+
+  protected async explain(p: Phrase): Promise<void> {
+    this.explaining.set(true);
+    this.explainError.set(null);
+    try {
+      this.phrase.value.set(
+        await firstValueFrom(this.api.explain(p.id, p.revision)),
+      );
+    } catch (err) {
+      this.explainError.set(toClientError(err).message);
+    } finally {
+      this.explaining.set(false);
+    }
+  }
+
   protected readonly dirty = computed(() => {
     const ctx = this.loaded()?.context;
     if (!ctx) return false;

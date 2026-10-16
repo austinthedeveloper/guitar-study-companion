@@ -1,6 +1,7 @@
 import { app } from '@azure/functions';
 import {
   createPhrase,
+  explainPhraseHandler,
   getPhrase,
   listPhrases,
   updateHarmony,
@@ -56,6 +57,27 @@ app.http('phrases-update-harmony', {
     return updateHarmony(req.params['id'] ?? '', body.body, {
       store: await appContext().phrases(),
       userId: currentUserId(),
+    });
+  }),
+});
+
+app.http('phrases-explain', {
+  methods: ['POST'],
+  authLevel: 'anonymous',
+  route: 'phrases/{id}/explanation',
+  handler: safe(async (req, ctx) => {
+    const app = appContext();
+    const body = await readJson(req);
+    if (!body.ok) return body.res;
+    return explainPhraseHandler(req.params['id'] ?? '', body.body, {
+      store: await app.phrases(),
+      userId: currentUserId(),
+      ai: app.ai,
+      timeoutMs: app.aiTimeoutMs,
+      scenario: app.e2eMode
+        ? (req.headers.get('x-gsc-fake-scenario') ?? undefined)
+        : undefined,
+      log: (message, data) => ctx.log(message, JSON.stringify(data ?? {})),
     });
   }),
 });

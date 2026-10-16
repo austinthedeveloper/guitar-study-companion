@@ -4,6 +4,8 @@ export const API_PATHS = {
   interpret: '/api/imports/interpret',
   phrases: '/api/phrases',
   phrase: (id: string) => `/api/phrases/${encodeURIComponent(id)}`,
+  phraseExplanation: (id: string) =>
+    `/api/phrases/${encodeURIComponent(id)}/explanation`,
   phraseHarmony: (id: string) =>
     `/api/phrases/${encodeURIComponent(id)}/harmony`,
 } as const;

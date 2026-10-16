@@ -5,13 +5,13 @@ import {
   input,
   output,
 } from '@angular/core';
-import { Interval, NoteAnalysis, NoteFact, NoteRole } from '@gsc/music-domain';
-
-/** A note's role over the chord in effect, and its bend target's. */
-export interface NoteRoles {
-  note: NoteRole | null;
-  bendTo: NoteRole | null;
-}
+import {
+  Interval,
+  NoteAnalysis,
+  NoteFact,
+  NoteRole,
+  NoteRoles,
+} from '@gsc/music-domain';
 
 /**
  * Verified note facts computed from the tab: names, chord shapes, and

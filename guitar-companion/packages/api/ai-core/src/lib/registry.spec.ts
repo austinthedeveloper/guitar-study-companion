@@ -37,6 +37,7 @@ describe('AI provider registry', () => {
     registerAiProvider('test-provider', (env) => ({
       name: `test-provider:${env['MODEL']}`,
       interpretTab: async () => ({ draft: null, model: 'x' }),
+      generateJson: async () => ({ json: null, model: 'x' }),
     }));
     expect(
       createAiProvider({ AI_PROVIDER: 'test-provider', MODEL: 'm1' }).name,

@@ -9,3 +9,4 @@ export * from './lib/providers/claude-provider';
 export * from './lib/providers/openai-provider';
 export * from './lib/registry';
 export * from './lib/misconfigured-provider';
+export * from './lib/explain';

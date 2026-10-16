@@ -144,4 +144,31 @@ describe('PhraseRepository', () => {
       );
     });
   });
+
+  describe('saveExplanation', () => {
+    const explanation = {
+      summary: 'S',
+      points: [],
+      phraseRevision: 1,
+      provider: 'fake',
+      model: 'm',
+      createdAt: '2026-10-16T00:00:00.000Z',
+    };
+
+    it('stores it without bumping the revision, only at that revision', async () => {
+      const created = await repo.create('fay', input);
+      const saved = await repo.saveExplanation('fay', created.id, explanation);
+      expect(saved).toMatchObject({ revision: 1, explanation });
+      await repo.updateHarmony('fay', created.id, {
+        revision: 1,
+        chordChanges: [],
+      });
+      expect(await repo.saveExplanation('fay', created.id, explanation)).toBe(
+        'conflict',
+      );
+      expect(await repo.saveExplanation('bob', created.id, explanation)).toBe(
+        'not_found',
+      );
+    });
+  });
 });

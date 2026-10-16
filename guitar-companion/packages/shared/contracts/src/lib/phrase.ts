@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ExplanationSchema } from './explanation';
 import { MusicalContextSchema, SourceReferenceSchema } from './source';
 import { TabEventSchema, TICKS_PER_QUARTER } from './tab';
 
@@ -18,6 +19,8 @@ export type CreatePhraseRequest = z.infer<typeof CreatePhraseRequestSchema>;
 export const PhraseSchema = CreatePhraseRequestSchema.extend({
   id: z.string(),
   revision: z.number().int().min(1),
+  /** Latest AI explanation; stale when its phraseRevision < revision. */
+  explanation: ExplanationSchema.optional(),
   createdAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
 });

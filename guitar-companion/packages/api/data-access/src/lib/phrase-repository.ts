@@ -1,5 +1,6 @@
 import {
   CreatePhraseRequest,
+  Explanation,
   Phrase,
   PhraseSummary,
   UpdateHarmonyRequest,
@@ -7,6 +8,7 @@ import {
 import { Collection, Db, ObjectId, WithId } from 'mongodb';
 
 interface PhraseDoc extends CreatePhraseRequest {
+  explanation?: Explanation;
   userId: string;
   revision: number;
   createdAt: Date;
@@ -85,6 +87,29 @@ export class PhraseRepository {
         ...(Object.keys(unset).length ? { $unset: unset } : {}),
         $inc: { revision: 1 },
       },
+      { returnDocument: 'after' },
+    );
+    if (doc) return toPhrase(doc);
+    return (await this.collection.countDocuments({ _id, userId }, { limit: 1 }))
+      ? 'conflict'
+      : 'not_found';
+  }
+
+  /**
+   * Stores an explanation only if the phrase is still at the revision it
+   * explains. Derived data, so the revision is not bumped.
+   */
+  async saveExplanation(
+    userId: string,
+    id: string,
+    explanation: Explanation,
+    now = new Date(),
+  ): Promise<Phrase | 'not_found' | 'conflict'> {
+    if (!ObjectId.isValid(id)) return 'not_found';
+    const _id = new ObjectId(id);
+    const doc = await this.collection.findOneAndUpdate(
+      { _id, userId, revision: explanation.phraseRevision },
+      { $set: { explanation, updatedAt: now } },
       { returnDocument: 'after' },
     );
     if (doc) return toPhrase(doc);
