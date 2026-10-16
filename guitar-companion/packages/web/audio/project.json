@@ -1,0 +1,23 @@
+{
+  "name": "audio",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/web/audio/src",
+  "projectType": "library",
+  "tags": ["scope:web", "type:util"],
+  "// targets": "to see all targets run: nx show project audio --web",
+  "targets": {
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["default", "^default"],
+      "options": {
+        "cwd": "packages/web/audio",
+        "commands": [
+          "tsc -p tsconfig.lib.json --noEmit",
+          "tsc -p tsconfig.spec.json --noEmit"
+        ],
+        "parallel": false
+      }
+    }
+  }
+}

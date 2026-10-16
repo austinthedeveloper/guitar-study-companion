@@ -23,6 +23,7 @@
       "@gsc/web/data-access": ["./packages/web/data-access/src/index.ts"],
       "@gsc/web/feature-home": ["./packages/web/feature-home/src/index.ts"],
       "@gsc/web/routes": ["./packages/web/routes/src/index.ts"],
+      "@gsc/web/audio": ["./packages/web/audio/src/index.ts"],
       "@gsc/web/image-tools": ["./packages/web/image-tools/src/index.ts"],
       "@gsc/web/feature-import": ["./packages/web/feature-import/src/index.ts"],
       "@gsc/web/feature-phrases": [
