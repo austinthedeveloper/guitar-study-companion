@@ -180,9 +180,17 @@ import { firstValueFrom } from 'rxjs';
           (explain)="explain(p)"
           (showNotes)="highlightIds.set($event)"
         />
-        <a routerLink="/phrases" class="text-brand-700 underline"
-          >All phrases</a
-        >
+        <div class="flex flex-wrap gap-4">
+          <a
+            [routerLink]="['/phrases', p.id, 'practice']"
+            class="btn-primary"
+            data-testid="practice-link"
+            >Practice this phrase</a
+          >
+          <a routerLink="/phrases" class="self-center text-brand-700 underline"
+            >All phrases</a
+          >
+        </div>
       </article>
     }
   `,

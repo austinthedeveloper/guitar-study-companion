@@ -14,3 +14,5 @@ export * from './lib/note-facts/note-facts';
 export * from './lib/scale-candidates/scale-candidates';
 export * from './lib/explanation/explanation';
 export * from './lib/harmony-form/harmony-form';
+export * from './lib/exercise-card/exercise-card';
+export * from './lib/plan-settings/plan-settings';

@@ -113,7 +113,9 @@ import {
                 @for (order of columns(); track order; let col = $index) {
                   <th scope="col" class="px-0.5 pb-1">
                     @if (readonly()) {
-                      <span class="text-xs text-stone-500">{{ col + 1 }}</span>
+                      <span class="text-xs text-stone-500">{{
+                        columnLabels()[col] ?? col + 1
+                      }}</span>
                     } @else {
                       <button
                         type="button"
@@ -369,17 +371,6 @@ import {
       }
     </div>
   `,
-  styles: `
-    .btn-ghost {
-      border-radius: 0.25rem;
-      border: 1px solid var(--color-stone-300);
-      padding: 0.125rem 0.5rem;
-      background: white;
-    }
-    .btn-ghost:disabled {
-      opacity: 0.5;
-    }
-  `,
 })
 export class TabEditorComponent {
   readonly events = model.required<EditorEvent[]>();
@@ -394,6 +385,8 @@ export class TabEditorComponent {
   readonly roles = input<Readonly<Record<string, NoteRoles>>>({});
   /** Read-only display: chord in effect at each column; shown where it changes. */
   readonly columnChords = input<readonly (string | null)[]>([]);
+  /** Read-only display: column numbers to show instead of 1..n (e.g. phrase note numbers). */
+  readonly columnLabels = input<readonly (number | string)[]>([]);
   /** Read-only display: notes to highlight (e.g. cited by an explanation). */
   readonly highlightIds = input<readonly string[]>([]);
   protected readonly highlighted = computed(() => new Set(this.highlightIds()));

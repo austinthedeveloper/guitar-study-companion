@@ -133,8 +133,14 @@ test.describe('Import page', { tag: routeTag(ROUTE_PATHS.import) }, () => {
       await box.focus();
       await page.keyboard.press('Shift+ArrowLeft');
       await page.keyboard.press('Shift+ArrowUp');
-      const width = await box.evaluate((el) => (el as HTMLElement).style.width);
-      expect(parseFloat(width)).toBeLessThan(100);
+      // Poll: under parallel load the resize can render a frame later.
+      await expect
+        .poll(async () =>
+          parseFloat(
+            await box.evaluate((el) => (el as HTMLElement).style.width),
+          ),
+        )
+        .toBeLessThan(100);
     });
 
     test('is accessible', async ({ page }) => {

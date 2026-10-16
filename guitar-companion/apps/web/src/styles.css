@@ -19,6 +19,9 @@
   .btn-primary {
     @apply inline-flex items-center rounded bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50;
   }
+  .btn-ghost {
+    @apply rounded border border-stone-300 bg-white px-2 py-0.5 disabled:opacity-50;
+  }
   .btn-secondary {
     @apply inline-flex items-center rounded border border-stone-300 bg-white px-4 py-2 text-sm text-stone-800 hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-50;
   }

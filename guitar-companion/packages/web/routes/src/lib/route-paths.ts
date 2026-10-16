@@ -8,6 +8,7 @@ export const ROUTE_PATHS = {
   import: '/import',
   phrases: '/phrases',
   phrase: '/phrases/:id',
+  practice: '/phrases/:id/practice',
   notFound: '/**',
 } as const;
 

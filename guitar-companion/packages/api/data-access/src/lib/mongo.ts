@@ -21,6 +21,9 @@ export class MongoConnection {
     if (!this.clientPromise) {
       const client = new MongoClient(this.uri, {
         serverSelectionTimeoutMS: 3000,
+        // Store absent optional fields as absent; the driver default writes
+        // null, which the contracts (optional, not nullable) reject on read.
+        ignoreUndefined: true,
       });
       this.clientPromise = client.connect().catch((err) => {
         this.clientPromise = null;

@@ -34,7 +34,7 @@ function bend(cents: number): [number, number] {
 export function encodeMidiFile(
   events: readonly NoteEvent[],
   bpm: number,
-): Uint8Array {
+): Uint8Array<ArrayBuffer> {
   const ticksPerSecond = (bpm / 60) * PPQ;
   const tick = (s: number) => Math.round(s * ticksPerSecond);
   const timed: { at: number; order: number; bytes: number[] }[] = [];

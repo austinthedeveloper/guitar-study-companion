@@ -30,5 +30,11 @@ export const appRoutes: Route[] = [
     loadComponent: () =>
       import('@gsc/web/feature-phrases').then((m) => m.PhraseDetailPage),
   },
+  {
+    path: routerPath(ROUTE_PATHS.practice),
+    title: title('Practice'),
+    loadComponent: () =>
+      import('@gsc/web/feature-practice').then((m) => m.PracticePage),
+  },
   { path: '**', title: title('Not found'), component: NotFoundComponent },
 ];
