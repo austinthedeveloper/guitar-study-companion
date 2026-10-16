@@ -22,6 +22,10 @@ The Nx workspace lives in [`guitar-companion/`](../guitar-companion). Run all co
 
 Running a single e2e spec only warns about route coverage. CI, or `ROUTE_COVERAGE=1`, makes uncovered routes fail the run.
 
+### Nx daemon is off
+
+`nx.json` sets `"useDaemonProcess": false`. With the daemon on, project-graph creation failed on about every other run with `ERR_REQUIRE_ESM` for `listr2` (required by `@angular/build`, which the Angular Vite plugin loads while Nx reads `vite.config.mts`). With the daemon off, it passed every time, at a cost of about 1.6 s per graph. CI never used the daemon, which is why only local runs failed. Re-check this before turning the daemon back on after an Nx or Angular upgrade.
+
 ## Workspace layout
 
 ```text

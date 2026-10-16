@@ -95,7 +95,16 @@ Record consequential choices here. Status values: `Proposed`, `Accepted`, `Super
 
 **Tradeoff:** The decoder is LGPL-3.0 and about 1 MB. It stays a separate dynamically loaded chunk and is only fetched when a HEIC file is used. Revisit before any public distribution.
 
-## Open decisions
+## ADR-011 — Practice plans: rules and AI together, MIDI playback, separate sessions
+
+**Status:** Accepted
+
+**Decision (owner, 2026-10-16):** Practice plans for M3 combine **deterministic rules** and **AI**. Rules build the exercise skeleton from verified notes: isolate each figure, slow practice, connect figures, and apply over the chords. That keeps notes, fingerings and tempos checkable. AI adds instructions and technique-specific advice, and goes through the same validation as explanations. Playback uses **MIDI**, through Web Audio synthesis of MIDI note events in the browser (with optional Web MIDI output), and comes with a **metronome**. Practice progress is stored in a separate **practice sessions** collection that references a plan and the phrase revision it was built from, not on the phrase itself.
+
+**Why:** Rules keep exercises honest about notes and playability; AI adds the coaching language rules can't. Separate sessions keep phrase documents small, preserve history across phrase edits, and match the domain model (PracticePlan and PracticeSession).
+
+**Tradeoff:** Two generation paths to test. A plan built on an older phrase revision must be marked stale, the same way explanations are.
+
 
 - [ ] Choose initial authentication method (defer until hosted multi-user milestone if local-only).
 - [x] Image upload path: the **request body**, carrying a base64 JPEG/PNG/WebP crop of at most 4 MB and 2048 px on the longest side. The full page never leaves the browser and nothing is stored. Revisit if retention becomes opt-in (M5).
