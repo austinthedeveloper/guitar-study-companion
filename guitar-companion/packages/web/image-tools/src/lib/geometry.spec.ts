@@ -26,6 +26,19 @@ describe('geometry', () => {
     });
   });
 
+  it('grows to the bounding box when tilted either way', () => {
+    // 3:4 photo turned sideways, then straightened by 10°.
+    const tilted = rotatedSize({ width: 3000, height: 4000 }, 90, 10);
+    expect(tilted).toEqual({ width: 4460, height: 3649 });
+    expect(rotatedSize({ width: 3000, height: 4000 }, 90, -10)).toEqual(
+      tilted,
+    );
+    expect(rotatedSize({ width: 3000, height: 4000 }, 0, 0)).toEqual({
+      width: 3000,
+      height: 4000,
+    });
+  });
+
   it('fits within a max dimension without upscaling', () => {
     expect(fitWithin({ width: 4032, height: 3024 }, 2048)).toEqual({
       width: 2048,

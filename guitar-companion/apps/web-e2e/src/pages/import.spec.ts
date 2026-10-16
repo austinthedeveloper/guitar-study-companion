@@ -106,6 +106,27 @@ test.describe('Import page', { tag: routeTag(ROUTE_PATHS.import) }, () => {
       await expect(page.getByTestId('zoom-level')).toHaveText('75%');
     });
 
+    test('straightens a tilted page with guides', async ({ page }) => {
+      const canvas = page.getByTestId('cropper-canvas');
+      const size = () =>
+        canvas.evaluate((c: HTMLCanvasElement) => [c.width, c.height]);
+      const before = await size();
+      const tilt = page.getByTestId('tilt');
+      await expect(page.getByTestId('tilt-reset')).toBeDisabled();
+      await tilt.focus();
+      await expect(page.getByTestId('tilt-guides')).toBeVisible();
+      await tilt.fill('4');
+      await expect(page.getByTestId('tilt-level')).toHaveText('4°');
+      await expect(canvas).toHaveAttribute('aria-label', /straightened 4°/);
+      // A tilted page is redrawn into its (differently shaped) bounding box.
+      expect(await size()).not.toEqual(before);
+
+      await page.getByTestId('tilt-reset').click();
+      await expect(page.getByTestId('tilt-level')).toHaveText('0°');
+      await page.getByTestId('select-all').click();
+      await expect(page.getByTestId('selection-next')).toBeEnabled();
+    });
+
     test('moves the selection with the keyboard', async ({ page }) => {
       await page.getByTestId('select-all').click();
       const box = page.getByTestId('selection-box');

@@ -41,6 +41,7 @@
     <gsc-image-cropper
       [image]="img"
       [(rotation)]="rotation"
+      [(tilt)]="tilt"
       [(selection)]="selection"
     />
     @if (selection() && !selectionUsable()) {

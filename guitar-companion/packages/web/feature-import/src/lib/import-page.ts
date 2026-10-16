@@ -92,6 +92,7 @@ export class ImportPage {
 
   // Step 2: selection
   protected readonly rotation = signal<Rotation>(0);
+  protected readonly tilt = signal(0);
   protected readonly selection = signal<NormalizedRect | null>(null);
   protected readonly selectionUsable = computed(() => {
     const img = this.image();
@@ -99,7 +100,11 @@ export class ImportPage {
       !!img &&
       isUsableSelection(
         this.selection(),
-        rotatedSize({ width: img.width, height: img.height }, this.rotation()),
+        rotatedSize(
+          { width: img.width, height: img.height },
+          this.rotation(),
+          this.tilt(),
+        ),
       )
     );
   });
@@ -193,6 +198,7 @@ export class ImportPage {
       this.image.set(bitmap);
       this.fileName.set(file.name);
       this.rotation.set(0);
+      this.tilt.set(0);
       this.selection.set(null);
       this.step.set(1);
     } catch {
@@ -211,10 +217,13 @@ export class ImportPage {
     if (!img || !sel || !this.selectionUsable()) return;
     this.cropError.set(null);
     try {
-      const result = await cropToJpeg(img, this.rotation(), sel, {
-        maxDim: MAX_CROP_DIMENSION,
-        maxBytes: MAX_CROP_BYTES,
-      });
+      const result = await cropToJpeg(
+        img,
+        this.rotation(),
+        sel,
+        { maxDim: MAX_CROP_DIMENSION, maxBytes: MAX_CROP_BYTES },
+        this.tilt(),
+      );
       const previous = this.crop();
       if (previous) URL.revokeObjectURL(previous.url);
       this.crop.set({

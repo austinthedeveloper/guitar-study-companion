@@ -17,10 +17,26 @@ export function rotateBy(rotation: Rotation, delta: 90 | -90): Rotation {
   return ((((rotation + delta) % 360) + 360) % 360) as Rotation;
 }
 
-export function rotatedSize(size: Size, rotation: Rotation): Size {
-  return rotation === 90 || rotation === 270
-    ? { width: size.height, height: size.width }
-    : size;
+/** Fine "straighten" adjustment for tilted photos, in degrees either way. */
+export const MAX_TILT = 15;
+
+/**
+ * Size of the image after a quarter-turn rotation plus an optional tilt
+ * (degrees, clockwise). A tilted image grows to its bounding box.
+ */
+export function rotatedSize(size: Size, rotation: Rotation, tilt = 0): Size {
+  const turned =
+    rotation === 90 || rotation === 270
+      ? { width: size.height, height: size.width }
+      : size;
+  if (!tilt) return turned;
+  const rad = (Math.abs(tilt) * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  return {
+    width: Math.round(turned.width * cos + turned.height * sin),
+    height: Math.round(turned.width * sin + turned.height * cos),
+  };
 }
 
 /** Scales to fit within maxDim on the longest side, never upscaling. */
