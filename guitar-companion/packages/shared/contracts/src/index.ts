@@ -4,5 +4,6 @@ export * from './lib/explanation';
 export * from './lib/health';
 export * from './lib/imports';
 export * from './lib/phrase';
+export * from './lib/practice';
 export * from './lib/source';
 export * from './lib/tab';
