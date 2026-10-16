@@ -14,6 +14,8 @@ import { ChordChange, Phrase } from '@gsc/contracts';
 import {
   analyzeNotes,
   assumedChordChanges,
+  candidateScales,
+  Chord,
   chordAt,
   findTuningPreset,
   formatKey,
@@ -33,6 +35,7 @@ import {
   AlertComponent,
   NoteFactsComponent,
   NoteRoles,
+  ScaleCandidatesComponent,
   TabEditorComponent,
 } from '@gsc/web/ui';
 import { firstValueFrom } from 'rxjs';
@@ -42,6 +45,7 @@ import { firstValueFrom } from 'rxjs';
   imports: [
     AlertComponent,
     NoteFactsComponent,
+    ScaleCandidatesComponent,
     TabEditorComponent,
     RouterLink,
     DatePipe,
@@ -215,6 +219,7 @@ import { firstValueFrom } from 'rxjs';
           [chordStarts]="chordStarts()"
           (chordChange)="placeChord($event.order, $event.chord)"
         />
+        <gsc-scale-candidates [analysis]="scales()" />
         <a routerLink="/phrases" class="text-brand-700 underline"
           >All phrases</a
         >
@@ -306,6 +311,16 @@ export class PhraseDetailPage {
     });
     return out;
   });
+  protected readonly scales = computed(() =>
+    candidateScales({
+      analysis: this.noteAnalysis(),
+      key: this.key(),
+      chords: [...this.effectiveChanges()]
+        .sort((a, b) => a.fromOrder - b.fromOrder)
+        .map((c) => parseChord(c.chord))
+        .filter((c): c is Chord => c !== null),
+    }),
+  );
   protected readonly dirty = computed(() => {
     const ctx = this.loaded()?.context;
     if (!ctx) return false;

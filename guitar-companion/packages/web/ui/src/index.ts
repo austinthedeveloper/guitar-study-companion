@@ -11,3 +11,4 @@ export * from './lib/steps/steps';
 export * from './lib/tab-editor/tab-editor';
 export * from './lib/tab-editor/tab-editor-model';
 export * from './lib/note-facts/note-facts';
+export * from './lib/scale-candidates/scale-candidates';

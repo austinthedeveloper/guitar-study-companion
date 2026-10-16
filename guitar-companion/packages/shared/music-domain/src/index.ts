@@ -5,3 +5,4 @@ export * from './lib/tunings';
 export * from './lib/keys';
 export * from './lib/analyze-notes';
 export * from './lib/chords';
+export * from './lib/scales';

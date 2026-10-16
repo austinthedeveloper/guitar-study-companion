@@ -101,6 +101,21 @@ function signatureTonic(key: Key): string {
   return spellWithLetter(pc, letter);
 }
 
+/**
+ * Spells the note `semitones` above a spelled root, using the letter
+ * `letterSteps` above the root's letter: from A, (6 semitones, 4 letters)
+ * is Eb (a b5) while (6, 3) is D# (a #4).
+ */
+export function spellFromRoot(
+  root: string,
+  semitones: number,
+  letterSteps: number,
+): string {
+  const rootPc = pitchClassOf(root) ?? 0;
+  const letter = LETTERS[(LETTERS.indexOf(root[0] as never) + letterSteps) % 7];
+  return spellWithLetter(mod12(rootPc + semitones), letter);
+}
+
 function spellWithLetter(pc: number, letter: string): string {
   const diff = mod12(pc - LETTER_PC[letter]);
   const accidental =

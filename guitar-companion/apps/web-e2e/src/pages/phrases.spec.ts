@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { ROUTE_PATHS, routeTag } from '@gsc/web/routes';
 import { expectNoA11yViolations } from '../support/a11y';
-import { createPhrase, updateHarmony } from '../support/api';
+import { createPhrase, highStringLick, updateHarmony } from '../support/api';
 
 test.describe('My phrases page', { tag: routeTag(ROUTE_PATHS.phrases) }, () => {
   test('lists saved phrases and links to them', async ({ page, request }) => {
@@ -152,6 +152,40 @@ test.describe(
       );
       await page.getByTestId('harmony-reload').click();
       await expect(page.getByTestId('harmony-key')).toHaveValue('G');
+    });
+
+    test('suggests scales and says how certain it is', async ({
+      page,
+      request,
+    }) => {
+      const few = await createPhrase(request, `Few ${Date.now()}`);
+      await page.goto(`/phrases/${few.id}`);
+      await expect(page.getByTestId('scales-certainty')).toContainText(
+        'Too few different notes',
+      );
+
+      // A C D E G ending on E: A minor and C major pentatonic fit equally.
+      const lick = await createPhrase(
+        request,
+        `Pentatonic ${Date.now()}`,
+        {},
+        highStringLick(5, 8, 10, 12, 15, 12),
+      );
+      await page.goto(`/phrases/${lick.id}`);
+      await expect(page.getByTestId('scales-certainty')).toContainText(
+        'Several scales fit equally well',
+      );
+      await expect(page.getByTestId('scale-name').first()).toBeVisible();
+
+      // Giving a key resolves it, live and with the reason shown.
+      await page.getByTestId('harmony-key').fill('Am');
+      await expect(page.getByTestId('scales-certainty')).toHaveText(
+        'Best fit: A minor pentatonic.',
+      );
+      await expect(page.getByTestId('scale-candidate').first()).toContainText(
+        'matches the key you gave (A minor)',
+      );
+      await expectNoA11yViolations(page);
     });
 
     test('spells notes in the phrase key, or says when the key is unclear', async ({

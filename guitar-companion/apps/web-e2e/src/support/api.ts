@@ -39,9 +39,11 @@ export async function createPhrase(
   request: APIRequestContext,
   title: string,
   context?: Partial<CreatePhraseRequest['context']>,
+  events?: CreatePhraseRequest['events'],
 ): Promise<Phrase> {
   const data = samplePhrase(title);
   data.context = { ...data.context, ...context };
+  if (events) data.events = events;
   const res = await request.post('/api/phrases', { data });
   expect(res.status()).toBe(201);
   return PhraseSchema.parse(await res.json());
@@ -56,3 +58,16 @@ export async function updateHarmony(
   expect(res.status()).toBe(200);
   return PhraseSchema.parse(await res.json());
 }
+
+/** Single notes on the high E string, e.g. frets 5 8 10 12 15 = A C D E G. */
+export const highStringLick = (
+  ...frets: number[]
+): CreatePhraseRequest['events'] =>
+  frets.map((fret, i) => ({
+    id: `e${i + 1}`,
+    order: i,
+    stringIndex: 0,
+    fret,
+    durationTicks: null,
+    techniques: [],
+  }));
