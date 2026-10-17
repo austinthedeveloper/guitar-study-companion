@@ -93,7 +93,7 @@
 - [x] Add observability, error handling, retry policy, and AI usage caps. *(Structured logs without content; error references on 500s; GET retries for transient failures; a per-user daily AI allowance by requests and tokens. Application Insights switches on with its connection string at deployment; see DEVELOPMENT.md "Observability".)*
 - [ ] Deploy UI and API to Azure and configure database access securely.
 - [ ] Run a private beta with a varied set of book images and record failure modes.
-- [ ] Review privacy, image retention, and copyright-related UX before broader use.
+- [x] Review privacy, image retention, and copyright-related UX before broader use. *(The `/privacy` page; consent before every image leaves the device, crops only, nothing retained; AI sees only note facts after import; Delete removes the phrase with its practice; personal-study wording in consent and on the privacy page.)*
 - [ ] E2E: M5 journey specs pass, including cross-user isolation; deployed smoke suite passes against Azure.
 
 **Exit criteria:** Private end-to-end product works in Azure, with a reusable library and bounded operational cost.

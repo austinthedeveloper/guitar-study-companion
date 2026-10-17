@@ -87,12 +87,22 @@ Module boundaries are enforced by lint (`eslint.config.mjs`):
 | `MONGODB_DB` | `gsc` | Database name |
 | `E2E_MODE` | `false` | Test-only seeding endpoints |
 
-## Deployment approach (planned; not yet verified in Azure)
+## Deployment approach (ADR-013; not yet deployed)
 
-- **Web:** `nx build web` produces a static output in `dist/apps/web/browser`. It includes `staticwebapp.config.json` (SPA fallback, security headers, Node 22 API runtime).
-- **API:** `nx build api` produces a single esbuild bundle in `dist/apps/api`: `main.js`, `host.json` and `package.json`, with `@azure/functions-core` supplied by the host. Deploy it as the Static Web App's **managed functions** for MVP, which gives a single resource, same-origin `/api`, and built-in auth. Move to a linked "bring your own" Function App only if we need features managed functions lack (non-HTTP triggers, longer timeouts, managed identity).
-- **DB:** MongoDB Atlas, with network access restricted and the connection string in app settings.
-- **Open:** a minimal deployed spike is still needed to confirm the bundle runs under SWA managed functions (see ARCHITECTURE.md).
+Everything runs in Azure. The owner's choice is Blob Storage for the site; the rest are recommendations.
+
+| Piece | Service | Notes |
+|---|---|---|
+| Web | Storage account **static website** (`$web` container) | Upload `dist/apps/web/browser`. Set the index and error documents to `index.html` so deep links load the app (they return 404 status with the app, which browsers handle). The default `https://<account>.z??.web.core.windows.net` endpoint already has HTTPS, which is enough for the private beta. A custom domain with HTTPS needs **Azure Front Door** (Standard) in front, which also returns a clean 200 for deep links. Add it when a domain is wanted. |
+| API | **Function App, Flex Consumption**, Linux, Node 22 | Deploy the `dist/apps/api` bundle. Microsoft recommends Flex Consumption for new apps, with a monthly free grant per subscription. Set **CORS** to the site's origin only. Use a system-assigned **managed identity**. |
+| Secrets | **Key Vault** | OpenAI and Anthropic keys and the database connection string, referenced from app settings (`@Microsoft.KeyVault(...)`), never in code or the web bundle. |
+| Database | **Azure Cosmos DB for MongoDB (vCore)** | Our MongoDB driver code works unchanged. The free tier (32 GB, one per subscription, limited regions) is enough for the beta, but **has no backups or high availability**. Either accept that for the beta and export data periodically, or start on the smallest paid tier. |
+| Logs | **Application Insights** | Set `APPLICATIONINSIGHTS_CONNECTION_STRING` on the Function App. |
+| Sign-in | **Microsoft Entra External ID** (ADR-014) | |
+
+**Web → API address:** the site and API are on different origins, so the web app reads `config.json` at startup (`{ "apiBaseUrl": "https://<func>.azurewebsites.net" }`). Locally and in e2e there is no `config.json`, so the app keeps calling relative `/api` paths through the dev proxy or SWA CLI.
+
+**Owner steps, before the first deploy:** create a resource group in one region where the Cosmos vCore free tier is available. In it, create the storage account (static website on), the Function App (Flex Consumption, Node 22), Key Vault, App Insights, and the Cosmos vCore cluster. Then give the Function App's identity "Key Vault Secrets User" on the vault. I'll then write the GitHub Actions deploy workflow (OIDC federated credentials, no stored secrets) and a deployed smoke suite.
 
 ## Observability and failure handling
 

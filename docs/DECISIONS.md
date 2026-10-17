@@ -24,7 +24,7 @@ Record consequential choices here. Status values: `Proposed`, `Accepted`, `Super
 
 ## ADR-003 — MongoDB Atlas
 
-**Status:** Proposed
+**Status:** Superseded by ADR-013 (Azure Cosmos DB for MongoDB vCore, to keep everything in Azure)
 
 **Decision:** Store users, phrases, analyses, practice plans, and progress in MongoDB Atlas.
 
@@ -116,9 +116,37 @@ Record consequential choices here. Status values: `Proposed`, `Accepted`, `Super
 
 **Also changed:** notes outside the key are now spelled by scale degree from the tonic: b2, b3, b6 and b7 as flats; the tritone as #4 in major keys and b5 in minor. The b3 of C is now Eb (it was D#), matching how scales were already spelled. Where the degree spelling would need a double accidental or a white-key enharmonic (Fb, Cb, E#, B#), the plain name is used instead, so the b5 of Bb minor stays E.
 
+## ADR-013 — All-Azure hosting: Blob static site, Flex Consumption Functions, Cosmos DB for MongoDB vCore
+
+**Status:** Accepted (owner chose Azure and Blob Storage for the site; the API and database choices are recommendations, not yet deployed)
+
+**Decision (2026-10-16):** The web app is a Storage account static website, with Azure Front Door added for a custom domain. The API is a Function App on the Flex Consumption plan (Node 22), with CORS limited to the site, a managed identity, and secrets in Key Vault. The database is Azure Cosmos DB for MongoDB (vCore); this replaces the "MongoDB Atlas" proposal in ADR-003 so everything stays in Azure. Logs go to Application Insights. This supersedes the earlier plan of Static Web Apps with managed functions.
+
+**Why:** It's the owner's stated preference (Azure, Blob for the site). Flex Consumption is Microsoft's recommended serverless plan and scales to zero. Cosmos vCore speaks the MongoDB protocol, so the data layer is unchanged.
+
+**Tradeoffs:**
+- **Origins:** the site and API are separate origins, so we need CORS and a runtime `config.json` with the API address. We also lose Static Web Apps' built-in auth, so sign-in is handled in the app (ADR-014).
+- **Free database tier:** Cosmos vCore's free tier has no backups.
+- **Custom domain:** HTTPS on a custom domain needs Front Door, which is a paid service.
+
+## ADR-014 — Sign-in with Microsoft Entra External ID; test-only login for e2e
+
+**Status:** Accepted (owner requirements; not yet built)
+
+**Decision (2026-10-16):** Users sign in with **SSO (Google and Microsoft accounts)** or **email and password** through one Microsoft Entra External ID user flow (an external tenant). Its Basic tier is free for the first 50,000 monthly active users. The SPA uses MSAL (authorization code with PKCE). The API validates the access token's signature (JWKS), issuer and audience on every request, and uses the token's subject as `userId`. Every repository query is already scoped by `userId`. For e2e, a **test-only `POST /api/e2e/login`** issues a short-lived token for a named test user, signed with an e2e-only key. The endpoint and that token issuer exist only when `E2E_MODE=true`, which a deployment must never set. Cross-user isolation tests log in as two users.
+
+**Why:** It meets the owner's requirements (SSO first, email and password as the backup) in Azure, at no cost at beta scale. The e2e endpoint keeps tests fast and deterministic, without automating a real identity provider.
+
+**Owner steps:**
+1. Create the external tenant.
+2. Register two apps: the SPA, and the API with an exposed scope.
+3. Add Google as an identity provider (a Google Cloud OAuth client).
+4. Create a sign-up and sign-in flow with email and password, Google and Microsoft.
+5. Share the tenant subdomain and the two client IDs.
+
 ## Open decisions
 
-- [ ] Choose initial authentication method (defer until hosted multi-user milestone if local-only).
+- [x] Choose initial authentication method: Microsoft Entra External ID with SSO and email/password (ADR-014).
 - [x] Image upload path: the **request body**, carrying a base64 JPEG/PNG/WebP crop of at most 4 MB and 2048 px on the longest side. The full page never leaves the browser and nothing is stored. Revisit if retention becomes opt-in (M5).
 - [ ] Select the default AI provider/model from private fixture evaluation, cost, and privacy terms. OpenAI and Claude adapters both exist; run `tools/fixtures/eval-private.mts` against each.
   - 2026-10-13, OpenAI `gpt-5.6-sol`, 3 verified cases: 26/29 positions read correctly (100%, 78%, 93%). Correct rhythm-unknown flag; about 1.5k input and 0.7-3.2k output tokens per crop; 10-43 s per crop. **Confidence was poorly calibrated:** no notes were flagged for review, even in the misread cases. Claude is not yet evaluated (needs `ANTHROPIC_API_KEY`).
@@ -130,5 +158,5 @@ Record consequential choices here. Status values: `Proposed`, `Accepted`, `Super
 - [x] Practice coaching (M3): the first real plan (2026-10-16, `gpt-6-luna`, the scan05 riff, 30 balanced minutes) had 10 rule-built exercises and nothing rejected. It took about 12 s, with about 2.8k input and 1.1k output tokens. String numbers, frets and note names in the tips were right, but slide tips sometimes reversed the slide ("stop at fret 6" when the tab slides from 6 to 5). A fret filter can't catch that, because both frets belong to the exercise. **Fix:** the facts sent to the model now spell out each move ("slide from fret 6 to fret 5", "pull-off from fret 3 to the open string") for coaching and explanations alike. All slide tips were correct in 3 of 3 runs afterwards. **Lesson:** describe direction in code; don't make the model infer it from where a technique is marked.
 - [x] Determine notation renderer/editor: a custom Angular tab editor for correction; alphaTab or VexFlow for display (to be chosen during M1/M2).
 - [x] Rhythm may be explicitly **unknown** in M1 (`durationTicks: null`, `rhythmKnown: false`).
-- [ ] Determine which Azure Functions hosting option best fits usage and current pricing.
+- [x] Determine which Azure Functions hosting option best fits usage and current pricing: Flex Consumption (ADR-013).
 - [x] Images are **not retained** in M1. Only the corrected phrase is saved. Retention, if ever added, will be opt-in.

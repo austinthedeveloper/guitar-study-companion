@@ -3,9 +3,15 @@ import {
   withFetch,
   withInterceptors,
 } from '@angular/common/http';
-import { retryInterceptor } from '@gsc/web/data-access';
+import {
+  apiBaseInterceptor,
+  ApiConfig,
+  retryInterceptor,
+} from '@gsc/web/data-access';
 import {
   ApplicationConfig,
+  inject,
+  provideAppInitializer,
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
 } from '@angular/core';
@@ -16,7 +22,11 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
-    provideHttpClient(withFetch(), withInterceptors([retryInterceptor])),
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([apiBaseInterceptor, retryInterceptor]),
+    ),
+    provideAppInitializer(() => inject(ApiConfig).load()),
     provideRouter(appRoutes, withComponentInputBinding()),
   ],
 };

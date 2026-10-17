@@ -7,3 +7,4 @@ export * from './lib/practice-api';
 export * from './lib/audio-engine';
 export * from './lib/exercise-playback';
 export * from './lib/retry.interceptor';
+export * from './lib/api-config';
