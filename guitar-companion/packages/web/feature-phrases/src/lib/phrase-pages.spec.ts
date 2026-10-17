@@ -110,11 +110,18 @@ describe('PhraseListPage', () => {
         title: 'Bend lick',
         source: phrase.source,
         createdAt: phrase.createdAt,
+        tags: ['blues'],
+        favorite: true,
+        facets: { key: 'G major', techniques: ['bend'], steps: [] },
       },
     ]);
     await settle();
     expect(
       el.querySelector('[data-testid="phrase-link-abc"]')?.textContent,
     ).toContain('Bend lick');
+    expect(el.querySelector('[data-testid="phrase-tag"]')?.textContent).toBe(
+      '#blues',
+    );
+    expect(el.querySelector('[data-testid="phrase-favorite"]')).not.toBeNull();
   });
 });

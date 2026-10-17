@@ -13,6 +13,7 @@ export const samplePhrase = (title: string): CreatePhraseRequest => ({
   context: { tuningMidi: [64, 59, 55, 50, 45, 40], capo: 0 },
   rhythmKnown: false,
   ticksPerQuarter: 480,
+  tags: [],
   events: [
     {
       id: 'e1',

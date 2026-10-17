@@ -6,6 +6,8 @@ import { FakeAiProvider } from './fake/fake-provider';
 const phrase: Phrase = {
   id: 'p1',
   revision: 3,
+  tags: [],
+  favorite: false,
   title: 'Bend lick',
   source: { bookTitle: 'Book' },
   context: {

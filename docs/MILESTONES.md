@@ -86,8 +86,8 @@
 
 **Goal:** Make repeated study useful over time.
 
-- [ ] Save and search phrases by key, technique, interval pattern, and source.
-- [ ] Add tags, personal annotations, and favorite phrases.
+- [x] Save and search phrases by key, technique, interval pattern, and source. *(The library page: words across title, book, song, author, notes and tags; key matched by meaning ("am" finds A minor); technique; consecutive interval patterns such as `m3 down, M2 up`. Facets are computed from the verified notes on each search, so they can't drift.)*
+- [x] Add tags, personal annotations, and favorite phrases. *(The phrase page's "In your library" panel: `PATCH /api/phrases/{id}/meta` with no revision bump, so analyses don't go stale; tags are lower-cased and de-duplicated.)*
 - [ ] Surface past practice sessions and pending review items.
 - [ ] Add authentication and per-user data isolation if deploying for multiple users.
 - [ ] Add observability, error handling, retry policy, and AI usage caps.

@@ -1,6 +1,12 @@
 import { CreatePhraseRequest, Phrase } from '@gsc/contracts';
 import { memoryStore } from './memory-store.testing';
-import { createPhrase, getPhrase, listPhrases, updateHarmony } from './phrases';
+import {
+  createPhrase,
+  getPhrase,
+  listPhrases,
+  updateHarmony,
+  updatePhraseMeta,
+} from './phrases';
 
 const valid: CreatePhraseRequest = {
   title: 'Lick',
@@ -27,7 +33,7 @@ describe('phrase handlers', () => {
     expect(created.status).toBe(201);
     const id = (created.body as Phrase).id;
     expect((await getPhrase(id, deps)).status).toBe(200);
-    expect((await listPhrases(deps)).body).toHaveLength(1);
+    expect((await listPhrases({}, deps)).body).toHaveLength(1);
   });
 
   it('hides other users phrases (404, not 403)', async () => {
@@ -134,6 +140,114 @@ describe('phrase handlers', () => {
       expect((await updateHarmony('nope', { revision: 1 }, deps)).status).toBe(
         404,
       );
+    });
+  });
+
+  describe('library', () => {
+    const note = (
+      order: number,
+      stringIndex: number,
+      fret: number,
+      techniques: string[] = [],
+    ) => ({
+      id: `e${order}`,
+      order,
+      stringIndex,
+      fret,
+      durationTicks: null,
+      techniques: techniques as never[],
+    });
+    async function seed() {
+      const deps = { store: memoryStore(), userId: 'u1' };
+      const add = (title: string, extra: object) =>
+        createPhrase({ ...valid, title, ...extra }, deps);
+      // A4 C5 D5: m3 up, M2 up; A minor; hammer-on.
+      await add('Minor run', {
+        context: { ...valid.context, key: 'Am' },
+        tags: ['Blues', 'warmup'],
+        notes: 'From the slow blues chapter',
+        events: [note(0, 0, 5), note(1, 0, 8, ['hammer-on']), note(2, 0, 10)],
+      });
+      // E5 D5: M2 down; G major.
+      await add('Major lick', {
+        context: { ...valid.context, key: 'G' },
+        events: [note(0, 0, 12), note(1, 0, 10, ['vibrato'])],
+      });
+      return deps;
+    }
+    const titles = async (
+      deps: Awaited<ReturnType<typeof seed>>,
+      q: Record<string, string>,
+    ) =>
+      ((await listPhrases(q, deps)).body as { title: string }[]).map(
+        (p) => p.title,
+      );
+
+    it('returns summaries with computed facets, newest first', async () => {
+      const deps = await seed();
+      const body = (await listPhrases({}, deps)).body as {
+        title: string;
+        tags: string[];
+        facets: object;
+      }[];
+      expect(body.map((p) => p.title)).toEqual(['Major lick', 'Minor run']);
+      expect(body[1]).toMatchObject({
+        tags: ['blues', 'warmup'],
+        favorite: false,
+        facets: {
+          key: 'A minor',
+          techniques: ['hammer-on'],
+          steps: ['m3 up', 'M2 up'],
+        },
+      });
+    });
+
+    it('filters by words, key meaning, technique, tag, and interval pattern', async () => {
+      const deps = await seed();
+      expect(await titles(deps, { q: 'slow BLUES' })).toEqual(['Minor run']);
+      expect(await titles(deps, { key: 'a minor' })).toEqual(['Minor run']);
+      expect(await titles(deps, { technique: 'vibrato' })).toEqual([
+        'Major lick',
+      ]);
+      expect(await titles(deps, { tag: 'Warmup' })).toEqual(['Minor run']);
+      expect(await titles(deps, { interval: 'm3 up, M2' })).toEqual([
+        'Minor run',
+      ]);
+      expect(await titles(deps, { interval: 'M2 down' })).toEqual([
+        'Major lick',
+      ]);
+      expect(await titles(deps, { interval: 'M2', key: 'G' })).toEqual([
+        'Major lick',
+      ]);
+    });
+
+    it('rejects searches it cannot understand', async () => {
+      const deps = await seed();
+      expect((await listPhrases({ interval: 'thirds' }, deps)).status).toBe(
+        400,
+      );
+      expect((await listPhrases({ key: 'H' }, deps)).status).toBe(400);
+    });
+
+    it('saves tags, favorite, and notes without a revision bump, and filters favorites', async () => {
+      const deps = await seed();
+      const [major] = (await listPhrases({}, deps)).body as { id: string }[];
+      const res = await updatePhraseMeta(
+        major.id,
+        { favorite: true, tags: ['  Fav ', 'fav'], notes: 'Try over E7' },
+        deps,
+      );
+      expect(res.body).toMatchObject({
+        favorite: true,
+        tags: ['fav'],
+        notes: 'Try over E7',
+        revision: 1,
+      });
+      expect(await titles(deps, { favorite: 'true' })).toEqual(['Major lick']);
+      expect((await updatePhraseMeta(major.id, {}, deps)).status).toBe(400);
+      expect(
+        (await updatePhraseMeta('nope', { favorite: true }, deps)).status,
+      ).toBe(404);
     });
   });
 });

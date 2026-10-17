@@ -1,14 +1,15 @@
-import { CreatePhraseRequest } from '@gsc/contracts';
+import { NewPhrase } from '@gsc/contracts';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { MongoConnection } from './mongo';
 import { PhraseRepository } from './phrase-repository';
 
-const input: CreatePhraseRequest = {
+const input: NewPhrase = {
   title: 'Bend lick',
   source: { bookTitle: 'Test Book', page: '63' },
   context: { tuningMidi: [64, 59, 55, 50, 45, 40], capo: 0 },
   rhythmKnown: false,
   ticksPerQuarter: 480,
+  tags: [],
   events: [
     {
       id: 'e1',
@@ -169,6 +170,43 @@ describe('PhraseRepository', () => {
       expect(await repo.saveExplanation('bob', created.id, explanation)).toBe(
         'not_found',
       );
+    });
+  });
+
+  describe('library fields', () => {
+    it('updates tags, favorite, and notes without a revision bump', async () => {
+      const created = await repo.create('gus', input);
+      expect(created).toMatchObject({ tags: [], favorite: false });
+      const updated = await repo.updateMeta('gus', created.id, {
+        favorite: true,
+        tags: ['blues'],
+      });
+      expect(updated).toMatchObject({
+        favorite: true,
+        tags: ['blues'],
+        revision: 1,
+      });
+      expect(
+        await repo.updateMeta('bob', created.id, { favorite: true }),
+      ).toBeNull();
+    });
+
+    it('defaults tags and favorite for phrases saved before they existed', async () => {
+      const created = await repo.create('hal', input);
+      await conn
+        .db()
+        .then((db) =>
+          db!
+            .collection('phrases')
+            .updateOne(
+              { title: input.title, userId: 'hal' },
+              { $unset: { tags: '', favorite: '' } },
+            ),
+        );
+      expect(await repo.get('hal', created.id)).toMatchObject({
+        tags: [],
+        favorite: false,
+      });
     });
   });
 });

@@ -1,13 +1,15 @@
 import {
-  CreatePhraseRequest,
   Explanation,
+  NewPhrase,
   Phrase,
-  PhraseSummary,
   UpdateHarmonyRequest,
+  UpdatePhraseMetaRequest,
 } from '@gsc/contracts';
 import { Collection, Db, ObjectId, WithId } from 'mongodb';
 
-interface PhraseDoc extends CreatePhraseRequest {
+interface PhraseDoc extends Omit<NewPhrase, 'tags'> {
+  tags?: string[];
+  favorite?: boolean;
   explanation?: Explanation;
   userId: string;
   revision: number;
@@ -32,7 +34,7 @@ export class PhraseRepository {
 
   async create(
     userId: string,
-    input: CreatePhraseRequest,
+    input: NewPhrase,
     now = new Date(),
   ): Promise<Phrase> {
     await this.ensureIndexes();
@@ -40,6 +42,7 @@ export class PhraseRepository {
       ...input,
       userId,
       revision: 1,
+      favorite: false,
       createdAt: now,
       updatedAt: now,
       schemaVersion: 1,
@@ -124,18 +127,30 @@ export class PhraseRepository {
     return exists ? 'conflict' : 'not_found';
   }
 
-  async list(userId: string, limit = 50): Promise<PhraseSummary[]> {
+  /** Newest first. Full phrases: the library computes facets from the notes. */
+  async list(userId: string, limit = 500): Promise<Phrase[]> {
     const docs = await this.collection
-      .find({ userId }, { projection: { title: 1, source: 1, createdAt: 1 } })
-      .sort({ createdAt: -1 })
+      .find({ userId })
+      .sort({ createdAt: -1, _id: -1 })
       .limit(limit)
       .toArray();
-    return docs.map((d) => ({
-      id: d._id.toHexString(),
-      title: d.title,
-      source: d.source,
-      createdAt: d.createdAt.toISOString(),
-    }));
+    return docs.map(toPhrase);
+  }
+
+  /** Tags, favorite, and notes; these don't change the music, so no revision bump. */
+  async updateMeta(
+    userId: string,
+    id: string,
+    meta: UpdatePhraseMetaRequest,
+    now = new Date(),
+  ): Promise<Phrase | null> {
+    if (!ObjectId.isValid(id)) return null;
+    const doc = await this.collection.findOneAndUpdate(
+      { _id: new ObjectId(id), userId },
+      { $set: { ...meta, updatedAt: now } },
+      { returnDocument: 'after' },
+    );
+    return doc ? toPhrase(doc) : null;
   }
 }
 
@@ -144,6 +159,9 @@ function toPhrase(doc: WithId<PhraseDoc>): Phrase {
   const { _id, userId, schemaVersion, createdAt, updatedAt, ...rest } = doc;
   return {
     ...rest,
+    // Phrases saved before the library existed have neither field.
+    tags: rest.tags ?? [],
+    favorite: rest.favorite ?? false,
     id: _id.toHexString(),
     createdAt: createdAt.toISOString(),
     updatedAt: updatedAt.toISOString(),

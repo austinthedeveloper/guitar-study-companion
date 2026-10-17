@@ -13,6 +13,90 @@ test.describe('My phrases page', { tag: routeTag(ROUTE_PATHS.phrases) }, () => {
     await expect(page.getByTestId('phrase-heading')).toHaveText(phrase.title);
   });
 
+  test('searches by words, key, technique, interval pattern, tag, and favorites', async ({
+    page,
+    request,
+  }) => {
+    const run = `lib${Date.now()}`;
+    // A4 C5 D5 in A minor: m3 up, M2 up.
+    const minor = await createPhrase(
+      request,
+      `${run} minor run`,
+      { key: 'Am' },
+      highStringLick(5, 8, 10),
+    );
+    // Sample phrase: E5 bent to F#5, then G5; with a bend.
+    await createPhrase(request, `${run} bend lick`, { key: 'G' });
+    await page.goto('/phrases');
+    const rows = page.getByTestId('phrase-list').locator('li');
+    await page.getByTestId('filter-q').fill(run);
+    await expect(rows).toHaveCount(2);
+
+    await page.getByTestId('filter-key').fill('am');
+    await expect(rows).toHaveCount(1);
+    await expect(rows.first()).toContainText('minor run');
+    await expect(rows.first()).toContainText('A minor');
+    await page.getByTestId('filter-key').fill('');
+    await page.getByTestId('filter-technique').selectOption('bend');
+    await expect(rows).toHaveCount(1);
+    await expect(rows.first()).toContainText('bend lick');
+    await page.getByTestId('filter-technique').selectOption('');
+    await page.getByTestId('filter-interval').fill('m3 up, M2');
+    await expect(rows).toHaveCount(1);
+    await expect(rows.first()).toContainText('minor run');
+    await page.getByTestId('filter-interval').fill('thirds');
+    await expect(page.getByTestId('library-search-error')).toContainText(
+      'Use interval names',
+    );
+    await page.getByTestId('filter-interval').fill('P5 up');
+    await expect(page.getByTestId('library-no-match')).toBeVisible();
+
+    // Favorite, tag, and annotate from the phrase page.
+    await page.goto(`/phrases/${minor.id}`);
+    await page.getByTestId('meta-favorite').click();
+    await page.getByTestId('meta-tags').fill('Warmup, blues');
+    await page.getByTestId('meta-notes').fill('Good for the slow blues.');
+    await page.getByTestId('meta-save').click();
+    await expect(page.getByTestId('meta-status')).toHaveText('Saved');
+    await page.reload();
+    await expect(page.getByTestId('meta-favorite')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await expect(page.getByTestId('meta-tags')).toHaveValue('warmup, blues');
+
+    await page.goto('/phrases');
+    await page.getByTestId('filter-q').fill(run);
+    await page.getByTestId('filter-favorite').check();
+    await expect(rows).toHaveCount(1);
+    await expect(rows.first().getByTestId('phrase-favorite')).toBeVisible();
+    await page.getByTestId('filter-favorite').uncheck();
+    await page.getByTestId('filter-tag').fill('warmup');
+    await expect(rows).toHaveCount(1);
+    await expect(rows.first().getByTestId('phrase-tag')).toHaveText([
+      '#warmup',
+      '#blues',
+    ]);
+    await page.getByTestId('filter-tag').fill('');
+    await page.getByTestId('filter-q').fill(`${run} slow blues`);
+    await expect(rows).toHaveCount(1);
+    await expectNoA11yViolations(page);
+  });
+
+  test('saving library fields keeps unsaved harmony edits', async ({
+    page,
+    request,
+  }) => {
+    const phrase = await createPhrase(request, `Keep edits ${Date.now()}`);
+    await page.goto(`/phrases/${phrase.id}`);
+    await page.getByTestId('harmony-key').fill('E');
+    await page.getByTestId('meta-tags').fill('later');
+    await page.getByTestId('meta-save').click();
+    await expect(page.getByTestId('meta-status')).toHaveText('Saved');
+    await expect(page.getByTestId('harmony-key')).toHaveValue('E');
+    await expect(page.getByTestId('harmony-dirty')).toBeVisible();
+  });
+
   test('shows an empty state', async ({ page }) => {
     await page.route('**/api/phrases', (route) => route.fulfill({ json: [] }));
     await page.goto('/phrases');

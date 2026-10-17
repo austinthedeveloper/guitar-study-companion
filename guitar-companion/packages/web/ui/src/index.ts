@@ -18,3 +18,5 @@ export * from './lib/exercise-card/exercise-card';
 export * from './lib/plan-settings/plan-settings';
 export * from './lib/transpose-compare/transpose-compare';
 export * from './lib/transpose-form/transpose-form';
+export * from './lib/library-filters/library-filters';
+export * from './lib/phrase-meta/phrase-meta';

@@ -5,6 +5,7 @@ import {
   getPhrase,
   listPhrases,
   updateHarmony,
+  updatePhraseMeta,
 } from '@gsc/api/handlers';
 import { appContext, currentUserId } from '../composition';
 import { readJson, safe } from '../http';
@@ -27,8 +28,8 @@ app.http('phrases-list', {
   methods: ['GET'],
   authLevel: 'anonymous',
   route: 'phrases',
-  handler: safe(async () =>
-    listPhrases({
+  handler: safe(async (req) =>
+    listPhrases(Object.fromEntries(req.query.entries()), {
       store: await appContext().phrases(),
       userId: currentUserId(),
     }),
@@ -78,6 +79,20 @@ app.http('phrases-explain', {
         ? (req.headers.get('x-gsc-fake-scenario') ?? undefined)
         : undefined,
       log: (message, data) => ctx.log(message, JSON.stringify(data ?? {})),
+    });
+  }),
+});
+
+app.http('phrases-update-meta', {
+  methods: ['PATCH'],
+  authLevel: 'anonymous',
+  route: 'phrases/{id}/meta',
+  handler: safe(async (req) => {
+    const body = await readJson(req);
+    if (!body.ok) return body.res;
+    return updatePhraseMeta(req.params['id'] ?? '', body.body, {
+      store: await appContext().phrases(),
+      userId: currentUserId(),
     });
   }),
 });

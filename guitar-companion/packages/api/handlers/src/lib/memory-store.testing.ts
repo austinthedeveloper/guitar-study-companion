@@ -11,6 +11,7 @@ export function memoryStore(): PhraseStore {
         ...input,
         id: String(rows.length + 1),
         revision: 1,
+        favorite: false,
         createdAt: '2026-10-13T00:00:00.000Z',
         updatedAt: '2026-10-13T00:00:00.000Z',
       };
@@ -51,12 +52,16 @@ export function memoryStore(): PhraseStore {
     async list(userId) {
       return rows
         .filter((r) => r.userId === userId)
-        .map(({ id, title, source, createdAt }) => ({
-          id,
-          title,
-          source,
-          createdAt,
-        }));
+        .reverse()
+        .map(({ userId: _u, ...p }) => p);
+    },
+    async updateMeta(userId, id, meta) {
+      const row = rows.find((r) => r.id === id && r.userId === userId);
+      if (!row) return null;
+      Object.assign(row, meta);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { userId: _u, ...p } = row;
+      return p;
     },
   };
 }

@@ -7,7 +7,9 @@ import {
   PhraseSchema,
   PhraseSummary,
   PhraseSummarySchema,
+  PhraseQuery,
   UpdateHarmonyRequest,
+  UpdatePhraseMetaRequest,
 } from '@gsc/contracts';
 import { map, Observable } from 'rxjs';
 
@@ -39,9 +41,19 @@ export class PhrasesApi {
       .pipe(map((b) => PhraseSchema.parse(b)));
   }
 
-  list(): Observable<PhraseSummary[]> {
+  /** The library, optionally filtered (see PhraseQuery). */
+  list(query: PhraseQuery = {}): Observable<PhraseSummary[]> {
+    const params = Object.fromEntries(
+      Object.entries(query).filter(([, v]) => v !== undefined && v !== ''),
+    ) as Record<string, string>;
     return this.http
-      .get<unknown>(API_PATHS.phrases)
+      .get<unknown>(API_PATHS.phrases, { params })
       .pipe(map((b) => PhraseSummarySchema.array().parse(b)));
+  }
+
+  updateMeta(id: string, meta: UpdatePhraseMetaRequest): Observable<Phrase> {
+    return this.http
+      .patch<unknown>(API_PATHS.phraseMeta(id), meta)
+      .pipe(map((b) => PhraseSchema.parse(b)));
   }
 }

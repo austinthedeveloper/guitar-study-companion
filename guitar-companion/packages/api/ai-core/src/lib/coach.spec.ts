@@ -7,6 +7,8 @@ import { FakeAiProvider } from './fake/fake-provider';
 const phrase: Phrase = {
   id: 'p1',
   revision: 1,
+  tags: [],
+  favorite: false,
   title: 'Bend lick',
   source: { bookTitle: 'Book' },
   context: { tuningMidi: [64, 59, 55, 50, 45, 40], capo: 0, chords: 'E7' },

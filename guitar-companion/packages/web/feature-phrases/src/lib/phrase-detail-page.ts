@@ -7,6 +7,7 @@ import {
   inject,
   input,
   signal,
+  untracked,
 } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -32,6 +33,8 @@ import {
   ExplanationComponent,
   HarmonyFormComponent,
   NoteFactsComponent,
+  PhraseMetaComponent,
+  PhraseMetaValue,
   ScaleCandidatesComponent,
   TabEditorComponent,
 } from '@gsc/web/ui';
@@ -44,6 +47,7 @@ import { firstValueFrom } from 'rxjs';
     ExplanationComponent,
     HarmonyFormComponent,
     NoteFactsComponent,
+    PhraseMetaComponent,
     ScaleCandidatesComponent,
     TabEditorComponent,
     RouterLink,
@@ -173,6 +177,12 @@ import { firstValueFrom } from 'rxjs';
           (chordChange)="placeChord($event.order, $event.chord)"
         />
         <gsc-scale-candidates [analysis]="scales()" />
+        <gsc-phrase-meta
+          [value]="{ tags: p.tags, favorite: p.favorite, notes: p.notes ?? '' }"
+          [saving]="metaSaving()"
+          [status]="metaStatus()"
+          (save)="saveMeta(p, $event)"
+        />
         <gsc-explanation
           [explanation]="p.explanation ?? null"
           [stale]="
@@ -311,6 +321,24 @@ export class PhraseDetailPage {
     }
   }
 
+  protected readonly metaSaving = signal(false);
+  protected readonly metaStatus = signal<string | null>(null);
+
+  protected async saveMeta(p: Phrase, meta: PhraseMetaValue): Promise<void> {
+    this.metaSaving.set(true);
+    this.metaStatus.set(null);
+    try {
+      const updated = await firstValueFrom(this.api.updateMeta(p.id, meta));
+      // Library fields don't touch the music, so no revision or stale state.
+      this.phrase.value.set(updated);
+      this.metaStatus.set('Saved');
+    } catch (err) {
+      this.metaStatus.set(`Not saved: ${toClientError(err).message}`);
+    } finally {
+      this.metaSaving.set(false);
+    }
+  }
+
   protected readonly dirty = computed(() => {
     const ctx = this.loaded()?.context;
     if (!ctx) return false;
@@ -323,8 +351,14 @@ export class PhraseDetailPage {
   });
 
   constructor() {
+    // Reset harmony edits only for a different phrase or revision, so saving
+    // library fields (which replaces the loaded phrase) keeps unsaved edits.
+    const version = computed(
+      () => `${this.loaded()?.id}:${this.loaded()?.revision}`,
+    );
     effect(() => {
-      const ctx = this.loaded()?.context;
+      version();
+      const ctx = untracked(() => this.loaded()?.context);
       this.keyText.set(ctx?.key ?? '');
       this.chordsText.set(ctx?.chords ?? '');
       this.changes.set(ctx?.chordChanges ?? []);

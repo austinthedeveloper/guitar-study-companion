@@ -10,3 +10,4 @@ export * from './lib/harmony';
 export * from './lib/practice';
 export * from './lib/transpose';
 export * from './lib/variations';
+export * from './lib/facets';

@@ -5,8 +5,18 @@ import {
   PhraseSummary,
   UpdateHarmonyRequest,
   UpdateHarmonyRequestSchema,
+  UpdatePhraseMetaRequest,
+  UpdatePhraseMetaRequestSchema,
+  PhraseQuerySchema,
 } from '@gsc/contracts';
-import { validateEvents } from '@gsc/music-domain';
+import {
+  formatKey,
+  matchesIntervalPattern,
+  parseIntervalPattern,
+  parseKey,
+  phraseFacets,
+  validateEvents,
+} from '@gsc/music-domain';
 import { apiError, HandlerResponse, staleRevision, zodIssues } from './http';
 
 /** Persistence port; implemented by @gsc/api/data-access PhraseRepository. */
@@ -16,7 +26,13 @@ export interface PhraseStore {
     input: ReturnType<typeof CreatePhraseRequestSchema.parse>,
   ): Promise<Phrase>;
   get(userId: string, id: string): Promise<Phrase | null>;
-  list(userId: string): Promise<PhraseSummary[]>;
+  /** All of a user's phrases, newest first. */
+  list(userId: string): Promise<Phrase[]>;
+  updateMeta(
+    userId: string,
+    id: string,
+    meta: UpdatePhraseMetaRequest,
+  ): Promise<Phrase | null>;
   updateHarmony(
     userId: string,
     id: string,
@@ -80,8 +96,96 @@ export async function getPhrase(
     : apiError(404, 'not_found', 'Phrase not found.');
 }
 
-export async function listPhrases(deps: PhraseDeps): Promise<HandlerResponse> {
-  return { status: 200, body: await deps.store.list(deps.userId) };
+/**
+ * The library: every phrase with its computed facets, filtered by the
+ * query. Facets come from the verified notes each time, so they can't
+ * drift from the music.
+ */
+export async function listPhrases(
+  query: Record<string, string | undefined>,
+  deps: PhraseDeps,
+): Promise<HandlerResponse> {
+  const parsed = PhraseQuerySchema.safeParse(query);
+  if (!parsed.success)
+    return apiError(400, 'validation_failed', 'Invalid search.', {
+      issues: zodIssues(parsed.error),
+    });
+  const q = parsed.data;
+  const pattern = q.interval ? parseIntervalPattern(q.interval) : null;
+  if (q.interval && !pattern)
+    return apiError(
+      400,
+      'validation_failed',
+      'Interval pattern not understood.',
+      {
+        issues: [
+          {
+            path: 'interval',
+            message:
+              'Use interval names like "m3 down, M2 up" (P1 m2 M2 m3 M3 P4 TT P5 ...).',
+          },
+        ],
+      },
+    );
+  const wantKey = q.key ? parseKey(q.key) : null;
+  if (q.key && !wantKey)
+    return apiError(400, 'validation_failed', 'Key not understood.', {
+      issues: [{ path: 'key', message: 'Use a key like A, F#m, or Bb minor.' }],
+    });
+  const words = (q.q ?? '').toLowerCase().split(/\s+/).filter(Boolean);
+
+  const summaries: PhraseSummary[] = [];
+  for (const p of await deps.store.list(deps.userId)) {
+    const facets = phraseFacets({
+      events: p.events,
+      tuningMidi: p.context.tuningMidi,
+      capo: p.context.capo,
+      key: p.context.key,
+    });
+    const text = [
+      p.title,
+      p.source.bookTitle,
+      p.source.songTitle,
+      p.source.author,
+      p.notes,
+      ...p.tags,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    if (words.some((w) => !text.includes(w))) continue;
+    if (wantKey && facets.key !== formatKey(wantKey)) continue;
+    if (q.technique && !facets.techniques.includes(q.technique)) continue;
+    if (q.tag && !p.tags.includes(q.tag)) continue;
+    if (q.favorite !== undefined && p.favorite !== q.favorite) continue;
+    if (pattern && !matchesIntervalPattern(facets.steps, pattern)) continue;
+    summaries.push({
+      id: p.id,
+      title: p.title,
+      source: p.source,
+      createdAt: p.createdAt,
+      tags: p.tags,
+      favorite: p.favorite,
+      facets,
+    });
+  }
+  return { status: 200, body: summaries };
+}
+
+export async function updatePhraseMeta(
+  id: string,
+  body: unknown,
+  deps: PhraseDeps,
+): Promise<HandlerResponse> {
+  const parsed = UpdatePhraseMetaRequestSchema.safeParse(body);
+  if (!parsed.success)
+    return apiError(400, 'validation_failed', 'Invalid update.', {
+      issues: zodIssues(parsed.error),
+    });
+  const phrase = await deps.store.updateMeta(deps.userId, id, parsed.data);
+  return phrase
+    ? { status: 200, body: phrase }
+    : apiError(404, 'not_found', 'Phrase not found.');
 }
 
 export async function updateHarmony(

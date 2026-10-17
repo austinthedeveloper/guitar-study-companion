@@ -694,6 +694,7 @@ export class TransposePage {
             durationTicks: v.rhythmKnown ? (e.durationTicks ?? 480) : null,
           })),
           notes: note || undefined,
+          tags: p.tags,
           derivedFrom: {
             phraseId: p.id,
             revision: p.revision,
