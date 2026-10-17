@@ -17,7 +17,9 @@ export function toClientError(err: unknown): ClientError {
       const e = parsed.data.error;
       return {
         code: e.code,
-        message: e.message,
+        message: e.errorId
+          ? `${e.message} (Reference: ${e.errorId})`
+          : e.message,
         retryable: e.retryable,
         issues: e.issues ?? [],
         status: err.status,

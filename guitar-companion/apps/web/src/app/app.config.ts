@@ -1,4 +1,9 @@
-import { provideHttpClient, withFetch } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withFetch,
+  withInterceptors,
+} from '@angular/common/http';
+import { retryInterceptor } from '@gsc/web/data-access';
 import {
   ApplicationConfig,
   provideBrowserGlobalErrorListeners,
@@ -11,7 +16,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideZonelessChangeDetection(),
-    provideHttpClient(withFetch()),
+    provideHttpClient(withFetch(), withInterceptors([retryInterceptor])),
     provideRouter(appRoutes, withComponentInputBinding()),
   ],
 };

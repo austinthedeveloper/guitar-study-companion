@@ -75,6 +75,7 @@ app.http('phrases-explain', {
       userId: currentUserId(),
       ai: app.ai,
       timeoutMs: app.aiTimeoutMs,
+      allowance: await app.allowance(),
       scenario: app.e2eMode
         ? (req.headers.get('x-gsc-fake-scenario') ?? undefined)
         : undefined,

@@ -25,6 +25,8 @@ export const ApiErrorSchema = z.object({
       .array(z.object({ path: z.string(), message: z.string() }))
       .optional(),
     retryable: z.boolean(),
+    /** Reference for unexpected errors, matching the server logs. */
+    errorId: z.string().max(40).optional(),
   }),
 });
 export type ApiError = z.infer<typeof ApiErrorSchema>;

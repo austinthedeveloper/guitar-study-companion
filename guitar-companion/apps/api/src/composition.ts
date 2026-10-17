@@ -8,7 +8,13 @@ import {
   MongoConnection,
   PhraseRepository,
   PracticeRepository,
+  UsageRepository,
 } from '@gsc/api/data-access';
+import {
+  AiAllowance,
+  DEFAULT_AI_LIMITS,
+  memoryUsageStore,
+} from '@gsc/api/handlers';
 
 /** Per-worker singletons built from app settings. */
 export interface AppContext {
@@ -20,6 +26,8 @@ export interface AppContext {
   e2eMode: boolean;
   phrases(): Promise<PhraseRepository>;
   practice(): Promise<PracticeRepository>;
+  /** Per-user daily AI allowance (in memory when there is no database). */
+  allowance(): Promise<AiAllowance>;
 }
 
 let context: AppContext | null = null;
@@ -32,6 +40,7 @@ export function appContext(): AppContext {
   );
   let repo: PhraseRepository | null = null;
   let practiceRepo: PracticeRepository | null = null;
+  let allowance: AiAllowance | null = null;
   context = {
     version: process.env['APP_VERSION'] || 'dev',
     ai: createAiProviderSafely(process.env, (reason) =>
@@ -47,6 +56,21 @@ export function appContext(): AppContext {
       if (!db) throw new Error('MONGODB_URI is not configured');
       repo = new PhraseRepository(db);
       return repo;
+    },
+    async allowance() {
+      if (allowance) return allowance;
+      const db = await mongo.db().catch(() => null);
+      allowance = new AiAllowance(
+        db ? new UsageRepository(db) : memoryUsageStore(),
+        {
+          requests:
+            Number(process.env['AI_DAILY_REQUESTS']) ||
+            DEFAULT_AI_LIMITS.requests,
+          tokens:
+            Number(process.env['AI_DAILY_TOKENS']) || DEFAULT_AI_LIMITS.tokens,
+        },
+      );
+      return allowance;
     },
     async practice() {
       if (practiceRepo) return practiceRepo;

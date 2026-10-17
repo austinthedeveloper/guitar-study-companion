@@ -1,5 +1,6 @@
 import { ExplainRequestSchema, Explanation } from '@gsc/contracts';
 import { AiError, AiProvider, explainPhrase } from '@gsc/api/ai-core';
+import { AiAllowance } from './ai-allowance';
 import { apiError, HandlerResponse, staleRevision, zodIssues } from './http';
 import { PhraseStore } from './phrases';
 
@@ -12,6 +13,8 @@ export interface ExplainDeps {
   scenario?: string;
   log?: (message: string, data?: Record<string, unknown>) => void;
   now?: () => Date;
+  /** Daily AI allowance; checked before and recorded after the call. */
+  allowance?: AiAllowance;
 }
 
 const AI_STATUS: Record<AiError['code'], { status: number; message: string }> =
@@ -49,11 +52,15 @@ export async function explainPhraseHandler(
   if (!phrase) return apiError(404, 'not_found', 'Phrase not found.');
   if (phrase.revision !== parsed.data.revision) return staleRevision();
 
+  const refused = await deps.allowance?.check(deps.userId, deps.scenario);
+  if (refused) return refused;
+
   try {
     const result = await explainPhrase(deps.ai, phrase, {
       timeoutMs: deps.timeoutMs,
       scenario: deps.scenario,
     });
+    await deps.allowance?.record(deps.userId, 1, result.usage);
     // Log usage and counts only, never musical content.
     deps.log?.('explain.ok', {
       provider: deps.ai.name,

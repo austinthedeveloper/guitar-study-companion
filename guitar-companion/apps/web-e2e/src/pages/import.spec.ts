@@ -202,6 +202,7 @@ test.describe('Import page', { tag: routeTag(ROUTE_PATHS.import) }, () => {
       ['unavailable', 'unavailable'],
       ['invalid-output', 'unusable result'],
       ['timeout', 'took too long'],
+      ['over-limit', "used today's AI allowance"],
     ] as const) {
       test(`${scenario}: shows a message and offers retry and manual entry`, async ({
         page,

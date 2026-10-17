@@ -6,3 +6,4 @@ export * from './lib/interpret';
 export * from './lib/phrases';
 export * from './lib/practice';
 export * from './lib/review';
+export * from './lib/ai-allowance';

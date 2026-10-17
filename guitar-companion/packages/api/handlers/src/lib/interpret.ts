@@ -5,6 +5,7 @@ import {
 } from '@gsc/contracts';
 import { AiError, AiProvider, interpretTab } from '@gsc/api/ai-core';
 import { apiError, HandlerResponse, zodIssues } from './http';
+import { AiAllowance } from './ai-allowance';
 import { sniffImageType } from './image-bytes';
 
 export interface InterpretDeps {
@@ -15,6 +16,9 @@ export interface InterpretDeps {
   /** Fake-provider scenario; only passed through when E2E_MODE is enabled. */
   scenario?: string;
   log?: (message: string, data?: Record<string, unknown>) => void;
+  /** Daily AI allowance; checked before and recorded after the call. */
+  allowance?: AiAllowance;
+  userId?: string;
 }
 
 const AI_STATUS: Record<AiError['code'], { status: number; message: string }> =
@@ -85,6 +89,10 @@ export async function interpretImport(
     );
   }
 
+  const userId = deps.userId ?? 'anonymous';
+  const refused = await deps.allowance?.check(userId, deps.scenario);
+  if (refused) return refused;
+
   try {
     const result = await interpretTab(
       deps.ai,
@@ -101,6 +109,7 @@ export async function interpretImport(
       inputTokens: result.usage?.inputTokens,
       outputTokens: result.usage?.outputTokens,
     });
+    await deps.allowance?.record(userId, deps.passes ?? 1, result.usage);
     const response: InterpretResponse = result;
     return { status: 200, body: response };
   } catch (err) {

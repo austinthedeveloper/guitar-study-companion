@@ -55,12 +55,27 @@ export function safe(
     try {
       return toHttp(await fn(req, ctx));
     } catch (err) {
-      ctx.error('unhandled', err instanceof Error ? err.message : String(err));
-      return toHttp(
-        apiError(500, 'internal', 'Something went wrong. Please try again.', {
-          retryable: true,
+      // The invocation id is indexed by Application Insights, so a user's
+      // reference finds the full log entry.
+      const errorId = ctx.invocationId.slice(0, 8);
+      ctx.error(
+        'unhandled',
+        JSON.stringify({
+          errorId,
+          route: req.url ? new URL(req.url).pathname : undefined,
+          message: err instanceof Error ? err.message : String(err),
         }),
       );
+      const res = apiError(
+        500,
+        'internal',
+        'Something went wrong. Please try again.',
+        { retryable: true },
+      );
+      return toHttp({
+        ...res,
+        body: { error: { ...res.body.error, errorId } },
+      });
     }
   };
 }

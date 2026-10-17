@@ -1,6 +1,6 @@
 import { app } from '@azure/functions';
 import { interpretImport } from '@gsc/api/handlers';
-import { appContext } from '../composition';
+import { appContext, currentUserId } from '../composition';
 import { readJson, safe } from '../http';
 
 app.http('imports-interpret', {
@@ -15,6 +15,8 @@ app.http('imports-interpret', {
       ai: app.ai,
       timeoutMs: app.aiTimeoutMs,
       passes: app.aiPasses,
+      allowance: await app.allowance(),
+      userId: currentUserId(),
       scenario: app.e2eMode
         ? (req.headers.get('x-gsc-fake-scenario') ?? undefined)
         : undefined,

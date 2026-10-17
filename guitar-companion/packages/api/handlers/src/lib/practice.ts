@@ -9,6 +9,7 @@ import {
 import { AiError, AiProvider, coachExercises } from '@gsc/api/ai-core';
 import { planForPhrase } from '@gsc/music-domain';
 import { apiError, HandlerResponse, staleRevision, zodIssues } from './http';
+import { AiAllowance } from './ai-allowance';
 import { PhraseStore } from './phrases';
 
 /** Persistence port; implemented by @gsc/api/data-access PracticeRepository. */
@@ -39,6 +40,8 @@ export interface PracticeDeps {
   /** Fake-provider scenario; only passed through when E2E_MODE is enabled. */
   scenario?: string;
   log?: (message: string, data?: Record<string, unknown>) => void;
+  /** Daily AI allowance; when used up, plans are built without AI tips. */
+  allowance?: AiAllowance;
 }
 
 /**
@@ -75,28 +78,32 @@ export async function createPlan(
   let exercises: Exercise[] = accepted.map((x) => ({ ...x, coaching: [] }));
 
   let coachedBy: PracticePlan['coachedBy'] = null;
-  try {
-    const coaching = await coachExercises(deps.ai, phrase, exercises, {
-      timeoutMs: deps.timeoutMs,
-      scenario: deps.scenario,
-    });
-    exercises = exercises.map((x) => ({
-      ...x,
-      coaching: coaching.tips[x.id] ?? [],
-    }));
-    coachedBy = { provider: deps.ai.name, model: coaching.model };
-    deps.log?.('coach.ok', {
-      provider: deps.ai.name,
-      model: coaching.model,
-      exercises: exercises.length,
-      droppedTips: coaching.droppedTips,
-      inputTokens: coaching.usage?.inputTokens,
-      outputTokens: coaching.usage?.outputTokens,
-    });
-  } catch (err) {
-    if (!(err instanceof AiError)) throw err;
-    deps.log?.('coach.ai_error', { code: err.code, provider: deps.ai.name });
-  }
+  const overLimit = await deps.allowance?.check(deps.userId, deps.scenario);
+  if (overLimit) deps.log?.('coach.skipped', { reason: 'allowance' });
+  else
+    try {
+      const coaching = await coachExercises(deps.ai, phrase, exercises, {
+        timeoutMs: deps.timeoutMs,
+        scenario: deps.scenario,
+      });
+      exercises = exercises.map((x) => ({
+        ...x,
+        coaching: coaching.tips[x.id] ?? [],
+      }));
+      coachedBy = { provider: deps.ai.name, model: coaching.model };
+      await deps.allowance?.record(deps.userId, 1, coaching.usage);
+      deps.log?.('coach.ok', {
+        provider: deps.ai.name,
+        model: coaching.model,
+        exercises: exercises.length,
+        droppedTips: coaching.droppedTips,
+        inputTokens: coaching.usage?.inputTokens,
+        outputTokens: coaching.usage?.outputTokens,
+      });
+    } catch (err) {
+      if (!(err instanceof AiError)) throw err;
+      deps.log?.('coach.ai_error', { code: err.code, provider: deps.ai.name });
+    }
 
   const plan = await deps.practice.createPlan(deps.userId, {
     phraseId: phrase.id,

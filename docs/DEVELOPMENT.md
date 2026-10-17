@@ -77,6 +77,8 @@ Module boundaries are enforced by lint (`eslint.config.mjs`):
 | `APP_VERSION` | `dev` | Version reported by `/api/health` |
 | `AI_PROVIDER` | `fake` | `fake`, `openai`, or `claude` |
 | `AI_TIMEOUT_MS` | `60000` | Recognition request timeout |
+| `AI_DAILY_REQUESTS` | `50` | Per-user AI requests per UTC day; then recognition and explanations return 429 and plans skip AI tips |
+| `AI_DAILY_TOKENS` | `300000` | Per-user AI tokens (input + output) per UTC day |
 | `AI_PASSES` | `2` | Parallel readings per image; disagreements are flagged for review (cost scales with this) |
 | `AI_MAX_OUTPUT_TOKENS` | provider default | Output token cap |
 | `OPENAI_API_KEY` / `OPENAI_MODEL` | *(empty)* | Required for `openai` (vision-capable model) |
@@ -91,6 +93,13 @@ Module boundaries are enforced by lint (`eslint.config.mjs`):
 - **API:** `nx build api` produces a single esbuild bundle in `dist/apps/api`: `main.js`, `host.json` and `package.json`, with `@azure/functions-core` supplied by the host. Deploy it as the Static Web App's **managed functions** for MVP, which gives a single resource, same-origin `/api`, and built-in auth. Move to a linked "bring your own" Function App only if we need features managed functions lack (non-HTTP triggers, longer timeouts, managed identity).
 - **DB:** MongoDB Atlas, with network access restricted and the connection string in app settings.
 - **Open:** a minimal deployed spike is still needed to confirm the bundle runs under SWA managed functions (see ARCHITECTURE.md).
+
+## Observability and failure handling
+
+- **Logs:** handlers log structured events with counts and token usage only, never images or musical content (`interpret.ok`, `explain.ok`, `coach.ok`, `coach.skipped`, `*.ai_error`). The Functions host sends them to Application Insights once the Function App has `APPLICATIONINSIGHTS_CONNECTION_STRING` set (a deployment setting; nothing to change in code).
+- **Unexpected errors** return a generic 500 with `errorId`, the first 8 characters of the Functions invocation id. The UI shows it as "Reference: …", and the same id is in the `unhandled` log entry, which Application Insights indexes by invocation id.
+- **Retries:** the web client retries GETs up to twice (300 ms, then 900 ms) on network errors and 502/503/504. Writes and AI requests are never retried automatically. AI SDK clients make one retry of their own (`maxRetries: 1`).
+- **AI allowance:** per user per UTC day, `AI_DAILY_REQUESTS` (default 50; a 2-pass recognition counts 2) and `AI_DAILY_TOKENS` (default 300k). Over the limit, recognition and explanations return 429 `rate_limited`, and practice plans are still built but without AI tips. Counters are in the `aiUsage` collection, or in memory without a database.
 
 ## Estimated per-request cost drivers
 

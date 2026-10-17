@@ -2,6 +2,7 @@ import { PracticePlanSchema } from '@gsc/contracts';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { MongoConnection } from './mongo';
 import { PracticeRepository } from './practice-repository';
+import { UsageRepository } from './usage-repository';
 
 const plan = {
   phraseId: 'phrase1',
@@ -110,5 +111,41 @@ describe('PracticeRepository', () => {
     expect(await repo.getSession('ivy', gone.id)).toBeNull();
     expect(await repo.getPlan('ivy', kept.id)).not.toBeNull();
     expect(await repo.getSession('ivy', kept.id)).not.toBeNull();
+  });
+});
+
+describe('UsageRepository', () => {
+  let server: MongoMemoryServer;
+  let conn: MongoConnection;
+  let repo: UsageRepository;
+
+  beforeAll(async () => {
+    server = await MongoMemoryServer.create();
+    conn = new MongoConnection(server.getUri(), 'test');
+    const db = await conn.db();
+    if (!db) throw new Error('no db');
+    repo = new UsageRepository(db);
+  }, 60_000);
+
+  afterAll(async () => {
+    await conn.close();
+    await server.stop();
+  });
+
+  it('counts per user and day, atomically under concurrency', async () => {
+    const one = { requests: 1, inputTokens: 10, outputTokens: 5 };
+    await Promise.all(
+      Array.from({ length: 10 }, () => repo.add('u1', '2026-10-16', one)),
+    );
+    expect(await repo.get('u1', '2026-10-16')).toEqual({
+      requests: 10,
+      inputTokens: 100,
+      outputTokens: 50,
+    });
+    expect(await repo.get('u1', '2026-10-17')).toEqual({
+      requests: 0,
+      inputTokens: 0,
+      outputTokens: 0,
+    });
   });
 });

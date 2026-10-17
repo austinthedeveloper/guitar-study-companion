@@ -1,5 +1,6 @@
 import { FakeAiProvider } from '@gsc/api/ai-core';
 import { MAX_CROP_BYTES } from '@gsc/contracts';
+import { AiAllowance, memoryUsageStore } from './ai-allowance';
 import { interpretImport } from './interpret';
 
 const PNG = Buffer.from([
@@ -96,5 +97,20 @@ describe('interpretImport', () => {
       'interpret.ok',
       expect.objectContaining({ provider: 'fake', events: 7 }),
     );
+  });
+
+  it('refuses with 429 when the AI allowance is used up, and records use', async () => {
+    const store = memoryUsageStore();
+    const allowance = new AiAllowance(store, { requests: 2, tokens: 1e6 });
+    const deps = {
+      ai: new FakeAiProvider(),
+      passes: 2,
+      allowance,
+      userId: 'u1',
+    };
+    expect((await interpretImport(body(), deps)).status).toBe(200);
+    const res = await interpretImport(body(), deps);
+    expect(res.status).toBe(429);
+    expect(res.body).toMatchObject({ error: { code: 'rate_limited' } });
   });
 });

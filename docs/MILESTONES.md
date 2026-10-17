@@ -90,7 +90,7 @@
 - [x] Add tags, personal annotations, and favorite phrases. *(The phrase page's "In your library" panel: `PATCH /api/phrases/{id}/meta` with no revision bump, so analyses don't go stale; tags are lower-cased and de-duplicated.)*
 - [x] Surface past practice sessions and pending review items. *(The `/review` page lists, in order: unfinished practice, finished plans due again after 7 days, plans and explanations built for older versions, and up to 5 unstarted phrases. Each item links to where to act. The phrase page shows practice history: every plan with progress and last practice date.)*
 - [ ] Add authentication and per-user data isolation if deploying for multiple users.
-- [ ] Add observability, error handling, retry policy, and AI usage caps.
+- [x] Add observability, error handling, retry policy, and AI usage caps. *(Structured logs without content; error references on 500s; GET retries for transient failures; a per-user daily AI allowance by requests and tokens. Application Insights switches on with its connection string at deployment; see DEVELOPMENT.md "Observability".)*
 - [ ] Deploy UI and API to Azure and configure database access securely.
 - [ ] Run a private beta with a varied set of book images and record failure modes.
 - [ ] Review privacy, image retention, and copyright-related UX before broader use.

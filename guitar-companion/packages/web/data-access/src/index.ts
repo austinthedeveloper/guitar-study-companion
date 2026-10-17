@@ -6,3 +6,4 @@ export * from './lib/flash';
 export * from './lib/practice-api';
 export * from './lib/audio-engine';
 export * from './lib/exercise-playback';
+export * from './lib/retry.interceptor';
