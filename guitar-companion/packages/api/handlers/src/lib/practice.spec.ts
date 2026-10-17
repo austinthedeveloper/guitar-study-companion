@@ -3,7 +3,7 @@ import { FakeAiProvider } from '@gsc/api/ai-core';
 import { memoryPracticeStore, memoryStore } from './memory-store.testing';
 import { createPhrase, updateHarmony } from './phrases';
 import { createPlan, getLatestPlan, getSession, saveSession } from './practice';
-import { getPracticeHistory, getReview } from './review';
+import { deletePhrase, getPracticeHistory, getReview } from './review';
 
 const lick: CreatePhraseRequest = {
   title: 'Lick',
@@ -182,5 +182,15 @@ describe('practice handlers', () => {
       expect.objectContaining({ phraseId: phrase.id, kind: 'unfinished' }),
     ]);
     expect((await getPracticeHistory('nope', deps)).status).toBe(404);
+  });
+
+  it('deletes a phrase with its plans and sessions', async () => {
+    const { deps, phrase } = await setup();
+    const plan = (await createPlan(phrase.id, { revision: 1, settings }, deps))
+      .body as PracticePlan;
+    expect((await deletePhrase(phrase.id, deps)).status).toBe(204);
+    expect((await getLatestPlan(phrase.id, deps)).status).toBe(404);
+    expect((await getSession(plan.id, deps)).status).toBe(404);
+    expect((await deletePhrase(phrase.id, deps)).status).toBe(404);
   });
 });

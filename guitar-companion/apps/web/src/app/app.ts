@@ -6,7 +6,10 @@ import { AppShellComponent, NavLink } from '@gsc/web/ui';
 @Component({
   selector: 'gsc-root',
   imports: [RouterOutlet, AppShellComponent],
-  template: `<gsc-app-shell title="Guitar Study Companion" [links]="links"
+  template: `<gsc-app-shell
+    title="Guitar Study Companion"
+    [links]="links"
+    [footerLinks]="footerLinks"
     ><router-outlet
   /></gsc-app-shell>`,
 })
@@ -16,5 +19,8 @@ export class App {
     { label: 'Import', path: ROUTE_PATHS.import },
     { label: 'My phrases', path: ROUTE_PATHS.phrases },
     { label: 'Review', path: ROUTE_PATHS.review },
+  ];
+  protected readonly footerLinks: NavLink[] = [
+    { label: 'Privacy and your data', path: ROUTE_PATHS.privacy },
   ];
 }

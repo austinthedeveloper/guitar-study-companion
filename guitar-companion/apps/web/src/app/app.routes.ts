@@ -25,6 +25,12 @@ export const appRoutes: Route[] = [
       import('@gsc/web/feature-phrases').then((m) => m.PhraseListPage),
   },
   {
+    path: routerPath(ROUTE_PATHS.privacy),
+    title: title('Privacy'),
+    loadComponent: () =>
+      import('@gsc/web/feature-home').then((m) => m.PrivacyPage),
+  },
+  {
     path: routerPath(ROUTE_PATHS.review),
     title: title('Review'),
     loadComponent: () =>

@@ -48,9 +48,19 @@ export interface NavLink {
     <main id="main" class="mx-auto max-w-5xl px-4 py-8">
       <ng-content />
     </main>
+    @if (footerLinks().length) {
+      <footer class="mx-auto max-w-5xl px-4 pb-8 text-sm text-stone-600">
+        <nav aria-label="Footer">
+          @for (link of footerLinks(); track link.path) {
+            <a [routerLink]="link.path" class="underline">{{ link.label }}</a>
+          }
+        </nav>
+      </footer>
+    }
   `,
 })
 export class AppShellComponent {
   readonly title = input.required<string>();
   readonly links = input<NavLink[]>([]);
+  readonly footerLinks = input<NavLink[]>([]);
 }

@@ -127,6 +127,16 @@ export class PhraseRepository {
     return exists ? 'conflict' : 'not_found';
   }
 
+  /** True when the user's phrase existed and is now gone. */
+  async delete(userId: string, id: string): Promise<boolean> {
+    if (!ObjectId.isValid(id)) return false;
+    const { deletedCount } = await this.collection.deleteOne({
+      _id: new ObjectId(id),
+      userId,
+    });
+    return deletedCount === 1;
+  }
+
   /** Newest first. Full phrases: the library computes facets from the notes. */
   async list(userId: string, limit = 500): Promise<Phrase[]> {
     const docs = await this.collection

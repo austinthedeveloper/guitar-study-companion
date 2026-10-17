@@ -22,3 +22,4 @@ export * from './lib/library-filters/library-filters';
 export * from './lib/phrase-meta/phrase-meta';
 export * from './lib/practice-history/practice-history';
 export * from './lib/review-queue/review-queue';
+export * from './lib/confirm-button/confirm-button';

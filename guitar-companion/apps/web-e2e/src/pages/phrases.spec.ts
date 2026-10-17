@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { API_PATHS } from '@gsc/contracts';
 import { ROUTE_PATHS, routeTag } from '@gsc/web/routes';
 import { expectNoA11yViolations } from '../support/a11y';
 import { createPhrase, highStringLick, updateHarmony } from '../support/api';
@@ -81,6 +82,37 @@ test.describe('My phrases page', { tag: routeTag(ROUTE_PATHS.phrases) }, () => {
     await page.getByTestId('filter-q').fill(`${run} slow blues`);
     await expect(rows).toHaveCount(1);
     await expectNoA11yViolations(page);
+  });
+
+  test('deletes a phrase with its practice history after confirming', async ({
+    page,
+    request,
+  }) => {
+    const phrase = await createPhrase(request, `Delete me ${Date.now()}`);
+    await request.post(API_PATHS.phrasePlans(phrase.id), {
+      data: {
+        revision: 1,
+        settings: { difficulty: 'medium', minutes: 15, focus: 'balanced' },
+      },
+    });
+    await page.goto(`/phrases/${phrase.id}`);
+    const del = page.getByTestId('phrase-delete');
+    await del.getByTestId('confirm-start').click();
+    await expect(del.getByTestId('confirm-group')).toContainText(
+      'Delete this phrase and its practice history?',
+    );
+    await del.getByTestId('confirm-cancel').click();
+    await expect(del.getByTestId('confirm-start')).toBeVisible();
+    await del.getByTestId('confirm-start').click();
+    await del.getByTestId('confirm-yes').click();
+
+    await expect(page).toHaveURL('/phrases');
+    await expect(page.getByTestId('deleted-banner')).toBeVisible();
+    await page.goto(`/phrases/${phrase.id}`);
+    await expect(page.getByTestId('phrase-not-found')).toBeVisible();
+    expect(
+      (await request.get(API_PATHS.phraseLatestPlan(phrase.id))).status(),
+    ).toBe(404);
   });
 
   test('saving library fields keeps unsaved harmony edits', async ({

@@ -55,6 +55,12 @@ export function memoryStore(): PhraseStore {
         .reverse()
         .map(({ userId: _u, ...p }) => p);
     },
+    async delete(userId, id) {
+      const i = rows.findIndex((r) => r.id === id && r.userId === userId);
+      if (i < 0) return false;
+      rows.splice(i, 1);
+      return true;
+    },
     async updateMeta(userId, id, meta) {
       const row = rows.find((r) => r.id === id && r.userId === userId);
       if (!row) return null;
@@ -100,6 +106,13 @@ export function memoryPracticeStore(): PracticeStore {
       return [...sessions.entries()]
         .filter(([k]) => k.startsWith(`${userId}:`))
         .map(([, s]) => s);
+    },
+    async deleteForPhrase(userId, phraseId) {
+      for (let i = plans.length - 1; i >= 0; i--)
+        if (plans[i].userId === userId && plans[i].phraseId === phraseId) {
+          sessions.delete(`${userId}:${plans[i].id}`);
+          plans.splice(i, 1);
+        }
     },
     async getSession(userId, planId) {
       return sessions.get(`${userId}:${planId}`) ?? null;

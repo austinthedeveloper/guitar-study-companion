@@ -51,6 +51,11 @@ export class PhrasesApi {
       .pipe(map((b) => PhraseSummarySchema.array().parse(b)));
   }
 
+  /** Deletes the phrase with its practice plans and sessions. */
+  delete(id: string): Observable<void> {
+    return this.http.delete<void>(API_PATHS.phrase(id));
+  }
+
   updateMeta(id: string, meta: UpdatePhraseMetaRequest): Observable<Phrase> {
     return this.http
       .patch<unknown>(API_PATHS.phraseMeta(id), meta)

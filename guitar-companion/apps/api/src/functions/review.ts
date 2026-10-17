@@ -1,5 +1,5 @@
 import { app } from '@azure/functions';
-import { getPracticeHistory, getReview } from '@gsc/api/handlers';
+import { deletePhrase, getPracticeHistory, getReview } from '@gsc/api/handlers';
 import { appContext, currentUserId } from '../composition';
 import { safe } from '../http';
 
@@ -22,6 +22,19 @@ app.http('plans-history', {
   route: 'phrases/{id}/plans',
   handler: safe(async (req) =>
     getPracticeHistory(req.params['id'] ?? '', {
+      phrases: await appContext().phrases(),
+      practice: await appContext().practice(),
+      userId: currentUserId(),
+    }),
+  ),
+});
+
+app.http('phrases-delete', {
+  methods: ['DELETE'],
+  authLevel: 'anonymous',
+  route: 'phrases/{id}',
+  handler: safe(async (req) =>
+    deletePhrase(req.params['id'] ?? '', {
       phrases: await appContext().phrases(),
       practice: await appContext().practice(),
       userId: currentUserId(),

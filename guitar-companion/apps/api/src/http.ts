@@ -11,7 +11,8 @@ export const MAX_BODY_BYTES = 6 * 1024 * 1024;
 export function toHttp(res: HandlerResponse): HttpResponseInit {
   return {
     status: res.status,
-    jsonBody: res.body,
+    // 204 No Content must not carry a body.
+    ...(res.status === 204 ? {} : { jsonBody: res.body }),
     headers: { 'Cache-Control': 'no-store' },
   };
 }

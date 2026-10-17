@@ -99,4 +99,16 @@ describe('PracticeRepository', () => {
     });
     expect(await repo.getSession('dan', p.id)).toBeNull();
   });
+
+  it('deletes only the given phrase’s plans and sessions', async () => {
+    const gone = await repo.createPlan('ivy', plan);
+    const kept = await repo.createPlan('ivy', { ...plan, phraseId: 'phrase2' });
+    await repo.saveSession('ivy', gone.id, { progress: {}, notes: 'x' });
+    await repo.saveSession('ivy', kept.id, { progress: {}, notes: 'y' });
+    await repo.deleteForPhrase('ivy', 'phrase1');
+    expect(await repo.getPlan('ivy', gone.id)).toBeNull();
+    expect(await repo.getSession('ivy', gone.id)).toBeNull();
+    expect(await repo.getPlan('ivy', kept.id)).not.toBeNull();
+    expect(await repo.getSession('ivy', kept.id)).not.toBeNull();
+  });
 });

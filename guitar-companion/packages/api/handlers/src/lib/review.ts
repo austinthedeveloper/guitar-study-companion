@@ -156,3 +156,17 @@ export async function getPracticeHistory(
       .map((p) => summarize(phrase, p, sessionOf.get(p.id))),
   };
 }
+
+/**
+ * Deletes a phrase with its practice plans and sessions. Phrases derived
+ * from it are kept (their link to the original just stops resolving).
+ */
+export async function deletePhrase(
+  id: string,
+  deps: Omit<ReviewDeps, 'now'>,
+): Promise<HandlerResponse> {
+  const deleted = await deps.phrases.delete(deps.userId, id);
+  if (!deleted) return apiError(404, 'not_found', 'Phrase not found.');
+  await deps.practice.deleteForPhrase(deps.userId, id);
+  return { status: 204, body: null };
+}

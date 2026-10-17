@@ -10,7 +10,7 @@ import {
 import { PhraseQuery } from '@gsc/contracts';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { PhrasesApi, toClientError } from '@gsc/web/data-access';
+import { Flash, PhrasesApi, toClientError } from '@gsc/web/data-access';
 import {
   AlertComponent,
   LibraryFiltersComponent,
@@ -34,6 +34,11 @@ import {
           >Import a passage</a
         >
       </div>
+      @if (justDeleted) {
+        <gsc-alert kind="success" data-testid="deleted-banner"
+          >Phrase deleted, with its practice history.</gsc-alert
+        >
+      }
       <gsc-library-filters
         [(q)]="q"
         [(key)]="key"
@@ -88,6 +93,7 @@ import {
 })
 export class PhraseListPage {
   private readonly api = inject(PhrasesApi);
+  protected readonly justDeleted = inject(Flash).consume('phrase-deleted');
   protected readonly q = signal('');
   protected readonly key = signal('');
   protected readonly technique = signal('');

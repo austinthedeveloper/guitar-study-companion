@@ -10,7 +10,7 @@ import {
   untracked,
 } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ChordChange, Phrase } from '@gsc/contracts';
 import {
   analyzeNotes,
@@ -31,6 +31,7 @@ import {
 } from '@gsc/web/data-access';
 import {
   AlertComponent,
+  ConfirmButtonComponent,
   ExplanationComponent,
   HarmonyFormComponent,
   NoteFactsComponent,
@@ -51,6 +52,7 @@ import { firstValueFrom } from 'rxjs';
     NoteFactsComponent,
     PhraseMetaComponent,
     PracticeHistoryComponent,
+    ConfirmButtonComponent,
     ScaleCandidatesComponent,
     TabEditorComponent,
     RouterLink,
@@ -220,6 +222,15 @@ import { firstValueFrom } from 'rxjs';
           <a routerLink="/phrases" class="self-center text-brand-700 underline"
             >All phrases</a
           >
+          <span class="ml-auto" data-testid="phrase-delete">
+            <gsc-confirm-button
+              label="Delete phrase"
+              question="Delete this phrase and its practice history?"
+              confirmLabel="Delete"
+              [busy]="deleting()"
+              (confirmed)="deletePhrase(p)"
+            />
+          </span>
         </div>
       </article>
     }
@@ -229,7 +240,8 @@ export class PhraseDetailPage {
   /** Bound from the route parameter. */
   readonly id = input.required<string>();
   private readonly api = inject(PhrasesApi);
-  protected readonly justSaved = inject(Flash).consume('phrase-saved');
+  private readonly flash = inject(Flash);
+  protected readonly justSaved = this.flash.consume('phrase-saved');
 
   protected readonly phrase = rxResource({
     params: () => this.id(),
@@ -330,6 +342,22 @@ export class PhraseDetailPage {
     params: () => this.id(),
     stream: ({ params }) => this.practiceApi.history(params),
   });
+  private readonly router = inject(Router);
+  protected readonly deleting = signal(false);
+
+  protected async deletePhrase(p: Phrase): Promise<void> {
+    this.deleting.set(true);
+    try {
+      await firstValueFrom(this.api.delete(p.id));
+      this.flash.set('phrase-deleted');
+      await this.router.navigate(['/phrases']);
+    } catch (err) {
+      this.metaStatus.set(`Not deleted: ${toClientError(err).message}`);
+    } finally {
+      this.deleting.set(false);
+    }
+  }
+
   protected readonly metaSaving = signal(false);
   protected readonly metaStatus = signal<string | null>(null);
 

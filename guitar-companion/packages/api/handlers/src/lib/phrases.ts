@@ -28,6 +28,7 @@ export interface PhraseStore {
   get(userId: string, id: string): Promise<Phrase | null>;
   /** All of a user's phrases, newest first. */
   list(userId: string): Promise<Phrase[]>;
+  delete(userId: string, id: string): Promise<boolean>;
   updateMeta(
     userId: string,
     id: string,

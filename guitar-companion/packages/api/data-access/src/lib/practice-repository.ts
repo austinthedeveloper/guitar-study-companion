@@ -89,6 +89,16 @@ export class PracticeRepository {
     return docs.map(toSession);
   }
 
+  /** Removes every plan built for a phrase, and their sessions. */
+  async deleteForPhrase(userId: string, phraseId: string): Promise<void> {
+    const plans = await this.plans
+      .find({ userId, phraseId }, { projection: { _id: 1 } })
+      .toArray();
+    const planIds = plans.map((p) => p._id.toHexString());
+    await this.sessions.deleteMany({ userId, planId: { $in: planIds } });
+    await this.plans.deleteMany({ userId, phraseId });
+  }
+
   async getSession(
     userId: string,
     planId: string,
