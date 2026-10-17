@@ -93,6 +93,14 @@ export function memoryPracticeStore(): PracticeStore {
         .at(-1);
       return p ? strip(p) : null;
     },
+    async plansForUser(userId) {
+      return plans.filter((p) => p.userId === userId).map(strip);
+    },
+    async sessionsForUser(userId) {
+      return [...sessions.entries()]
+        .filter(([k]) => k.startsWith(`${userId}:`))
+        .map(([, s]) => s);
+    },
     async getSession(userId, planId) {
       return sessions.get(`${userId}:${planId}`) ?? null;
     },

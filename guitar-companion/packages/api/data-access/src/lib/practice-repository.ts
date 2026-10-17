@@ -72,6 +72,23 @@ export class PracticeRepository {
     return doc ? toPlan(doc) : null;
   }
 
+  async plansForUser(userId: string, limit = 1000): Promise<PracticePlan[]> {
+    const docs = await this.plans
+      .find({ userId })
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(limit)
+      .toArray();
+    return docs.map(toPlan);
+  }
+
+  async sessionsForUser(
+    userId: string,
+    limit = 1000,
+  ): Promise<PracticeSession[]> {
+    const docs = await this.sessions.find({ userId }).limit(limit).toArray();
+    return docs.map(toSession);
+  }
+
   async getSession(
     userId: string,
     planId: string,

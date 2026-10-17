@@ -26,6 +26,7 @@ import {
   ClientError,
   Flash,
   PhrasesApi,
+  PracticeApi,
   toClientError,
 } from '@gsc/web/data-access';
 import {
@@ -35,6 +36,7 @@ import {
   NoteFactsComponent,
   PhraseMetaComponent,
   PhraseMetaValue,
+  PracticeHistoryComponent,
   ScaleCandidatesComponent,
   TabEditorComponent,
 } from '@gsc/web/ui';
@@ -48,6 +50,7 @@ import { firstValueFrom } from 'rxjs';
     HarmonyFormComponent,
     NoteFactsComponent,
     PhraseMetaComponent,
+    PracticeHistoryComponent,
     ScaleCandidatesComponent,
     TabEditorComponent,
     RouterLink,
@@ -183,6 +186,7 @@ import { firstValueFrom } from 'rxjs';
           [status]="metaStatus()"
           (save)="saveMeta(p, $event)"
         />
+        <gsc-practice-history [entries]="history.value() ?? []" />
         <gsc-explanation
           [explanation]="p.explanation ?? null"
           [stale]="
@@ -321,6 +325,11 @@ export class PhraseDetailPage {
     }
   }
 
+  private readonly practiceApi = inject(PracticeApi);
+  protected readonly history = rxResource({
+    params: () => this.id(),
+    stream: ({ params }) => this.practiceApi.history(params),
+  });
   protected readonly metaSaving = signal(false);
   protected readonly metaStatus = signal<string | null>(null);
 

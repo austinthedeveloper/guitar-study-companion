@@ -7,6 +7,7 @@ export const ROUTE_PATHS = {
   home: '/',
   import: '/import',
   phrases: '/phrases',
+  review: '/review',
   phrase: '/phrases/:id',
   practice: '/phrases/:id/practice',
   transpose: '/phrases/:id/transpose',

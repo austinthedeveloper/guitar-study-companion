@@ -15,5 +15,6 @@ export class App {
     { label: 'Home', path: ROUTE_PATHS.home },
     { label: 'Import', path: ROUTE_PATHS.import },
     { label: 'My phrases', path: ROUTE_PATHS.phrases },
+    { label: 'Review', path: ROUTE_PATHS.review },
   ];
 }

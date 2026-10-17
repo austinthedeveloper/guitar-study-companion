@@ -67,6 +67,7 @@ describe('PhraseDetailPage', () => {
   it('renders the phrase with tuning, rhythm, and origin', async () => {
     const { el, http, settle } = await render(PhraseDetailPage, { id: 'abc' });
     http.expectOne('/api/phrases/abc').flush(phrase);
+    http.expectOne('/api/phrases/abc/plans').flush([]);
     await settle();
     expect(text(el, 'phrase-heading')).toBe('Bend lick');
     expect(text(el, 'phrase-tuning')).toContain('Drop D');
@@ -88,6 +89,13 @@ describe('PhraseDetailPage', () => {
         },
       },
       { status: 404, statusText: 'Not Found' },
+    );
+    http.expectOne('/api/phrases/missing/plans').flush(
+      { error: { code: 'not_found', message: 'x', retryable: false } },
+      {
+        status: 404,
+        statusText: 'Not Found',
+      },
     );
     await settle();
     expect(el.querySelector('[data-testid="phrase-not-found"]')).not.toBeNull();

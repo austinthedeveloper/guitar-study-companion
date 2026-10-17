@@ -9,6 +9,7 @@ export const API_PATHS = {
   phrasePlans: (id: string) => `/api/phrases/${encodeURIComponent(id)}/plans`,
   phraseLatestPlan: (id: string) =>
     `/api/phrases/${encodeURIComponent(id)}/plans/latest`,
+  review: '/api/review',
   planSession: (planId: string) =>
     `/api/plans/${encodeURIComponent(planId)}/session`,
   phraseMeta: (id: string) => `/api/phrases/${encodeURIComponent(id)}/meta`,

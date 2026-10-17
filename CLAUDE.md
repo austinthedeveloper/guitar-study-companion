@@ -52,6 +52,7 @@ node tools/fixtures/eval-private.mts      # recognition accuracy on private fixt
 
 - The Nx daemon is off (`useDaemonProcess: false`); with it on, the graph fails about half the time (listr2 `ERR_REQUIRE_ESM`). If "Failed to process project graph" comes back, check whether the daemon was re-enabled.
 - macOS has no `timeout` command. Never leave a bare `cat > file` without a heredoc, because it waits on stdin forever.
+- Occasionally one Vitest process stalls at startup during a parallel `run-many` (seen in contracts, handlers, web; never reproducible alone). If a run hangs with an idle `vitest` and no workers, kill it and rerun; it isn't the code. Adding an HTTP request to a page breaks its `whenStable()`-based unit tests until the test flushes that request too.
 - Kill background servers when done: `pkill -f "nx serve api"; pkill -f "func start"`.
 - Python `str.replace` edits that skip their assertion silently no-op once Prettier has re-wrapped the code. Always `assert old in s`, and re-read the target after formatting. A global `sed` hits the same line in every test in a file; scope it.
 - Pages showing several tabs have duplicate `cell-*` test ids; scope locators (e.g. `getByTestId('transposed-tab').getByTestId('cell-0-2')`).

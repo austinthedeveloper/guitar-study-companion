@@ -20,3 +20,5 @@ export * from './lib/transpose-compare/transpose-compare';
 export * from './lib/transpose-form/transpose-form';
 export * from './lib/library-filters/library-filters';
 export * from './lib/phrase-meta/phrase-meta';
+export * from './lib/practice-history/practice-history';
+export * from './lib/review-queue/review-queue';

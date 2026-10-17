@@ -3,6 +3,7 @@ import { FakeAiProvider } from '@gsc/api/ai-core';
 import { memoryPracticeStore, memoryStore } from './memory-store.testing';
 import { createPhrase, updateHarmony } from './phrases';
 import { createPlan, getLatestPlan, getSession, saveSession } from './practice';
+import { getPracticeHistory, getReview } from './review';
 
 const lick: CreatePhraseRequest = {
   title: 'Lick',
@@ -145,5 +146,41 @@ describe('practice handlers', () => {
     ).toBe(400);
     expect((await getSession('nope', deps)).status).toBe(404);
     expect((await getLatestPlan('other', deps)).status).toBe(404);
+  });
+
+  it('lists practice history and feeds the review queue', async () => {
+    const { deps, phrase } = await setup();
+    const plan = (await createPlan(phrase.id, { revision: 1, settings }, deps))
+      .body as PracticePlan;
+    await saveSession(
+      plan.id,
+      {
+        progress: {
+          [plan.exercises[0].id]: {
+            completedAt: '2026-10-16T10:00:00.000Z',
+            bestBpm: 60,
+          },
+        },
+        notes: '',
+      },
+      deps,
+    );
+    const history = await getPracticeHistory(phrase.id, {
+      ...deps,
+      phrases: deps.phrases,
+    });
+    expect(history.body).toEqual([
+      expect.objectContaining({
+        planId: plan.id,
+        exercises: plan.exercises.length,
+        completed: 1,
+        stale: false,
+      }),
+    ]);
+    const review = await getReview(deps);
+    expect(review.body).toEqual([
+      expect.objectContaining({ phraseId: phrase.id, kind: 'unfinished' }),
+    ]);
+    expect((await getPracticeHistory('nope', deps)).status).toBe(404);
   });
 });

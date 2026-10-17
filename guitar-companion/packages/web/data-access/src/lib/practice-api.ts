@@ -7,6 +7,10 @@ import {
   PracticePlanSchema,
   PracticeSession,
   PracticeSessionSchema,
+  PracticeHistoryEntry,
+  PracticeHistoryEntrySchema,
+  ReviewItem,
+  ReviewItemSchema,
   UpdateSessionRequest,
 } from '@gsc/contracts';
 import { map, Observable } from 'rxjs';
@@ -30,6 +34,20 @@ export class PracticeApi {
     return this.http
       .get<unknown>(API_PATHS.phraseLatestPlan(phraseId))
       .pipe(map((b) => PracticePlanSchema.parse(b)));
+  }
+
+  /** What needs attention next, most urgent first. */
+  review(): Observable<ReviewItem[]> {
+    return this.http
+      .get<unknown>(API_PATHS.review)
+      .pipe(map((b) => ReviewItemSchema.array().parse(b)));
+  }
+
+  /** Every plan built for a phrase, newest first, with progress. */
+  history(phraseId: string): Observable<PracticeHistoryEntry[]> {
+    return this.http
+      .get<unknown>(API_PATHS.phrasePlans(phraseId))
+      .pipe(map((b) => PracticeHistoryEntrySchema.array().parse(b)));
   }
 
   session(planId: string): Observable<PracticeSession> {

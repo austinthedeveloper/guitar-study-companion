@@ -19,6 +19,8 @@ export interface PracticeStore {
   ): Promise<PracticePlan>;
   getPlan(userId: string, planId: string): Promise<PracticePlan | null>;
   latestPlan(userId: string, phraseId: string): Promise<PracticePlan | null>;
+  plansForUser(userId: string): Promise<PracticePlan[]>;
+  sessionsForUser(userId: string): Promise<PracticeSession[]>;
   getSession(userId: string, planId: string): Promise<PracticeSession | null>;
   saveSession(
     userId: string,
