@@ -10,9 +10,11 @@ import { ROUTE_PATHS, routeTag } from '@gsc/web/routes';
  * Whole-site coverage guard: every route in ROUTE_PATHS must have at least
  * one test tagged `@route:<path>`. Fails the run in CI or when
  * ROUTE_COVERAGE=1; otherwise only warns (so running one spec locally works).
+ * ROUTE_COVERAGE=0 turns it off, for filtered runs such as the deployed smoke.
  */
 export default class RouteCoverageReporter implements Reporter {
   private missing: string[] = [];
+  private readonly off = process.env['ROUTE_COVERAGE'] === '0';
   private readonly strict =
     !!process.env['CI'] || process.env['ROUTE_COVERAGE'] === '1';
 
@@ -24,7 +26,7 @@ export default class RouteCoverageReporter implements Reporter {
   }
 
   onEnd(result: FullResult): { status?: FullResult['status'] } | void {
-    if (this.missing.length === 0) return;
+    if (this.off || this.missing.length === 0) return;
     const msg = `Routes without e2e coverage: ${this.missing.join(', ')}`;
     if (this.strict) {
       console.error(`\n✖ ${msg}`);

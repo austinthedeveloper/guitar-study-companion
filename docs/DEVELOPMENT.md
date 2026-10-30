@@ -87,7 +87,7 @@ Module boundaries are enforced by lint (`eslint.config.mjs`):
 | `MONGODB_DB` | `gsc` | Database name |
 | `E2E_MODE` | `false` | Test-only seeding endpoints |
 
-## Deployment approach (ADR-013; not yet deployed)
+## Deployment (ADR-013)
 
 Everything runs in Azure. The owner's choice is Blob Storage for the site; the rest are recommendations.
 
@@ -102,7 +102,23 @@ Everything runs in Azure. The owner's choice is Blob Storage for the site; the r
 
 **Web → API address:** the site and API are on different origins, so the web app reads `config.json` at startup (`{ "apiBaseUrl": "https://<func>.azurewebsites.net" }`). Locally and in e2e there is no `config.json`, so the app keeps calling relative `/api` paths through the dev proxy or SWA CLI.
 
-**Owner steps, before the first deploy:** create a resource group in one region where the Cosmos vCore free tier is available. In it, create the storage account (static website on), the Function App (Flex Consumption, Node 22), Key Vault, App Insights, and the Cosmos vCore cluster. Then give the Function App's identity "Key Vault Secrets User" on the vault. I'll then write the GitHub Actions deploy workflow (OIDC federated credentials, no stored secrets) and a deployed smoke suite.
+**Private beta resources** (subscription "Azure subscription 1", region `southcentralus`, resource group `rg-gsc-beta`):
+
+| Resource | Name |
+|---|---|
+| Site (static website) | `gscwebfjn7`, https://gscwebfjn7.z21.web.core.windows.net |
+| API (Flex Consumption, Node 22) | `func-gsc-fjn7`, https://func-gsc-fjn7.azurewebsites.net (plan `ASP-rggscbeta-f00e`, deployment storage `gscfuncfjn7`) |
+| Database (Mongo vCore, **Free** tier) | `gsc-mongo-fjn7`; firewall allows Azure services only |
+| Key Vault (RBAC) | `kv-gsc-fjn7`: secrets `MONGODB-URI`, `OPENAI-API-KEY` |
+| Logs | `log-gsc-beta` (Log Analytics), `appi-gsc-beta` (Application Insights) |
+
+Function App settings: `MONGODB_URI` and `OPENAI_API_KEY` are Key Vault references (`@Microsoft.KeyVault(...)`), plus `MONGODB_DB=gsc`, `APP_VERSION=beta`, `OPENAI_MODEL` and `AI_PROVIDER` (still `fake` until the first deploy is checked). Never set `E2E_MODE` on a deployment.
+
+**Deploy pipeline** (`.github/workflows/deploy.yml`): runs when CI passes on a push to `main`, or by hand (`workflow_dispatch` on `main`). It builds `web` and `api`, writes `config.json` with the API address into the web build, deploys the API with `Azure/functions-action`, uploads the site to `$web` (`index.html` and `config.json` with `no-cache`), waits for `/api/health`, then runs the smoke suite against Azure.
+
+- **Sign-in:** OIDC. The Entra app `gh-gsc-deploy` has a federated credential for `repo:austinthedeveloper/guitar-study-companion:ref:refs/heads/main` and no client secret. Its roles: Storage Blob Data Contributor on `gscwebfjn7` and Website Contributor on `func-gsc-fjn7`.
+- **Repository variables** (Actions variables, not secrets): `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_FUNCTIONAPP_NAME`, `AZURE_WEB_STORAGE`, `SITE_URL`, `API_URL`, `APP_VERSION`.
+- **Smoke suite** (`apps/web-e2e/src/smoke`, tag `@smoke`): read-only, creates no user data. It checks `/api/health` (status ok, database up, expected version), a phrase-library query, the app shell reaching the API across origins, and a deep link. It also runs in the normal e2e suite against the local stack. Against Azure: `BASE_URL=<site> SMOKE_API_URL=<api> ROUTE_COVERAGE=0 npx playwright test -c apps/web-e2e/playwright.config.mts --grep @smoke`.
 
 ## Observability and failure handling
 

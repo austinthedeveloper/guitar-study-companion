@@ -1,0 +1,111 @@
+name: Deploy
+
+# Deploys main to the Azure private beta (ADR-013) after CI passes on it,
+# then runs the read-only smoke suite against the deployed site and API.
+# Azure sign-in is OIDC (federated credential on refs/heads/main): no stored
+# secrets. Resource names are repository variables; see docs/DEVELOPMENT.md.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-beta
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: guitar-companion
+
+env:
+  NX_NO_CLOUD: true
+
+jobs:
+  deploy:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: guitar-companion/.nvmrc
+          cache: npm
+          cache-dependency-path: guitar-companion/package-lock.json
+
+      - run: npm ci
+
+      - run: npx nx run-many -t build -p web api
+
+      - name: Point the web app at the API
+        run: |
+          printf '{ "apiBaseUrl": "%s" }\n' "${{ vars.API_URL }}" \
+            > dist/apps/web/browser/config.json
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy API (Flex Consumption)
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ vars.AZURE_FUNCTIONAPP_NAME }}
+          package: guitar-companion/dist/apps/api
+
+      - name: Upload web to the static website
+        run: |
+          # Hashed bundles can be cached; index.html and config.json must not be.
+          az storage blob upload-batch --auth-mode login \
+            --account-name "${{ vars.AZURE_WEB_STORAGE }}" \
+            -d '$web' -s dist/apps/web/browser --overwrite --only-show-errors \
+            --content-cache-control 'public, max-age=31536000, immutable'
+          for f in index.html config.json; do
+            az storage blob upload --auth-mode login \
+              --account-name "${{ vars.AZURE_WEB_STORAGE }}" \
+              -c '$web' -n "$f" -f "dist/apps/web/browser/$f" --overwrite \
+              --only-show-errors --content-cache-control 'no-cache'
+          done
+
+      - name: Wait for the API to start
+        run: |
+          for i in $(seq 1 20); do
+            if curl -fsS "${{ vars.API_URL }}/api/health"; then exit 0; fi
+            sleep 15
+          done
+          exit 1
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Smoke suite against Azure
+        run: >-
+          npx playwright test -c apps/web-e2e/playwright.config.mts
+          --grep @smoke
+        env:
+          BASE_URL: ${{ vars.SITE_URL }}
+          SMOKE_API_URL: ${{ vars.API_URL }}
+          SMOKE_EXPECT_VERSION: ${{ vars.APP_VERSION }}
+          ROUTE_COVERAGE: '0'
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: smoke-report
+          path: guitar-companion/dist/.playwright
+          retention-days: 7
