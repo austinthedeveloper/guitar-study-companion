@@ -18,6 +18,7 @@ The Nx workspace lives in [`guitar-companion/`](../guitar-companion). Run all co
 | `npm run e2e:ui` | Playwright UI mode. |
 | `npm run verify` | Everything CI runs: format check, lint, unit tests, typecheck, build, e2e. |
 | `npm run dev:real-ai` | The API against a real AI provider (`-- --provider openai\|claude\|fake`) with a throwaway MongoDB on :27999. Costs money per AI call. It doesn't reload on code changes, so restart it after editing API or shared code. |
+| `npm run dev:openai` | **Local preview with real AI.** The whole app (API on :7071, web on :4200) with OpenAI `gpt-6-luna`. The key comes from Key Vault `kv-gsc-fjn7` via `az` (sign in with `az login`), else from `.env`. The database is kept in `tmp/dev-openai-db` across runs; delete that folder to start fresh. Costs money per AI call, and the API doesn't reload on code changes. |
 | `node tools/fixtures/phrase-from-fixture.mts <case>` | Saves a private verified fixture as a phrase on the running API and prints its id. |
 | `node tools/fixtures/eval-private.mts` | Scores AI recognition against private fixtures (see DECISIONS.md for past results). |
 | `npx nx test <project>` | Unit tests for one project (Vitest). |
