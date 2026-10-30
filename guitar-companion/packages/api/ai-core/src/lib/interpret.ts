@@ -24,6 +24,10 @@ export interface InterpretTabResult {
   rejectedEventCount: number;
 }
 
+/**
+ * Must stay under the Functions host's functionTimeout (apps/api/deploy/host.json),
+ * or the host stops the request with a bare 500 before this fires.
+ */
 export const DEFAULT_AI_TIMEOUT_MS = 60_000;
 /** Independent readings per image; disagreements are flagged for review. */
 export const DEFAULT_AI_PASSES = 2;

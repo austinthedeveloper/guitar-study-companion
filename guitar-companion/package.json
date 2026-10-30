@@ -11,7 +11,8 @@
     "e2e:all-browsers": "E2E_ALL_BROWSERS=1 nx e2e web-e2e",
     "e2e:ui": "nx e2e web-e2e --ui",
     "verify": "nx format:check && nx run-many -t lint test typecheck build && nx e2e web-e2e",
-    "dev:real-ai": "node tools/scripts/real-ai-stack.mjs"
+    "dev:real-ai": "node tools/scripts/real-ai-stack.mjs",
+    "dev:openai": "node tools/scripts/real-ai-stack.mjs --web --data tmp/dev-openai-db"
   },
   "private": true,
   "dependencies": {

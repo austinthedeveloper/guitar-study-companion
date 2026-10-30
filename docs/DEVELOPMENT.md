@@ -18,6 +18,7 @@ The Nx workspace lives in [`guitar-companion/`](../guitar-companion). Run all co
 | `npm run e2e:ui` | Playwright UI mode. |
 | `npm run verify` | Everything CI runs: format check, lint, unit tests, typecheck, build, e2e. |
 | `npm run dev:real-ai` | The API against a real AI provider (`-- --provider openai\|claude\|fake`) with a throwaway MongoDB on :27999. Costs money per AI call. It doesn't reload on code changes, so restart it after editing API or shared code. |
+| `npm run dev:openai` | **Local preview with real AI.** The whole app (API on :7071, web on :4200) with OpenAI `gpt-6-luna`. The key comes from Key Vault `kv-gsc-fjn7` via `az` (sign in with `az login`), else from `.env`. The database is kept in `tmp/dev-openai-db` across runs; delete that folder to start fresh. Costs money per AI call, and the API doesn't reload on code changes. |
 | `node tools/fixtures/phrase-from-fixture.mts <case>` | Saves a private verified fixture as a phrase on the running API and prints its id. |
 | `node tools/fixtures/eval-private.mts` | Scores AI recognition against private fixtures (see DECISIONS.md for past results). |
 | `npx nx test <project>` | Unit tests for one project (Vitest). |
@@ -76,7 +77,7 @@ Module boundaries are enforced by lint (`eslint.config.mjs`):
 |---|---|---|
 | `APP_VERSION` | `dev` | Version reported by `/api/health` |
 | `AI_PROVIDER` | `fake` | `fake`, `openai`, or `claude` |
-| `AI_TIMEOUT_MS` | `60000` | Recognition request timeout |
+| `AI_TIMEOUT_MS` | `60000` | Recognition request timeout. Keep it well under `functionTimeout` in `apps/api/deploy/host.json` (2 min): if the host stops the request first, the user gets a bare 500 instead of the retryable "took too long" error. |
 | `AI_DAILY_REQUESTS` | `50` | Per-user AI requests per UTC day; then recognition and explanations return 429 and plans skip AI tips |
 | `AI_DAILY_TOKENS` | `300000` | Per-user AI tokens (input + output) per UTC day |
 | `AI_PASSES` | `2` | Parallel readings per image; disagreements are flagged for review (cost scales with this) |
