@@ -112,11 +112,15 @@ Everything runs in Azure. The owner's choice is Blob Storage for the site; the r
 | Key Vault (RBAC) | `kv-gsc-fjn7`: secrets `MONGODB-URI`, `OPENAI-API-KEY` |
 | Logs | `log-gsc-beta` (Log Analytics), `appi-gsc-beta` (Application Insights) |
 
-Function App settings: `MONGODB_URI` and `OPENAI_API_KEY` are Key Vault references (`@Microsoft.KeyVault(...)`), plus `MONGODB_DB=gsc`, `APP_VERSION=beta`, `OPENAI_MODEL` and `AI_PROVIDER` (still `fake` until the first deploy is checked). Never set `E2E_MODE` on a deployment.
+Function App settings: `MONGODB_URI` and `OPENAI_API_KEY` are Key Vault references (`@Microsoft.KeyVault(...)`), plus `MONGODB_DB=gsc`, `APP_VERSION=beta`, `OPENAI_MODEL` and `AI_PROVIDER=openai` (switched from `fake` on 2026-10-30 after the first deploy passed its smoke run). Never set `E2E_MODE` on a deployment.
 
 **Deploy pipeline** (`.github/workflows/deploy.yml`): runs when CI passes on a push to `main`, or by hand (`workflow_dispatch` on `main`). It builds `web` and `api`, writes `config.json` with the API address into the web build, deploys the API with `Azure/functions-action`, uploads the site to `$web` (`index.html` and `config.json` with `no-cache`), waits for `/api/health`, then runs the smoke suite against Azure.
 
-- **Sign-in:** OIDC. The Entra app `gh-gsc-deploy` has a federated credential for `repo:austinthedeveloper/guitar-study-companion:ref:refs/heads/main` and no client secret. Its roles: Storage Blob Data Contributor on `gscwebfjn7` and Website Contributor on `func-gsc-fjn7`.
+- **Sign-in:** OIDC. The Entra app `gh-gsc-deploy` has no client secret and two federated credentials for `main`, one per subject format GitHub may send:
+  - `repo:austinthedeveloper@2235324/guitar-study-companion@1418224187:ref:refs/heads/main` is what this repo sends today. Its OIDC subject uses the immutable format, with owner and repo IDs, so a renamed or re-created repo can't reuse the credential. Check it with `gh api repos/austinthedeveloper/guitar-study-companion/actions/oidc/customization/sub`.
+  - `repo:austinthedeveloper/guitar-study-companion:ref:refs/heads/main` is the plain name format, kept in case the repo's setting changes.
+
+  A mismatch fails `azure/login` with `AADSTS700213: No matching federated identity record`. The error message shows the subject GitHub sent. Its roles: Storage Blob Data Contributor on `gscwebfjn7` and Website Contributor on `func-gsc-fjn7`.
 - **Repository variables** (Actions variables, not secrets): `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_FUNCTIONAPP_NAME`, `AZURE_WEB_STORAGE`, `SITE_URL`, `API_URL`, `APP_VERSION`.
 - **Smoke suite** (`apps/web-e2e/src/smoke`, tag `@smoke`): read-only, creates no user data. It checks `/api/health` (status ok, database up, expected version), a phrase-library query, the app shell reaching the API across origins, and a deep link. It also runs in the normal e2e suite against the local stack. Against Azure: `BASE_URL=<site> SMOKE_API_URL=<api> ROUTE_COVERAGE=0 npx playwright test -c apps/web-e2e/playwright.config.mts --grep @smoke`.
 
