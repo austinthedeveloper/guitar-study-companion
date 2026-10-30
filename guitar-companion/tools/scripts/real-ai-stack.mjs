@@ -63,6 +63,19 @@ if (provider === 'openai') {
     aiEnv.OPENAI_MODEL = 'gpt-6-luna';
 }
 
+// A leftover API (e.g. from a closed terminal) would make this one fail to bind.
+for (const busy of [7071, ...(withWeb ? [4200] : [])]) {
+  try {
+    execSync(`lsof -ti tcp:${busy} -sTCP:LISTEN`, { stdio: 'pipe' });
+  } catch {
+    continue; // Nothing listening.
+  }
+  console.error(
+    `[real-ai] Port ${busy} is already in use, probably by an earlier run. Stop it with:\n  lsof -ti tcp:${busy} -sTCP:LISTEN | xargs kill`,
+  );
+  process.exit(1);
+}
+
 if (dataDir) mkdirSync(dataDir, { recursive: true });
 const mongo = await MongoMemoryServer.create({
   instance: dataDir
@@ -119,4 +132,6 @@ async function stop(code = 0) {
 }
 process.on('SIGINT', () => stop(0));
 process.on('SIGTERM', () => stop(0));
+// Closing the terminal window sends SIGHUP; without this the API outlives it.
+process.on('SIGHUP', () => stop(0));
 for (const child of children) child.on('exit', (code) => stop(code ?? 0));
