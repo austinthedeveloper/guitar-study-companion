@@ -116,6 +116,11 @@ export interface SourceFormValue {
   `,
 })
 export class SourceFormComponent {
+  /**
+   * Seeds the form until it has been seeded or edited. Later values are ignored,
+   * so a parent can bind `valueChange` back here without the trimmed value
+   * overwriting what the user is typing (e.g. eating a trailing space).
+   */
   readonly initial = input<SourceFormValue | null>(null);
   /** Forces validation messages to show (e.g. after a submit attempt). */
   readonly showErrors = input(false);
@@ -138,11 +143,13 @@ export class SourceFormComponent {
     chords: new FormControl('', { nonNullable: true }),
   });
   private readonly forceErrors = computed(() => this.showErrors());
+  private synced = false;
 
   constructor() {
     effect(() => {
       const v = this.initial();
-      if (!v) return;
+      if (!v || this.synced) return;
+      this.synced = true;
       this.form.patchValue(
         {
           bookTitle: v.source.bookTitle,
@@ -157,9 +164,10 @@ export class SourceFormComponent {
       );
       this.valueChange.emit(this.current());
     });
-    this.form.valueChanges
-      .pipe(takeUntilDestroyed())
-      .subscribe(() => this.valueChange.emit(this.current()));
+    this.form.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.synced = true;
+      this.valueChange.emit(this.current());
+    });
   }
 
   protected showError(name: 'bookTitle'): boolean {
