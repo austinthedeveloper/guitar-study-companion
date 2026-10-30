@@ -7,7 +7,7 @@ import { AppShellComponent, NavLink } from '@gsc/web/ui';
   selector: 'gsc-root',
   imports: [RouterOutlet, AppShellComponent],
   template: `<gsc-app-shell
-    title="Guitar Study Companion"
+    brand="Guitar Study Companion"
     [links]="links"
     [footerLinks]="footerLinks"
     ><router-outlet
