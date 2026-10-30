@@ -77,7 +77,7 @@ Module boundaries are enforced by lint (`eslint.config.mjs`):
 |---|---|---|
 | `APP_VERSION` | `dev` | Version reported by `/api/health` |
 | `AI_PROVIDER` | `fake` | `fake`, `openai`, or `claude` |
-| `AI_TIMEOUT_MS` | `60000` | Recognition request timeout |
+| `AI_TIMEOUT_MS` | `60000` | Recognition request timeout. Keep it well under `functionTimeout` in `apps/api/deploy/host.json` (2 min): if the host stops the request first, the user gets a bare 500 instead of the retryable "took too long" error. |
 | `AI_DAILY_REQUESTS` | `50` | Per-user AI requests per UTC day; then recognition and explanations return 429 and plans skip AI tips |
 | `AI_DAILY_TOKENS` | `300000` | Per-user AI tokens (input + output) per UTC day |
 | `AI_PASSES` | `2` | Parallel readings per image; disagreements are flagged for review (cost scales with this) |
