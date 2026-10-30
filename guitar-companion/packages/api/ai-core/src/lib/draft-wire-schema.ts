@@ -6,6 +6,13 @@ import { TECHNIQUES } from '@gsc/contracts';
  * additional properties). Range checks happen afterwards in zod and
  * music-domain validation, never trusted from the provider.
  */
+/**
+ * The model's verdict on the crop itself. "unreadable" means it could not
+ * read the tab reliably, and the draft is refused rather than shown.
+ */
+export const IMAGE_QUALITIES = ['clear', 'poor', 'unreadable'] as const;
+export type ImageQuality = (typeof IMAGE_QUALITIES)[number];
+
 const box = {
   type: ['object', 'null'],
   additionalProperties: false,
@@ -28,6 +35,8 @@ export const DRAFT_WIRE_JSON_SCHEMA = {
     'uncertainties',
     'detectedSymbols',
     'notes',
+    'imageQuality',
+    'imageQualityReason',
   ],
   properties: {
     stringCount: { type: 'integer' },
@@ -79,6 +88,8 @@ export const DRAFT_WIRE_JSON_SCHEMA = {
     },
     detectedSymbols: { type: 'array', items: { type: 'string' } },
     notes: { type: 'string' },
+    imageQuality: { type: 'string', enum: [...IMAGE_QUALITIES] },
+    imageQualityReason: { type: ['string', 'null'] },
   },
 } as const;
 

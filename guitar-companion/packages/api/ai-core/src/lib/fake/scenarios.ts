@@ -140,6 +140,23 @@ export const FAKE_SCENARIOS = {
       ],
     },
   },
+  'poor-quality': {
+    kind: 'draft',
+    draft: {
+      ...lick,
+      imageQuality: 'poor',
+      imageQualityReason: 'Glare covers part of the second string.',
+    },
+  },
+  unreadable: {
+    kind: 'draft',
+    draft: {
+      ...lick,
+      imageQuality: 'unreadable',
+      imageQualityReason:
+        'The photo is blurred, so stacked fret numbers run together.',
+    },
+  },
   'invalid-output': { kind: 'draft', draft: { hello: 'not a transcription' } },
   unavailable: { kind: 'throw', message: 'Simulated provider outage' },
   timeout: { kind: 'hang' },

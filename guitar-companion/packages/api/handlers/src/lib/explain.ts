@@ -32,6 +32,11 @@ const AI_STATUS: Record<AiError['code'], { status: number; message: string }> =
       status: 502,
       message: 'The explanation came back unusable. Try again.',
     },
+    // Only image recognition raises this; listed so the map stays total.
+    ai_image_unreadable: {
+      status: 502,
+      message: 'The explanation came back unusable. Try again.',
+    },
   };
 
 /**

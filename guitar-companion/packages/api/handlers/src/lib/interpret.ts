@@ -38,6 +38,11 @@ const AI_STATUS: Record<AiError['code'], { status: number; message: string }> =
       message:
         'Recognition returned an unusable result. Try again or enter the notes manually.',
     },
+    ai_image_unreadable: {
+      status: 422,
+      message:
+        'This image is too unclear to read reliably, so no draft was made.',
+    },
   };
 
 export async function interpretImport(
@@ -117,8 +122,21 @@ export async function interpretImport(
       deps.log?.('interpret.ai_error', {
         code: err.code,
         provider: deps.ai.name,
+        inputTokens: err.usage?.inputTokens,
+        outputTokens: err.usage?.outputTokens,
       });
       const mapped = AI_STATUS[err.code];
+      if (err.code === 'ai_image_unreadable') {
+        // The readings were made and paid for, so they count.
+        await deps.allowance?.record(userId, deps.passes ?? 1, err.usage);
+        // The reason describes the image's problem (e.g. blur), not its content.
+        return apiError(
+          mapped.status,
+          err.code,
+          `${mapped.message} ${err.message}`,
+          { retryable: false },
+        );
+      }
       return apiError(mapped.status, err.code, mapped.message, {
         retryable: true,
       });

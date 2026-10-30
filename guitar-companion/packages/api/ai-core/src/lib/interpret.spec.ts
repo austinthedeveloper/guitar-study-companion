@@ -85,6 +85,22 @@ describe('interpretTab', () => {
     expect(result.draft.events).toEqual([]);
     expect(result.draft.uncertainties[0].reason).toMatch(/No tablature/);
   });
+  it('refuses a draft the model calls unreadable, with its reason', async () => {
+    await expect(run('unreadable')).rejects.toMatchObject({
+      code: 'ai_image_unreadable',
+      message: 'The photo is blurred, so stacked fret numbers run together.',
+    });
+  });
+
+  it('keeps a poor-quality draft but explains the quality first', async () => {
+    const result = await run('poor-quality');
+    expect(result.draft.events).toHaveLength(7);
+    expect(result.draft.uncertainties[0]).toEqual({
+      eventIds: [],
+      reason: 'Image quality is poor: Glare covers part of the second string.',
+    });
+  });
+
   describe('with several passes', () => {
     const draft = (...frets: number[]) => ({
       stringCount: 6,
@@ -103,9 +119,7 @@ describe('interpretTab', () => {
       notes: '',
     });
     /** Answers each call with the next queued reading (or throws it). */
-    const scripted = (
-      ...readings: (ReturnType<typeof draft> | Error)[]
-    ): AiProvider => ({
+    const scripted = (...readings: (object | Error)[]): AiProvider => ({
       name: 'scripted',
       interpretTab: async (): Promise<RawInterpretResult> => {
         const next = readings.shift();
@@ -159,6 +173,45 @@ describe('interpretTab', () => {
       );
       expect(result.draft.events.map((e) => e.fret)).toEqual([5, 7]);
       expect(result.usage).toEqual({ inputTokens: 100, outputTokens: 10 });
+    });
+
+    it('refuses a draft when either reading calls the image unreadable', async () => {
+      const blurry = {
+        ...draft(5, 7),
+        imageQuality: 'unreadable',
+        imageQualityReason: null,
+      };
+      await expect(
+        interpretTab(scripted(draft(5, 7), blurry), input, 1000, 2),
+      ).rejects.toMatchObject({
+        code: 'ai_image_unreadable',
+        message: /could not read/,
+        usage: { inputTokens: 200, outputTokens: 20 },
+      });
+    });
+
+    it('refuses a draft where most notes are disputed', async () => {
+      await expect(
+        interpretTab(
+          scripted(draft(1, 2, 3, 4, 5, 6), draft(1, 2, 7, 8, 9, 10)),
+          input,
+          1000,
+          2,
+        ),
+      ).rejects.toMatchObject({
+        code: 'ai_image_unreadable',
+        message: /4 of 6 recognized notes/,
+      });
+    });
+
+    it('keeps a draft where only some notes are disputed', async () => {
+      const result = await interpretTab(
+        scripted(draft(1, 2, 3, 4, 5, 6), draft(1, 2, 3, 4, 9, 10)),
+        input,
+        1000,
+        2,
+      );
+      expect(result.draft.events).toHaveLength(6);
     });
 
     it('fails only when every pass fails', async () => {

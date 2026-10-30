@@ -89,14 +89,32 @@
       (valueChange)="meta.set($event)"
     />
 
-    @if (interpretError(); as err) {
+    @if (interpretError(); as err) { @if (err.code === 'ai_image_unreadable') {
+    <gsc-alert
+      kind="warning"
+      heading="Image too unclear to read"
+      data-testid="unreadable-image"
+    >
+      <p data-testid="interpret-error">{{ err.message }}</p>
+      <p class="mt-1">For a better result:</p>
+      <ul class="mt-1 list-disc pl-5">
+        <li>Take a sharper photo in good light, holding the camera steady.</li>
+        <li>Fill the frame with the page, or use a scan.</li>
+        <li>Select just one tab staff, and straighten it if it is tilted.</li>
+      </ul>
+      <p class="mt-1">
+        Use Back to choose a new photo or a tighter selection, or enter the
+        notes manually.
+      </p>
+    </gsc-alert>
+    } @else {
     <gsc-alert kind="error" heading="Recognition failed">
       <p data-testid="interpret-error">{{ err.message }}</p>
       @if (events().length > 0) {
       <p class="mt-1">Your corrected notes are safe.</p>
       }
     </gsc-alert>
-    }
+    } }
 
     <div class="flex flex-wrap justify-between gap-2">
       <button type="button" class="btn-secondary" (click)="goTo(1)">

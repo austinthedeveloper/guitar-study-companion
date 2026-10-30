@@ -10,6 +10,7 @@ export const API_ERROR_CODES = [
   'ai_unavailable',
   'ai_invalid_output',
   'ai_timeout',
+  'ai_image_unreadable',
   'rate_limited',
   'internal',
 ] as const;

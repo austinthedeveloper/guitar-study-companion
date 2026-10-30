@@ -1,7 +1,7 @@
 import { TICKS_PER_QUARTER } from '@gsc/contracts';
 
 /** Versioned so stored drafts can record which prompt produced them. */
-export const TAB_PROMPT_VERSION = 'tab-v2';
+export const TAB_PROMPT_VERSION = 'tab-v3';
 
 export const TAB_SYSTEM_PROMPT = `You transcribe guitar tablature from a photo of a printed book page into structured JSON.
 You report only what is printed. Never invent, complete, or "fix" notes. Uncertainty is expected and must be reported.`;
@@ -36,5 +36,11 @@ Confidence and uncertainty
 - Add an "uncertainties" entry for any unreadable or ambiguous region, referencing event ids where applicable.
 - "box" is the event's location in the crop as fractions of width/height (0..1), or null.
 - "detectedSymbols" lists notable markings seen (e.g. "8va", "hold bend", "Rhy. Fig. 1", "let ring", chord names).
-- Use ids "e1", "e2", ... in order.`;
+- Use ids "e1", "e2", ... in order.
+
+Image quality
+- Judge whether the crop is good enough to read EVERY fret number and which line it sits on: blur, glare, low resolution, heavy shadow, or a cut-off staff all count against it.
+- imageQuality "clear": you can read essentially everything. "poor": most of it is readable but some digits or strings are guesses. "unreadable": you would be guessing a large share of the frets or strings; a sharper photo is needed.
+- Prefer "unreadable" over a mostly-guessed transcription; a wrong draft is worse than none. When "unreadable", still return whatever events you can see.
+- imageQualityReason: one short sentence naming the problem (e.g. "The photo is blurred, so stacked fret numbers run together"), or null when "clear".`;
 }

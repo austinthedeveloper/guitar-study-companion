@@ -224,6 +224,26 @@ test.describe('Import page', { tag: routeTag(ROUTE_PATHS.import) }, () => {
       });
     }
 
+    test('an unreadable image explains why and suggests a sharper photo', async ({
+      page,
+    }) => {
+      await useFakeScenario(page, 'unreadable');
+      await page.goto('/import');
+      await upload(page, 'synthetic-lick.png');
+      await selectPassage(page);
+      await fillDetails(page);
+      await recognize(page);
+      const alert = page.getByTestId('unreadable-image');
+      await expect(alert).toContainText('Image too unclear to read');
+      await expect(alert).toContainText('stacked fret numbers run together');
+      await expect(alert).toContainText('sharper photo');
+      await expect(page.getByTestId('step-review')).toBeHidden();
+      await expectNoA11yViolations(page);
+
+      await page.getByTestId('enter-manually').click();
+      await expect(page.getByTestId('step-review')).toBeVisible();
+    });
+
     test('a failure after corrections keeps the corrected notes', async ({
       page,
     }) => {
