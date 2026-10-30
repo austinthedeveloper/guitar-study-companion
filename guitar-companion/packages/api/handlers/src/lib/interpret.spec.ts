@@ -89,6 +89,29 @@ describe('interpretImport', () => {
     });
   });
 
+  it('refuses an unreadable image with 422, its reason, and no retry', async () => {
+    const res = await interpretImport(body(), deps('unreadable'));
+    expect(res.status).toBe(422);
+    expect(res.body).toMatchObject({
+      error: { code: 'ai_image_unreadable', retryable: false },
+    });
+    expect(JSON.stringify(res.body)).toContain('blurred');
+  });
+
+  it('counts an unreadable image against the allowance', async () => {
+    const store = memoryUsageStore();
+    const allowance = new AiAllowance(store, { requests: 2, tokens: 1e6 });
+    const deps = {
+      ai: new FakeAiProvider(),
+      scenario: 'unreadable',
+      passes: 2,
+      allowance,
+      userId: 'u1',
+    };
+    expect((await interpretImport(body(), deps)).status).toBe(422);
+    expect((await interpretImport(body(), deps)).status).toBe(429);
+  });
+
   it('logs counts but never image data', async () => {
     const log = vi.fn();
     await interpretImport(body(), { ...deps(), log });
