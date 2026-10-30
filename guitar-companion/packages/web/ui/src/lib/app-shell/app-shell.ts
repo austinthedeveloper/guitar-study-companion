@@ -6,7 +6,11 @@ export interface NavLink {
   path: string;
 }
 
-/** Page chrome: header, primary nav, and projected main content. */
+/**
+ * Page chrome: header, primary nav, and projected main content.
+ * The brand input is deliberately not named `title`: a static `title="…"` on
+ * the host element stays in the DOM and shows as a tooltip over the whole page.
+ */
 @Component({
   selector: 'gsc-app-shell',
   imports: [RouterLink, RouterLinkActive],
@@ -25,7 +29,7 @@ export interface NavLink {
           routerLink="/"
           class="text-lg font-semibold text-stone-900"
           data-testid="brand"
-          >{{ title() }}</a
+          >{{ brand() }}</a
         >
         <nav aria-label="Primary">
           <ul class="flex gap-4 text-sm">
@@ -60,7 +64,7 @@ export interface NavLink {
   `,
 })
 export class AppShellComponent {
-  readonly title = input.required<string>();
+  readonly brand = input.required<string>();
   readonly links = input<NavLink[]>([]);
   readonly footerLinks = input<NavLink[]>([]);
 }
