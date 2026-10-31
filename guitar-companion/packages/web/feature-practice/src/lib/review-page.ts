@@ -16,14 +16,14 @@ import { AlertComponent, ReviewQueueComponent } from '@gsc/web/ui';
   template: `
     <section class="space-y-4">
       <header>
-        <h1 class="text-2xl font-semibold text-stone-900">Review</h1>
-        <p class="text-sm text-stone-600">
+        <h1 class="h1">Review</h1>
+        <p class="text-sm text-ink-muted">
           Unfinished practice first, then finished plans due for another run,
           then anything built for an older version of a phrase.
         </p>
       </header>
       @if (queue.isLoading()) {
-        <p class="text-stone-600" role="status">Loading…</p>
+        <p class="text-ink-muted" role="status">Loading…</p>
       } @else if (error(); as err) {
         <gsc-alert kind="error" heading="Could not load your review queue">
           <p>{{ err.message }}</p>
@@ -39,13 +39,13 @@ import { AlertComponent, ReviewQueueComponent } from '@gsc/web/ui';
       } @else if (queue.value(); as items) {
         @if (items.length === 0) {
           <div
-            class="rounded border border-dashed border-stone-300 p-8 text-center text-stone-600"
+            class="rounded border border-dashed border-rule-strong p-8 text-center text-ink-muted"
             data-testid="review-empty"
           >
             <p>Nothing to review. Nice.</p>
             <a
               routerLink="/phrases"
-              class="mt-2 inline-block text-brand-700 underline"
+              class="mt-2 inline-block text-brand-ink underline"
               >Browse your phrases</a
             >
           </div>

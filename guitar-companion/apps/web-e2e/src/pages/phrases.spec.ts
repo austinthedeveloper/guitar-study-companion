@@ -3,6 +3,7 @@ import { API_PATHS } from '@gsc/contracts';
 import { ROUTE_PATHS, routeTag } from '@gsc/web/routes';
 import { expectNoA11yViolations } from '../support/a11y';
 import { createPhrase, highStringLick, updateHarmony } from '../support/api';
+import { openStudyTab } from '../support/phrase-detail';
 
 test.describe('My phrases page', { tag: routeTag(ROUTE_PATHS.phrases) }, () => {
   test('lists saved phrases and links to them', async ({ page, request }) => {
@@ -54,12 +55,14 @@ test.describe('My phrases page', { tag: routeTag(ROUTE_PATHS.phrases) }, () => {
 
     // Favorite, tag, and annotate from the phrase page.
     await page.goto(`/phrases/${minor.id}`);
+    await openStudyTab(page, 'library');
     await page.getByTestId('meta-favorite').click();
     await page.getByTestId('meta-tags').fill('Warmup, blues');
     await page.getByTestId('meta-notes').fill('Good for the slow blues.');
     await page.getByTestId('meta-save').click();
     await expect(page.getByTestId('meta-status')).toHaveText('Saved');
     await page.reload();
+    await openStudyTab(page, 'library');
     await expect(page.getByTestId('meta-favorite')).toHaveAttribute(
       'aria-pressed',
       'true',
@@ -122,9 +125,11 @@ test.describe('My phrases page', { tag: routeTag(ROUTE_PATHS.phrases) }, () => {
     const phrase = await createPhrase(request, `Keep edits ${Date.now()}`);
     await page.goto(`/phrases/${phrase.id}`);
     await page.getByTestId('harmony-key').fill('E');
+    await openStudyTab(page, 'library');
     await page.getByTestId('meta-tags').fill('later');
     await page.getByTestId('meta-save').click();
     await expect(page.getByTestId('meta-status')).toHaveText('Saved');
+    await openStudyTab(page, 'notes');
     await expect(page.getByTestId('harmony-key')).toHaveValue('E');
     await expect(page.getByTestId('harmony-dirty')).toBeVisible();
   });
@@ -215,7 +220,7 @@ test.describe(
       ).toHaveText(['R', '2']);
       await expect(
         page.getByTestId('note-row').nth(1).getByTestId('note-role'),
-      ).toHaveText(['b3']);
+      ).toHaveText(['♭3']);
       await expect(page.getByTestId('harmony-dirty')).toBeVisible();
     });
 
@@ -234,13 +239,13 @@ test.describe(
       // G5 over A7 is the b7, a chord tone.
       await expect(
         page.getByTestId('note-row').nth(1).getByTestId('note-role'),
-      ).toHaveText(['b7']);
+      ).toHaveText(['♭7']);
 
       // Roles and chord changes appear on the tab itself.
       await expect(page.getByTestId('tab-chord-0')).toHaveText('E7');
       await expect(page.getByTestId('tab-chord-1')).toHaveText('A7');
       await expect(page.getByTestId('cell-role-0-1')).toHaveText('R→2');
-      await expect(page.getByTestId('cell-role-1-0')).toHaveText('b7');
+      await expect(page.getByTestId('cell-role-1-0')).toHaveText('♭7');
       await expect(page.getByTestId('tab-role-legend')).toBeVisible();
 
       await page.getByTestId('harmony-save').click();
@@ -283,6 +288,7 @@ test.describe(
     }) => {
       const few = await createPhrase(request, `Few ${Date.now()}`);
       await page.goto(`/phrases/${few.id}`);
+      await openStudyTab(page, 'scales');
       await expect(page.getByTestId('scales-certainty')).toContainText(
         'Too few different notes',
       );
@@ -295,13 +301,16 @@ test.describe(
         highStringLick(5, 8, 10, 12, 15, 12),
       );
       await page.goto(`/phrases/${lick.id}`);
+      await openStudyTab(page, 'scales');
       await expect(page.getByTestId('scales-certainty')).toContainText(
         'Several scales fit equally well',
       );
       await expect(page.getByTestId('scale-name').first()).toBeVisible();
 
       // Giving a key resolves it, live and with the reason shown.
+      await openStudyTab(page, 'notes');
       await page.getByTestId('harmony-key').fill('Am');
+      await openStudyTab(page, 'scales');
       await expect(page.getByTestId('scales-certainty')).toHaveText(
         'Best fit: A minor pentatonic.',
       );
@@ -319,6 +328,7 @@ test.describe(
         chords: 'E7',
       });
       await page.goto(`/phrases/${phrase.id}`);
+      await openStudyTab(page, 'why');
       await page.getByTestId('explain').click();
       await expect(page.getByTestId('explanation-summary')).toContainText(
         'Synthetic explanation',
@@ -342,6 +352,7 @@ test.describe(
 
       // Persisted with the phrase.
       await page.reload();
+      await openStudyTab(page, 'why');
       await expect(page.getByTestId('explanation-summary')).toBeVisible();
     });
 
@@ -353,15 +364,20 @@ test.describe(
         chords: 'E7',
       });
       await page.goto(`/phrases/${phrase.id}`);
+      await openStudyTab(page, 'why');
       await page.getByTestId('explain').click();
       await expect(page.getByTestId('explanation-summary')).toBeVisible();
 
+      await openStudyTab(page, 'notes');
       await page.getByTestId('harmony-key').fill('E');
       // Unsaved edits: the server would explain the saved phrase instead.
+      await openStudyTab(page, 'why');
       await expect(page.getByTestId('explanation-blocked')).toContainText(
         'Save your harmony changes first',
       );
+      await openStudyTab(page, 'notes');
       await page.getByTestId('harmony-save').click();
+      await openStudyTab(page, 'why');
       await expect(page.getByTestId('explanation-stale')).toBeVisible();
       await expect(page.getByTestId('explain')).toHaveText(
         'Update explanation',
@@ -382,6 +398,7 @@ test.describe(
         }),
       );
       await page.goto(`/phrases/${phrase.id}`);
+      await openStudyTab(page, 'why');
       await page.getByTestId('explain').click();
       await expect(page.getByTestId('explanation')).toContainText(
         'The explanation service is unavailable',

@@ -13,6 +13,7 @@ import {
   NoteRole,
   NoteRoles,
 } from '@gsc/music-domain';
+import { displayRole, roleKind } from '../note-roles/note-roles';
 
 /**
  * Verified note facts computed from the tab: names, chord shapes, and
@@ -24,32 +25,30 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section
-      class="space-y-3 rounded-lg border border-stone-300 bg-white p-4"
+      class="space-y-3 rounded-lg border border-rule-strong bg-paper-raised p-4"
       aria-labelledby="note-facts-heading"
       data-testid="note-facts"
     >
       <header>
-        <h2 id="note-facts-heading" class="text-lg font-semibold">
-          Notes and intervals
-        </h2>
-        <p class="text-sm text-stone-600">
+        <h2 id="note-facts-heading" class="h2">Notes and intervals</h2>
+        <p class="text-sm text-ink-muted">
           Computed from your tab, tuning, and capo. {{ spelling() }}
         </p>
       </header>
       @if (analysis().range; as range) {
         <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm">
-          <dt class="text-stone-600">Range</dt>
+          <dt class="text-ink-muted">Range</dt>
           <dd data-testid="note-range">
             {{ range.lowest }} – {{ range.highest }}
           </dd>
-          <dt class="text-stone-600">Pitches used</dt>
+          <dt class="text-ink-muted">Pitches used</dt>
           <dd data-testid="note-pitch-classes">
             {{ analysis().pitchClasses.join(' ') }}
           </dd>
         </dl>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-sm" data-testid="note-table">
-            <thead class="text-stone-600">
+            <thead class="text-ink-muted">
               <tr>
                 <th scope="col" class="py-1 pr-4 font-medium">#</th>
                 @if (chordOptions().length) {
@@ -65,14 +64,14 @@ import {
                 track col.order;
                 let i = $index
               ) {
-                <tr class="border-t border-stone-200" data-testid="note-row">
-                  <td class="py-1 pr-4 tabular-nums text-stone-500">
+                <tr class="border-t border-rule" data-testid="note-row">
+                  <td class="py-1 pr-4 tabular-nums text-ink-muted">
                     {{ i + 1 }}
                   </td>
                   @if (chordOptions().length) {
                     <td class="py-1 pr-4">
                       <select
-                        class="rounded border border-stone-300 bg-white px-1 py-0.5"
+                        class="rounded border border-rule-strong bg-paper-raised px-1 py-0.5"
                         [attr.aria-label]="'Chord from note ' + (i + 1)"
                         (change)="
                           chordChange.emit({
@@ -105,7 +104,7 @@ import {
                       <span>{{ noteLabel(n) }}</span>
                       @if (roles()[n.eventId]?.note; as r) {
                         <span [class]="roleClass(r)" data-testid="note-role">{{
-                          r.label
+                          roleText(r)
                         }}</span>
                       }
                       @if (n.bendToName) {
@@ -114,7 +113,7 @@ import {
                           <span
                             [class]="roleClass(r)"
                             data-testid="note-role"
-                            >{{ r.label }}</span
+                            >{{ roleText(r) }}</span
                           >
                         }
                       }
@@ -132,7 +131,7 @@ import {
           </table>
         </div>
       } @else {
-        <p class="text-sm text-stone-600">
+        <p class="text-sm text-ink-muted">
           No pitched notes (only dead notes).
         </p>
       }
@@ -169,12 +168,11 @@ export class NoteFactsComponent {
   }
 
   protected roleClass(role: NoteRole): string {
-    return (
-      'ml-1 rounded px-1 text-xs ' +
-      (role.chordTone
-        ? 'bg-brand-50 font-semibold text-brand-700'
-        : 'bg-stone-100 text-stone-600')
-    );
+    return `ml-1 font-mono text-xs role-${roleKind(role)}`;
+  }
+
+  protected roleText(role: NoteRole): string {
+    return displayRole(role.label);
   }
 
   protected intervalLabel(

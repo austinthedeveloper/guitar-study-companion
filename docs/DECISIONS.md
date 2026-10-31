@@ -144,6 +144,14 @@ Record consequential choices here. Status values: `Proposed`, `Accepted`, `Super
 4. Create a sign-up and sign-in flow with email and password, Google and Microsoft.
 5. Share the tenant subdomain and the two client IDs.
 
+## ADR-015 — Design system: practice notebook, annotated sheet
+
+**Status:** Accepted
+
+**Decision (2026-10-31):** The web app follows the Guitar Study Companion design system (a Claude design-system artifact): warm paper and ink colour tokens with a dark theme from `prefers-color-scheme`, Fraunces for page titles, IBM Plex Sans for UI text and IBM Plex Mono for tab. The fonts are self-hosted from `@fontsource` packages, so no page load reaches a font CDN. Tokens live in the `@theme` block of `apps/web/src/styles.css` as semantic colours (`paper`, `ink`, `rule`, `brand`, `uncertain-*`, `error-*`, `role-*`…); templates use those, not palette colours like `stone-600`. Phrase detail uses the "annotated sheet" layout: the tab has note and step rows under it, columns you can pick to see one note in words, and the study sections behind tabs, with the facts tab first. Notes are coloured by their role over the chord (root, chord tone, outside the chord), always with the role text and a legend. The editable grid keeps neutral cells, so "needs review" and "invalid" stay readable. Its role row comes from the key and chords entered on the Details step.
+
+**Why:** The owner chose this direction from three Phrase detail mock-ups, and asked for bolder colour that carries meaning. Role colours come from code (`harmonize`), like every other musical fact. Semantic tokens let one class serve both themes, and every text pair meets WCAG AA in both.
+
 ## Open decisions
 
 - [x] Choose initial authentication method: Microsoft Entra External ID with SSO and email/password (ADR-014).

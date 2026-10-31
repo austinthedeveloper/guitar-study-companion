@@ -53,14 +53,14 @@ const ZOOMS = [0.5, 0.75, 1, 1.5, 2, 3];
         >
           ⟳ Rotate right
         </button>
-        <span class="mx-2 h-5 w-px bg-stone-300"></span>
+        <span class="mx-2 h-5 w-px bg-rule"></span>
         <label class="flex items-center gap-2" for="cropper-tilt">
           Straighten
         </label>
         <input
           id="cropper-tilt"
           type="range"
-          class="w-32 accent-brand-600"
+          class="w-32 accent-brand"
           [min]="-maxTilt"
           [max]="maxTilt"
           step="0.5"
@@ -85,7 +85,7 @@ const ZOOMS = [0.5, 0.75, 1, 1.5, 2, 3];
         >
           Reset
         </button>
-        <span class="mx-2 h-5 w-px bg-stone-300"></span>
+        <span class="mx-2 h-5 w-px bg-rule"></span>
         <button
           type="button"
           class="tool"
@@ -112,7 +112,7 @@ const ZOOMS = [0.5, 0.75, 1, 1.5, 2, 3];
         >
           +
         </button>
-        <span class="mx-2 h-5 w-px bg-stone-300"></span>
+        <span class="mx-2 h-5 w-px bg-rule"></span>
         <button
           type="button"
           class="tool"
@@ -131,13 +131,13 @@ const ZOOMS = [0.5, 0.75, 1, 1.5, 2, 3];
           Clear selection
         </button>
       </div>
-      <p class="text-sm text-stone-600">
+      <p class="text-sm text-ink-muted">
         Drag over the passage you want. Keep it to a few bars of one tab staff.
         If the page is tilted, use Straighten until the tab lines run level with
         the guides.
       </p>
       <div
-        class="max-h-[70vh] overflow-auto rounded border border-stone-300 bg-stone-100"
+        class="max-h-[70vh] overflow-auto rounded border border-rule-strong bg-paper-sunk"
         data-testid="cropper-viewport"
       >
         <div class="relative select-none" [style.width.%]="zoom() * 100">
@@ -165,7 +165,7 @@ const ZOOMS = [0.5, 0.75, 1, 1.5, 2, 3];
           }
           @if (selection(); as s) {
             <div
-              class="absolute border-2 border-brand-600 bg-brand-600/10 outline-none focus-visible:ring-4 focus-visible:ring-brand-600/40"
+              class="absolute border-2 border-brand bg-brand/10 outline-none focus-visible:ring-4 focus-visible:ring-focus/40"
               [style.left.%]="s.x * 100"
               [style.top.%]="s.y * 100"
               [style.width.%]="s.width * 100"
@@ -185,8 +185,8 @@ const ZOOMS = [0.5, 0.75, 1, 1.5, 2, 3];
   styles: `
     .tool {
       border-radius: 0.25rem;
-      border: 1px solid var(--color-stone-300);
-      background: white;
+      border: 1px solid var(--color-rule-strong);
+      background: var(--color-paper-raised);
       padding: 0.25rem 0.5rem;
     }
     .tool:disabled {

@@ -18,7 +18,7 @@ const LABELS: Record<ReviewItem['kind'], string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <ul
-      class="divide-y divide-stone-200 rounded border border-stone-200 bg-white"
+      class="divide-y divide-rule rounded border border-rule bg-paper-raised"
       data-testid="review-queue"
     >
       @for (item of items(); track item.phraseId + item.kind) {
@@ -28,8 +28,8 @@ const LABELS: Record<ReviewItem['kind'], string> = {
           [attr.data-kind]="item.kind"
         >
           <div class="min-w-0 flex-1">
-            <span class="font-medium text-stone-900">{{ item.title }}</span>
-            <span class="block text-sm text-stone-600">
+            <span class="font-medium text-ink">{{ item.title }}</span>
+            <span class="block text-sm text-ink-muted">
               {{ item.detail }}
               @if (item.at) {
                 · {{ item.at | date: 'mediumDate' }}

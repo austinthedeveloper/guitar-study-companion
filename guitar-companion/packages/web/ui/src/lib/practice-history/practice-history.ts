@@ -9,15 +9,13 @@ import { PracticeHistoryEntry } from '@gsc/contracts';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section
-      class="space-y-2 rounded-lg border border-stone-300 bg-white p-4"
+      class="space-y-2 rounded-lg border border-rule-strong bg-paper-raised p-4"
       aria-labelledby="history-heading"
       data-testid="practice-history"
     >
-      <h2 id="history-heading" class="text-lg font-semibold">
-        Practice history
-      </h2>
+      <h2 id="history-heading" class="h2">Practice history</h2>
       @if (entries().length === 0) {
-        <p class="text-sm text-stone-600" data-testid="history-empty">
+        <p class="text-sm text-ink-muted" data-testid="history-empty">
           Not practised yet.
         </p>
       } @else {
@@ -34,7 +32,7 @@ import { PracticeHistoryEntry } from '@gsc/contracts';
                 · last practised {{ e.lastPracticed | date: 'mediumDate' }}
               }
               @if (e.stale) {
-                <span class="text-amber-800">
+                <span class="text-uncertain-ink">
                   · built for an earlier version</span
                 >
               }
