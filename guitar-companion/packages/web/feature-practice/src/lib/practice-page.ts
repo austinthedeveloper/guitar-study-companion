@@ -42,14 +42,14 @@ import { catchError, firstValueFrom, of, throwError } from 'rxjs';
   providers: [ExercisePlayback],
   template: `
     @if (phrase.isLoading()) {
-      <p class="text-stone-600" role="status">Loading…</p>
+      <p class="text-ink-muted" role="status">Loading…</p>
     } @else if (phraseError(); as err) {
       @if (err.code === 'not_found') {
         <section class="py-12 text-center" data-testid="practice-not-found">
-          <h1 class="text-2xl font-semibold">Phrase not found</h1>
+          <h1 class="h1">Phrase not found</h1>
           <a
             routerLink="/phrases"
-            class="mt-4 inline-block text-brand-700 underline"
+            class="mt-4 inline-block text-brand-ink underline"
             >Back to my phrases</a
           >
         </section>
@@ -70,16 +70,11 @@ import { catchError, firstValueFrom, of, throwError } from 'rxjs';
         <header>
           <a
             [routerLink]="['/phrases', p.id]"
-            class="text-sm text-brand-700 underline"
+            class="text-sm text-brand-ink underline"
             >← {{ p.title }}</a
           >
-          <h1
-            class="mt-1 text-2xl font-semibold"
-            data-testid="practice-heading"
-          >
-            Practice
-          </h1>
-          <p class="text-sm text-stone-600">
+          <h1 class="mt-1 h1" data-testid="practice-heading">Practice</h1>
+          <p class="text-sm text-ink-muted">
             Exercises are built from your verified notes. Progress is what you
             report; nothing listens to your playing.
           </p>
@@ -98,7 +93,7 @@ import { catchError, firstValueFrom, of, throwError } from 'rxjs';
         }
 
         @if (planLoading()) {
-          <p class="text-stone-600" role="status">Loading plan…</p>
+          <p class="text-ink-muted" role="status">Loading plan…</p>
         } @else if (plan(); as pl) {
           @if (pl.phraseRevision !== p.revision) {
             <gsc-alert kind="warning" data-testid="plan-stale"
@@ -107,7 +102,7 @@ import { catchError, firstValueFrom, of, throwError } from 'rxjs';
             >
           }
           @if (!pl.coachedBy) {
-            <p class="text-sm text-stone-600" data-testid="plan-uncoached">
+            <p class="text-sm text-ink-muted" data-testid="plan-uncoached">
               AI tips weren't available for this plan; the steps below come from
               the rules.
             </p>
@@ -123,7 +118,7 @@ import { catchError, firstValueFrom, of, throwError } from 'rxjs';
           }
           <p class="text-sm font-medium" data-testid="plan-progress">
             {{ doneCount() }} of {{ pl.exercises.length }} done
-            <span class="font-normal text-stone-600">
+            <span class="font-normal text-ink-muted">
               · {{ saveStatus() }}</span
             >
           </p>
@@ -154,7 +149,7 @@ import { catchError, firstValueFrom, of, throwError } from 'rxjs';
           <label class="block text-sm">
             <span class="block font-medium">Session notes</span>
             <textarea
-              class="mt-1 w-full rounded border border-stone-300 p-2"
+              class="mt-1 w-full rounded border border-rule-strong p-2"
               rows="3"
               placeholder="What felt hard? What to try next time?"
               [value]="notes()"
@@ -164,7 +159,7 @@ import { catchError, firstValueFrom, of, throwError } from 'rxjs';
             ></textarea>
           </label>
         } @else {
-          <p class="text-stone-600" data-testid="plan-empty">
+          <p class="text-ink-muted" data-testid="plan-empty">
             No plan yet. Choose settings and build one.
           </p>
         }

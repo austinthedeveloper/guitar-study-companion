@@ -14,7 +14,14 @@ import {
   MAX_CROP_DIMENSION,
   Uncertainty,
 } from '@gsc/contracts';
-import { midiToNoteName, validateEvents } from '@gsc/music-domain';
+import {
+  analyzeNotes,
+  harmonize,
+  midiToNoteName,
+  parseKey,
+  sliceOrders,
+  validateEvents,
+} from '@gsc/music-domain';
 import {
   ClientError,
   Flash,
@@ -41,6 +48,7 @@ import {
   FileDropComponent,
   ImageCropperComponent,
   SourceFormComponent,
+  tabAnnotations,
   SourceFormValue,
   StepsComponent,
   TabEditorComponent,
@@ -150,6 +158,19 @@ export class ImportPage {
       midiToNoteName(m).replace(/-?\d+$/, ''),
     ),
   );
+  /** Notes, roles over the given chords, and steps under the grid. */
+  protected readonly annotations = computed(() => {
+    const context = this.meta()?.context;
+    const events = this.events();
+    const analysis = analyzeNotes({
+      events,
+      tuningMidi: context?.tuningMidi ?? [64, 59, 55, 50, 45, 40],
+      capo: context?.capo ?? 0,
+      key: parseKey(context?.key ?? ''),
+    });
+    const { roles } = harmonize({ analysis, chords: context?.chords });
+    return tabAnnotations(sliceOrders(events), analysis, roles);
+  });
   protected readonly issues = computed(() =>
     validateEvents(this.events(), {
       stringCount: this.stringCount(),

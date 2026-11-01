@@ -4,6 +4,7 @@ import {
   computed,
   input,
   model,
+  output,
   signal,
 } from '@angular/core';
 import { Technique } from '@gsc/contracts';
@@ -14,6 +15,7 @@ import {
   NoteRoles,
   insertSliceBefore,
   moveSlice,
+  NoteRole,
   setNote,
   sliceOrders,
   updateEvent,
@@ -27,6 +29,11 @@ import {
   parseCell,
   TECHNIQUE_OPTIONS,
 } from './tab-editor-model';
+import {
+  displayRole,
+  roleKind,
+  TabColumnAnnotation,
+} from '../note-roles/note-roles';
 
 /**
  * Tab correction grid: one row per string (top = highest), one column per
@@ -50,33 +57,33 @@ import {
             Rhythm is known
           </label>
           @if (!rhythmKnown()) {
-            <span class="text-stone-600" data-testid="rhythm-unknown-note"
+            <span class="text-ink-muted" data-testid="rhythm-unknown-note"
               >Durations are left empty; nothing is guessed from spacing.</span
             >
           }
-          <span class="ml-auto inline-flex items-center gap-2 text-stone-600">
-            <span
-              class="inline-block h-3 w-3 rounded-sm bg-amber-200 ring-1 ring-amber-400"
-            ></span>
-            Needs review
-            <span
-              class="ml-2 inline-block h-3 w-3 rounded-sm bg-red-100 ring-2 ring-red-500"
-            ></span>
-            Invalid
+          <span
+            class="ml-auto inline-flex items-center gap-4 text-xs font-medium text-ink-muted"
+          >
+            <span class="inline-flex items-center gap-1"
+              ><i class="swatch is-uncertain"></i>Needs review</span
+            >
+            <span class="inline-flex items-center gap-1"
+              ><i class="swatch is-invalid"></i>Invalid</span
+            >
           </span>
         </div>
       }
 
       @if (columns().length === 0) {
         <div
-          class="rounded border border-dashed border-stone-300 p-6 text-center text-stone-600"
+          class="rounded border border-dashed border-rule-strong p-6 text-center text-ink-muted"
           data-testid="tab-editor-empty"
         >
           <p>No notes yet.</p>
           @if (!readonly()) {
             <button
               type="button"
-              class="mt-3 rounded bg-brand-700 px-3 py-1.5 text-sm text-white"
+              class="btn-primary mt-3"
               (click)="addColumn()"
               data-testid="add-column"
             >
@@ -86,11 +93,13 @@ import {
         </div>
       } @else {
         <div
-          class="overflow-x-auto rounded border border-stone-200 bg-white p-3"
+          class="overflow-x-auto rounded-[10px] border border-rule bg-paper-raised p-3"
           role="group"
           aria-label="Tablature"
         >
-          <table class="border-collapse font-mono text-sm">
+          <table
+            class="tab-sheet border-collapse font-mono text-sm tabular-nums"
+          >
             <thead>
               @if (readonly() && columnChords().length) {
                 <tr data-testid="tab-chords">
@@ -98,7 +107,8 @@ import {
                   @for (order of columns(); track order; let col = $index) {
                     <th
                       scope="col"
-                      class="px-0.5 text-left font-sans text-xs font-semibold text-stone-700"
+                      class="px-0.5 text-left font-sans text-xs font-semibold whitespace-nowrap text-brand-ink"
+                      [class.bg-brand-tint]="activeColumn() === order"
                       [attr.data-testid]="'tab-chord-' + col"
                     >
                       @if (chordChangesAt(col); as chord) {
@@ -111,19 +121,43 @@ import {
               <tr>
                 <th scope="col" class="sr-only">String</th>
                 @for (order of columns(); track order; let col = $index) {
-                  <th scope="col" class="px-0.5 pb-1">
-                    @if (readonly()) {
-                      <span class="text-xs text-stone-500">{{
+                  <th
+                    scope="col"
+                    class="px-0.5 pb-1"
+                    [class.bg-brand-tint]="
+                      readonly() && activeColumn() === order
+                    "
+                  >
+                    @if (readonly() && !selectable()) {
+                      <span class="text-xs text-ink-muted">{{
                         columnLabels()[col] ?? col + 1
                       }}</span>
+                    } @else if (readonly()) {
+                      <button
+                        type="button"
+                        class="h-7 w-full min-w-9 rounded text-xs hover:bg-paper-sunk"
+                        [class]="
+                          activeColumn() === order
+                            ? 'font-semibold text-brand-ink'
+                            : 'text-ink-muted'
+                        "
+                        [attr.aria-pressed]="activeColumn() === order"
+                        [attr.aria-label]="
+                          'Show note ' + (columnLabels()[col] ?? col + 1)
+                        "
+                        [attr.data-testid]="'column-' + col"
+                        (click)="columnPick.emit(order)"
+                      >
+                        {{ columnLabels()[col] ?? col + 1 }}
+                      </button>
                     } @else {
                       <button
                         type="button"
                         class="w-9 rounded text-xs"
                         [class]="
                           selectedColumn() === order
-                            ? 'bg-brand-700 text-white'
-                            : 'text-stone-600 hover:bg-stone-100'
+                            ? 'bg-brand text-on-brand'
+                            : 'text-ink-muted hover:bg-paper-sunk'
                         "
                         [attr.aria-pressed]="selectedColumn() === order"
                         [attr.aria-label]="'Select position ' + (col + 1)"
@@ -142,36 +176,40 @@ import {
                 <tr>
                   <th
                     scope="row"
-                    class="pr-2 text-right text-xs font-normal text-stone-500"
+                    class="pr-2 text-right text-xs font-normal text-ink-muted"
                   >
                     {{ stringLabels()[s] ?? s + 1 }}
                   </th>
                   @for (order of columns(); track order; let col = $index) {
                     @let e = cell(order, s);
-                    <td class="border-y border-stone-300 px-0.5 py-0.5">
+                    <td
+                      class="tab-line px-0.5 py-0.5 text-center align-top"
+                      [class.is-active]="readonly() && activeColumn() === order"
+                    >
                       @if (readonly()) {
                         <span
-                          class="inline-flex w-9 flex-col items-center rounded"
-                          [class.bg-amber-100]="!!e && highlighted().has(e.id)"
+                          class="inline-flex min-w-9 flex-col items-center gap-0.5 rounded"
+                          [class.h-10]="hasRoles()"
+                          [class.bg-uncertain-fill]="
+                            !!e && highlighted().has(e.id)
+                          "
                           [class.ring-2]="!!e && highlighted().has(e.id)"
-                          [class.ring-amber-500]="
+                          [class.ring-uncertain-line]="
                             !!e && highlighted().has(e.id)
                           "
                           [attr.data-highlighted]="
                             e && highlighted().has(e.id) ? 'true' : null
                           "
                         >
-                          <span [attr.data-testid]="'cell-' + col + '-' + s">{{
-                            cellText(e)
-                          }}</span>
+                          <span
+                            [class]="e ? chipClass(e.id) : 'h-6'"
+                            [attr.data-testid]="'cell-' + col + '-' + s"
+                            >{{ cellText(e) }}</span
+                          >
                           @if (e && roleLabel(e.id); as label) {
                             <span
-                              class="font-sans text-[10px] leading-none"
-                              [class]="
-                                roles()[e.id]?.note?.chordTone
-                                  ? 'font-semibold text-brand-700'
-                                  : 'text-stone-500'
-                              "
+                              class="font-mono text-[11px] leading-none"
+                              [class]="roleTextClass(e.id)"
                               [attr.data-testid]="'cell-role-' + col + '-' + s"
                               >{{ label }}</span
                             >
@@ -182,7 +220,7 @@ import {
                           type="text"
                           inputmode="numeric"
                           maxlength="2"
-                          class="w-9 rounded border px-1 py-0.5 text-center"
+                          class="w-9 rounded border px-1 py-0.5 text-center font-medium"
                           [class]="cellClass(e)"
                           [value]="cellText(e)"
                           [attr.aria-label]="
@@ -205,21 +243,58 @@ import {
                 </tr>
               }
             </tbody>
+            @if (annotations().length) {
+              <tbody class="border-t border-rule" data-testid="tab-annotations">
+                @for (row of annotationRows(); track row.key) {
+                  <tr>
+                    <th
+                      scope="row"
+                      class="pr-2 text-right text-xs font-normal text-ink-muted"
+                    >
+                      {{ row.label }}
+                    </th>
+                    @for (order of columns(); track order; let col = $index) {
+                      <td
+                        class="h-6 px-0.5 text-center text-[13px] whitespace-nowrap"
+                        [class.bg-brand-tint]="
+                          readonly() && activeColumn() === order
+                        "
+                        [attr.data-testid]="'tab-' + row.key + '-' + col"
+                      >
+                        <span class="inline-flex gap-1">
+                          @for (part of row.cells[col] ?? []; track $index) {
+                            <span [class]="part.cls">{{ part.text }}</span>
+                          }
+                        </span>
+                      </td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            }
           </table>
         </div>
 
-        @if (readonly() && hasRoles()) {
-          <p class="text-xs text-stone-600" data-testid="tab-role-legend">
-            Under each fret: its role over the chord (<span
-              class="font-semibold text-brand-700"
-              >bold</span
+        @if (hasRoles() || annotationRoles()) {
+          <p
+            class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-medium text-ink-muted"
+            data-testid="tab-role-legend"
+          >
+            <span>Role over the chord:</span>
+            <span class="inline-flex items-center gap-1"
+              ><i class="swatch is-root"></i>Root</span
             >
-            = chord tone).
+            <span class="inline-flex items-center gap-1"
+              ><i class="swatch is-chord"></i>Chord tone</span
+            >
+            <span class="inline-flex items-center gap-1"
+              ><i class="swatch is-other"></i>Outside the chord</span
+            >
           </p>
         }
         @if (!readonly() && selected(); as sel) {
           <section
-            class="rounded border border-stone-200 bg-stone-50 p-3"
+            class="rounded border border-rule bg-paper-sunk p-3"
             aria-label="Selected position"
             data-testid="column-panel"
           >
@@ -261,7 +336,7 @@ import {
               </button>
               <button
                 type="button"
-                class="btn-ghost text-red-700"
+                class="btn-ghost text-error-ink"
                 (click)="remove(sel.order)"
                 data-testid="delete-column"
               >
@@ -269,13 +344,13 @@ import {
               </button>
             </div>
             @if (sel.events.length === 0) {
-              <p class="mt-2 text-sm text-stone-600">
+              <p class="mt-2 text-sm text-ink-muted">
                 Type a fret number in this column to add a note.
               </p>
             }
             @for (e of sel.events; track e.id) {
               <fieldset
-                class="mt-3 rounded border border-stone-200 bg-white p-2 text-sm"
+                class="mt-3 rounded border border-rule bg-paper-raised p-2 text-sm"
                 [attr.data-testid]="'note-panel-' + e.stringIndex"
               >
                 <legend class="px-1 font-medium">
@@ -331,7 +406,7 @@ import {
                   <label class="inline-flex items-center gap-2">
                     Duration
                     <select
-                      class="rounded border px-1 py-0.5 disabled:bg-stone-100"
+                      class="rounded border px-1 py-0.5 disabled:bg-paper-sunk"
                       [disabled]="!rhythmKnown()"
                       (change)="setDuration(e, $any($event.target).value)"
                       [attr.data-testid]="'duration-' + e.stringIndex"
@@ -351,7 +426,7 @@ import {
                   </label>
                 </div>
                 @for (msg of issuesFor(e.id); track msg) {
-                  <p class="mt-1 text-red-700" role="alert">{{ msg }}</p>
+                  <p class="mt-1 text-error-ink" role="alert">{{ msg }}</p>
                 }
               </fieldset>
             }
@@ -361,7 +436,7 @@ import {
         @if (!readonly()) {
           <button
             type="button"
-            class="rounded border border-stone-300 px-3 py-1.5 text-sm hover:bg-stone-50"
+            class="rounded border border-rule-strong px-3 py-1.5 text-sm hover:bg-paper-sunk"
             (click)="addColumn()"
             data-testid="add-column"
           >
@@ -389,6 +464,13 @@ export class TabEditorComponent {
   readonly columnLabels = input<readonly (number | string)[]>([]);
   /** Read-only display: notes to highlight (e.g. cited by an explanation). */
   readonly highlightIds = input<readonly string[]>([]);
+  /** Read-only display: position buttons pick a column (see `columnPick`). */
+  readonly selectable = input(false);
+  /** Read-only display: the picked column's order, highlighted. */
+  readonly activeColumn = input<number | null>(null);
+  readonly columnPick = output<number>();
+  /** Facts per column, shown as rows under the strings. */
+  readonly annotations = input<readonly TabColumnAnnotation[]>([]);
   protected readonly highlighted = computed(() => new Set(this.highlightIds()));
   protected readonly hasRoles = computed(() =>
     Object.values(this.roles()).some((r) => r.note),
@@ -401,8 +483,58 @@ export class TabEditorComponent {
   }
 
   protected roleLabel(id: string): string | null {
-    return formatRoles(this.roles()[id]);
+    const label = formatRoles(this.roles()[id]);
+    return label && displayRole(label);
   }
+
+  /** Fret chip colour from the note's role over its chord. */
+  protected chipClass(id: string): string {
+    const kind = roleKind(this.roles()[id]?.note);
+    return 'note-chip' + (kind ? ` is-${kind}` : '');
+  }
+
+  protected roleTextClass(id: string): string {
+    const kind = roleKind(this.roles()[id]?.note);
+    return kind ? `role-${kind}` : 'text-ink-muted';
+  }
+
+  protected readonly annotationRoles = computed(() =>
+    this.annotations().some((a) => a.roles.length),
+  );
+  /** Rows under the strings: note names, roles (editing only) and steps. */
+  protected readonly annotationRows = computed(() => {
+    const cols = this.annotations();
+    const rows: {
+      key: string;
+      label: string;
+      cells: { text: string; cls: string }[][];
+    }[] = [
+      {
+        key: 'note',
+        label: 'note',
+        cells: cols.map((a) => a.notes.map((text) => ({ text, cls: '' }))),
+      },
+    ];
+    if (!this.readonly() && this.annotationRoles())
+      rows.push({
+        key: 'role',
+        label: 'role',
+        cells: cols.map((a) =>
+          a.roles.map((r) => ({
+            text: displayRole(r.label),
+            cls: `role-${roleKind(r) ?? 'other'}`,
+          })),
+        ),
+      });
+    rows.push({
+      key: 'step',
+      label: 'step',
+      cells: cols.map((a) =>
+        a.step ? [{ text: a.step, cls: 'text-ink-muted' }] : [],
+      ),
+    });
+    return rows;
+  });
 
   protected readonly selectedColumn = signal<number | null>(null);
   protected readonly techniqueOptions = TECHNIQUE_OPTIONS;
@@ -457,11 +589,11 @@ export class TabEditorComponent {
   }
 
   protected cellClass(e: EditorEvent | undefined): string {
-    if (!e) return 'border-transparent bg-transparent hover:border-stone-300';
+    if (!e) return 'border-transparent bg-transparent hover:border-rule-strong';
     if (this.issueIds().has(e.id))
-      return 'border-red-500 bg-red-100 ring-2 ring-red-500';
-    if (this.needsReview(e)) return 'border-amber-400 bg-amber-200';
-    return 'border-stone-300 bg-white';
+      return 'border-error-line bg-error-tint ring-2 ring-error-line';
+    if (this.needsReview(e)) return 'border-uncertain-line bg-uncertain-fill';
+    return 'border-rule-strong bg-paper-raised';
   }
 
   protected cellTitle(e: EditorEvent): string {

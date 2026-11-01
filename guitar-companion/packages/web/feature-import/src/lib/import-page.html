@@ -1,6 +1,6 @@
 <div class="space-y-6">
   <header class="space-y-3">
-    <h1 class="text-2xl font-semibold text-stone-900">Import a passage</h1>
+    <h1 class="h1">Import a passage</h1>
     <gsc-steps [steps]="steps" [current]="step()" />
   </header>
 
@@ -10,7 +10,7 @@
     class="space-y-4"
     data-testid="step-upload"
   >
-    <h2 id="upload-heading" class="text-lg font-medium">
+    <h2 id="upload-heading" class="text-[17px] font-semibold">
       Upload a photo of a page
     </h2>
     <gsc-file-drop
@@ -31,10 +31,10 @@
     data-testid="step-select"
   >
     <div class="flex flex-wrap items-baseline justify-between gap-2">
-      <h2 id="select-heading" class="text-lg font-medium">
+      <h2 id="select-heading" class="text-[17px] font-semibold">
         Select the passage
       </h2>
-      <span class="text-sm text-stone-600" data-testid="file-name"
+      <span class="text-sm text-ink-muted" data-testid="file-name"
         >{{ fileName() }}</span
       >
     </div>
@@ -72,14 +72,14 @@
     class="space-y-4"
     data-testid="step-details"
   >
-    <h2 id="details-heading" class="text-lg font-medium">
+    <h2 id="details-heading" class="text-[17px] font-semibold">
       Where is this from?
     </h2>
     @if (crop(); as c) {
     <img
       [src]="c.url"
       alt="Selected passage"
-      class="max-h-48 rounded border border-stone-300 bg-white"
+      class="max-h-48 rounded border border-rule-strong bg-paper-raised"
       data-testid="crop-preview"
     />
     }
@@ -142,7 +142,7 @@
       </div>
     </div>
     @if (interpreting()) {
-    <p class="text-sm text-stone-600" role="status" data-testid="interpreting">
+    <p class="text-sm text-ink-muted" role="status" data-testid="interpreting">
       Reading the tablature. This can take up to a minute.
     </p>
     }
@@ -153,7 +153,9 @@
     class="space-y-4"
     data-testid="step-review"
   >
-    <h2 id="review-heading" class="text-lg font-medium">Review and correct</h2>
+    <h2 id="review-heading" class="text-[17px] font-semibold">
+      Review and correct
+    </h2>
 
     @if (pendingDraft(); as draft) {
     <gsc-alert kind="info" heading="New recognition ready">
@@ -181,7 +183,7 @@
       </div>
     </gsc-alert>
     } @if (crop(); as c) {
-    <figure class="rounded border border-stone-300 bg-white p-2">
+    <figure class="rounded border border-rule-strong bg-paper-raised p-2">
       <img
         [src]="c.url"
         alt="Selected passage for comparison"
@@ -193,7 +195,7 @@
       </figcaption>
     </figure>
     } @if (recognition(); as r) {
-    <p class="text-sm text-stone-600" data-testid="recognition-summary">
+    <p class="text-sm text-ink-muted" data-testid="recognition-summary">
       Draft from {{ r.provider }} ({{ r.model }}). AI recognition is a starting
       point; your corrections are what get saved. @if (reviewCount() > 0) {
       <strong data-testid="review-count"
@@ -207,13 +209,13 @@
       instrument and were removed. Check the passage for gaps.
     </gsc-alert>
     } } @else {
-    <p class="text-sm text-stone-600">
+    <p class="text-sm text-ink-muted">
       Type fret numbers into the grid. Top row is the highest string. Use x for
       dead notes.
     </p>
     } @if (uncertainties().length > 0) {
     <details
-      class="rounded border border-amber-300 bg-amber-50 p-3 text-sm"
+      class="rounded border border-uncertain-line bg-uncertain-tint p-3 text-sm"
       open
       data-testid="uncertainties"
     >
@@ -231,7 +233,7 @@
     <label class="flex max-w-md flex-col gap-1 text-sm">
       <span>Phrase name <span aria-hidden="true">*</span></span>
       <input
-        class="rounded border border-stone-300 px-2 py-1.5"
+        class="rounded border border-rule-strong px-2 py-1.5"
         [value]="title()"
         (input)="title.set($any($event.target).value)"
         required
@@ -246,6 +248,7 @@
       [stringLabels]="stringLabels()"
       [uncertainEventIds]="uncertainIds()"
       [issues]="issues()"
+      [annotations]="annotations()"
     />
 
     @if (issues().length > 0) {

@@ -70,14 +70,14 @@ interface Version {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (phrase.isLoading()) {
-      <p class="text-stone-600" role="status">Loading…</p>
+      <p class="text-ink-muted" role="status">Loading…</p>
     } @else if (phraseError(); as err) {
       @if (err.code === 'not_found') {
         <section class="py-12 text-center" data-testid="transpose-not-found">
-          <h1 class="text-2xl font-semibold">Phrase not found</h1>
+          <h1 class="h1">Phrase not found</h1>
           <a
             routerLink="/phrases"
-            class="mt-4 inline-block text-brand-700 underline"
+            class="mt-4 inline-block text-brand-ink underline"
             >Back to my phrases</a
           >
         </section>
@@ -91,11 +91,11 @@ interface Version {
         <header>
           <a
             [routerLink]="['/phrases', p.id]"
-            class="text-sm text-brand-700 underline"
+            class="text-sm text-brand-ink underline"
             >← {{ p.title }}</a
           >
-          <h1 class="mt-1 text-2xl font-semibold">Transpose and vary</h1>
-          <p class="text-sm text-stone-600">
+          <h1 class="mt-1 h1">Transpose and vary</h1>
+          <p class="text-sm text-ink-muted">
             Every note moves by the same interval, so the lick's shape and each
             note's role are kept. Fingerings are worked out to stay playable.
           </p>
@@ -110,7 +110,7 @@ interface Version {
         />
 
         @if (keyProblem(); as problem) {
-          <p class="text-sm text-stone-600" data-testid="transpose-hint">
+          <p class="text-sm text-ink-muted" data-testid="transpose-hint">
             {{ problem }}
           </p>
         } @else if (result()?.problem; as problem) {
@@ -139,7 +139,7 @@ interface Version {
             <div class="flex flex-wrap items-center gap-3">
               <h2
                 id="transposed-heading"
-                class="text-lg font-semibold"
+                class="h2"
                 data-testid="transposed-heading"
               >
                 In {{ toLabel() }} ({{ shiftLabel() }})
@@ -194,9 +194,7 @@ interface Version {
           </section>
 
           <section class="space-y-3" aria-labelledby="variations-heading">
-            <h2 id="variations-heading" class="text-lg font-semibold">
-              Variations
-            </h2>
+            <h2 id="variations-heading" class="h2">Variations</h2>
             @for (v of variations(); track $index) {
               @if (v.variation; as variation) {
                 <div class="space-y-2" data-testid="variation">
@@ -240,7 +238,7 @@ interface Version {
                 </div>
               } @else {
                 <p
-                  class="text-sm text-stone-600"
+                  class="text-sm text-ink-muted"
                   data-testid="variation-skipped"
                 >
                   {{ v.reason }}
@@ -250,15 +248,11 @@ interface Version {
           </section>
 
           <section class="space-y-3" aria-labelledby="apply-heading">
-            <h2 id="apply-heading" class="text-lg font-semibold">
-              Apply over a progression
-            </h2>
+            <h2 id="apply-heading" class="h2">Apply over a progression</h2>
             <label class="block text-sm">
-              <span class="block text-stone-700"
-                >Chords (in {{ toLabel() }})</span
-              >
+              <span class="block text-ink">Chords (in {{ toLabel() }})</span>
               <input
-                class="mt-1 w-full rounded border border-stone-300 px-2 py-1"
+                class="mt-1 w-full rounded border border-rule-strong px-2 py-1"
                 autocomplete="off"
                 placeholder="e.g. C7 F7 G7"
                 [value]="progression()"
@@ -266,14 +260,16 @@ interface Version {
                 data-testid="apply-progression"
               />
             </label>
-            <p class="text-sm text-stone-600">
+            <p class="text-sm text-ink-muted">
               Play the phrase once over each chord, ending on that chord's root
               (or 3rd). The count shows how many notes are chord tones.
             </p>
             @for (a of applications(); track $index) {
               <div data-testid="application">
                 @if (!a.understood) {
-                  <p class="text-sm text-amber-800">{{ a.ending.reason }}</p>
+                  <p class="text-sm text-uncertain-ink">
+                    {{ a.ending.reason }}
+                  </p>
                 } @else {
                   <p class="text-sm font-medium" data-testid="application-fit">
                     Over {{ a.chord }}: {{ a.chordTones }} of
@@ -314,7 +310,7 @@ interface Version {
                       (downloadMidi)="noop()"
                     />
                   } @else {
-                    <p class="text-sm text-stone-600">{{ a.ending.reason }}</p>
+                    <p class="text-sm text-ink-muted">{{ a.ending.reason }}</p>
                   }
                 }
               </div>

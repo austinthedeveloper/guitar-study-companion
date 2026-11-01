@@ -18,22 +18,22 @@ import { AlertComponent } from '../alert/alert';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section
-      class="space-y-3 rounded-lg border border-stone-300 bg-white p-4"
+      class="space-y-3 rounded-lg border border-rule-strong bg-paper-raised p-4"
       aria-labelledby="harmony-heading"
       data-testid="harmony"
     >
       <header>
-        <h2 id="harmony-heading" class="text-lg font-semibold">Harmony</h2>
-        <p class="text-sm text-stone-600">
+        <h2 id="harmony-heading" class="h2">Harmony</h2>
+        <p class="text-sm text-ink-muted">
           Your assumptions about the music around this phrase. Tab alone can't
           tell us the key or which chord is under each note.
         </p>
       </header>
       <div class="grid gap-3 sm:grid-cols-[10rem_1fr]">
         <label class="text-sm">
-          <span class="block text-stone-700">Key</span>
+          <span class="block text-ink">Key</span>
           <input
-            class="mt-1 w-full rounded border border-stone-300 px-2 py-1"
+            class="mt-1 w-full rounded border border-rule-strong px-2 py-1"
             placeholder="e.g. A or F#m"
             autocomplete="off"
             [value]="key()"
@@ -42,9 +42,9 @@ import { AlertComponent } from '../alert/alert';
           />
         </label>
         <label class="text-sm">
-          <span class="block text-stone-700">Chords</span>
+          <span class="block text-ink">Chords</span>
           <input
-            class="mt-1 w-full rounded border border-stone-300 px-2 py-1"
+            class="mt-1 w-full rounded border border-rule-strong px-2 py-1"
             placeholder="e.g. A7 D7 E7"
             autocomplete="off"
             [value]="chords()"
@@ -54,12 +54,12 @@ import { AlertComponent } from '../alert/alert';
         </label>
       </div>
       @if (unknownChords().length) {
-        <p class="text-sm text-amber-800" data-testid="unknown-chords">
+        <p class="text-sm text-uncertain-ink" data-testid="unknown-chords">
           Not understood, so not used for note roles:
           {{ unknownChords().join(', ') }}
         </p>
       }
-      <p class="text-sm text-stone-600" data-testid="placement-help">
+      <p class="text-sm text-ink-muted" data-testid="placement-help">
         {{ placementHelp() }}
       </p>
       @if (saveError(); as err) {
@@ -88,7 +88,7 @@ import { AlertComponent } from '../alert/alert';
           {{ saving() ? 'Saving…' : 'Save harmony' }}
         </button>
         @if (dirty()) {
-          <span class="text-sm text-stone-600" data-testid="harmony-dirty"
+          <span class="text-sm text-ink-muted" data-testid="harmony-dirty"
             >Unsaved changes. Note roles already reflect them.</span
           >
         }

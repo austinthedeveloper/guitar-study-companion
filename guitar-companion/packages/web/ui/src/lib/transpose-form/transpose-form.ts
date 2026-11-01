@@ -19,15 +19,15 @@ const MAX_FRETS = [12, 15, 17, 19, 22];
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form
-      class="grid gap-3 rounded-lg border border-stone-300 bg-white p-4 text-sm sm:grid-cols-5"
+      class="grid gap-3 rounded-lg border border-rule-strong bg-paper-raised p-4 text-sm sm:grid-cols-5"
       aria-label="Transpose settings"
       data-testid="transpose-form"
       (submit)="$event.preventDefault()"
     >
       <label>
-        <span class="block text-stone-700">From key</span>
+        <span class="block text-ink">From key</span>
         <input
-          class="mt-1 w-full rounded border border-stone-300 px-2 py-1"
+          class="mt-1 w-full rounded border border-rule-strong px-2 py-1"
           autocomplete="off"
           placeholder="e.g. A"
           [value]="fromKey()"
@@ -36,9 +36,9 @@ const MAX_FRETS = [12, 15, 17, 19, 22];
         />
       </label>
       <label>
-        <span class="block text-stone-700">To key</span>
+        <span class="block text-ink">To key</span>
         <input
-          class="mt-1 w-full rounded border border-stone-300 px-2 py-1"
+          class="mt-1 w-full rounded border border-rule-strong px-2 py-1"
           autocomplete="off"
           placeholder="e.g. C"
           [value]="toKey()"
@@ -47,9 +47,9 @@ const MAX_FRETS = [12, 15, 17, 19, 22];
         />
       </label>
       <label>
-        <span class="block text-stone-700">Octave</span>
+        <span class="block text-ink">Octave</span>
         <select
-          class="mt-1 w-full rounded border border-stone-300 bg-white px-2 py-1"
+          class="mt-1 w-full rounded border border-rule-strong bg-paper-raised px-2 py-1"
           (change)="octave.set($any($event.target).value)"
           data-testid="transpose-octave"
         >
@@ -61,9 +61,9 @@ const MAX_FRETS = [12, 15, 17, 19, 22];
         </select>
       </label>
       <label>
-        <span class="block text-stone-700">Position</span>
+        <span class="block text-ink">Position</span>
         <select
-          class="mt-1 w-full rounded border border-stone-300 bg-white px-2 py-1"
+          class="mt-1 w-full rounded border border-rule-strong bg-paper-raised px-2 py-1"
           (change)="setPosition($any($event.target).value)"
           data-testid="transpose-position"
         >
@@ -75,9 +75,9 @@ const MAX_FRETS = [12, 15, 17, 19, 22];
         </select>
       </label>
       <label>
-        <span class="block text-stone-700">Highest fret</span>
+        <span class="block text-ink">Highest fret</span>
         <select
-          class="mt-1 w-full rounded border border-stone-300 bg-white px-2 py-1"
+          class="mt-1 w-full rounded border border-rule-strong bg-paper-raised px-2 py-1"
           (change)="maxFret.set(+$any($event.target).value)"
           data-testid="transpose-max-fret"
         >

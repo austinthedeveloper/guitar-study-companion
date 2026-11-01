@@ -15,27 +15,27 @@ import {
   template: `
     <dialog
       #dialog
-      class="m-auto max-w-lg rounded-lg p-0 backdrop:bg-black/40"
+      class="m-auto max-w-lg rounded-[10px] border border-rule bg-paper-raised p-0 text-ink shadow-dialog backdrop:bg-scrim"
       aria-labelledby="consent-title"
       data-testid="consent-dialog"
       (cancel)="$event.preventDefault(); declined.emit()"
     >
-      <div class="space-y-3 p-5">
-        <h2 id="consent-title" class="text-lg font-semibold">
+      <div class="space-y-3 p-6">
+        <h2 id="consent-title" class="h2">
           Send this selection for recognition?
         </h2>
-        <p class="text-sm text-stone-700">
+        <p class="text-sm text-ink-muted">
           Only the selected area (not the whole page) will be sent to
-          <strong>{{ providerLabel() }}</strong> to read the tablature. The
-          image is not saved by this app.
+          <strong class="text-ink">{{ providerLabel() }}</strong> to read the
+          tablature. The image is not saved by this app.
         </p>
-        <p class="text-sm text-stone-700">
+        <p class="text-sm text-ink-muted">
           Only send pages from books you own, for your personal study.
         </p>
         <div class="flex justify-end gap-2 pt-2">
           <button
             type="button"
-            class="rounded border border-stone-300 px-3 py-1.5"
+            class="btn-secondary"
             (click)="declined.emit()"
             data-testid="consent-decline"
           >
@@ -43,7 +43,7 @@ import {
           </button>
           <button
             type="button"
-            class="rounded bg-brand-700 px-3 py-1.5 text-white"
+            class="btn-primary"
             (click)="confirmed.emit()"
             data-testid="consent-confirm"
           >

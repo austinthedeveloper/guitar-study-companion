@@ -94,6 +94,7 @@
 - [x] Deploy UI and API to Azure and configure database access securely. *(Azure resources in `rg-gsc-beta`: static site, Flex Consumption API with managed identity, Key Vault references for the database and OpenAI key, Free-tier Mongo vCore reachable only from Azure. The deploy workflow uses OIDC sign-in with no stored secrets. The first deploy ran on 2026-10-30 and its smoke suite passed against Azure; AI then switched to OpenAI.)*
 - [ ] Run a private beta with a varied set of book images and record failure modes.
 - [x] Review privacy, image retention, and copyright-related UX before broader use. *(The `/privacy` page; consent before every image leaves the device, crops only, nothing retained; AI sees only note facts after import; Delete removes the phrase with its practice; personal-study wording in consent and on the privacy page.)*
+- [x] Apply the design system across the site. *(ADR-015: semantic colour tokens with a dark theme, self-hosted Fraunces, IBM Plex Sans and Plex Mono, a brand masthead. Phrase detail is an annotated sheet: note and step rows under the tab, a panel for the picked note, study sections in tabs. Notes are coloured by role over the chord on Phrase detail, Home's example, the Review grid's role row and a role strip in My phrases (a new `roles` facet).)*
 - [ ] E2E: M5 journey specs pass, including cross-user isolation; deployed smoke suite passes against Azure.
 
 **Exit criteria:** Private end-to-end product works in Azure, with a reusable library and bounded operational cost.

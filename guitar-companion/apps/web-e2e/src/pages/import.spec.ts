@@ -184,6 +184,8 @@ test.describe('Import page', { tag: routeTag(ROUTE_PATHS.import) }, () => {
       const sent = countInterpretRequests(page);
       await fillDetails(page);
       await page.getByTestId('recognize').click();
+      // The dialog opens a tick after the click; Escape before that is lost.
+      await expect(page.getByTestId('consent-dialog')).toBeVisible();
       await page.keyboard.press('Escape');
       await expect(page.getByTestId('consent-dialog')).toBeHidden();
       expect(sent()).toBe(0);

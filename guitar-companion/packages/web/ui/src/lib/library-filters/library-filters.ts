@@ -7,17 +7,17 @@ import { TECHNIQUES } from '@gsc/contracts';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form
-      class="grid gap-3 rounded-lg border border-stone-300 bg-white p-4 text-sm sm:grid-cols-3"
+      class="grid gap-3 rounded-lg border border-rule-strong bg-paper-raised p-4 text-sm sm:grid-cols-3"
       role="search"
       aria-label="Search phrases"
       data-testid="library-filters"
       (submit)="$event.preventDefault()"
     >
       <label class="sm:col-span-3">
-        <span class="block text-stone-700">Search</span>
+        <span class="block text-ink">Search</span>
         <input
           type="search"
-          class="mt-1 w-full rounded border border-stone-300 px-2 py-1"
+          class="mt-1 w-full rounded border border-rule-strong px-2 py-1"
           placeholder="Title, book, song, notes, or tag"
           [value]="q()"
           (input)="q.set($any($event.target).value)"
@@ -25,9 +25,9 @@ import { TECHNIQUES } from '@gsc/contracts';
         />
       </label>
       <label>
-        <span class="block text-stone-700">Key</span>
+        <span class="block text-ink">Key</span>
         <input
-          class="mt-1 w-full rounded border border-stone-300 px-2 py-1"
+          class="mt-1 w-full rounded border border-rule-strong px-2 py-1"
           placeholder="e.g. Am"
           autocomplete="off"
           [value]="key()"
@@ -36,9 +36,9 @@ import { TECHNIQUES } from '@gsc/contracts';
         />
       </label>
       <label>
-        <span class="block text-stone-700">Technique</span>
+        <span class="block text-ink">Technique</span>
         <select
-          class="mt-1 w-full rounded border border-stone-300 bg-white px-2 py-1"
+          class="mt-1 w-full rounded border border-rule-strong bg-paper-raised px-2 py-1"
           (change)="technique.set($any($event.target).value)"
           data-testid="filter-technique"
         >
@@ -49,9 +49,9 @@ import { TECHNIQUES } from '@gsc/contracts';
         </select>
       </label>
       <label>
-        <span class="block text-stone-700">Tag</span>
+        <span class="block text-ink">Tag</span>
         <input
-          class="mt-1 w-full rounded border border-stone-300 px-2 py-1"
+          class="mt-1 w-full rounded border border-rule-strong px-2 py-1"
           placeholder="e.g. blues"
           autocomplete="off"
           [value]="tag()"
@@ -60,9 +60,9 @@ import { TECHNIQUES } from '@gsc/contracts';
         />
       </label>
       <label class="sm:col-span-2">
-        <span class="block text-stone-700">Interval pattern</span>
+        <span class="block text-ink">Interval pattern</span>
         <input
-          class="mt-1 w-full rounded border border-stone-300 px-2 py-1"
+          class="mt-1 w-full rounded border border-rule-strong px-2 py-1"
           placeholder="e.g. m3 down, M2 up"
           autocomplete="off"
           [value]="interval()"

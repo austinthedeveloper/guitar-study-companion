@@ -101,6 +101,61 @@ export function describeStep(
   return `${fromPrevious.name} ${fromPrevious.semitones > 0 ? 'up' : 'down'}`;
 }
 
+/** A column's step for a narrow table cell: "↓m3", "↑P4", "=", "chord", or null. */
+export function shortStep(
+  fromPrevious: Interval | null,
+  chordIntervals: readonly Interval[],
+): string | null {
+  if (chordIntervals.length) return 'chord';
+  if (!fromPrevious) return null;
+  if (fromPrevious.semitones === 0) return '=';
+  return `${fromPrevious.semitones > 0 ? '↑' : '↓'}${fromPrevious.name}`;
+}
+
+const QUALITY: Record<string, string> = {
+  P: 'perfect',
+  M: 'major',
+  m: 'minor',
+  A: 'augmented',
+};
+const ORDINALS = ['', '', '2nd', '3rd', '4th', '5th', '6th', '7th', 'octave'];
+
+/** "minor 3rd", "tritone", "octave"; compound sizes as "major 9th". */
+export function intervalWords(semitones: number): string {
+  const name = intervalName(semitones);
+  if (name === 'TT') return 'tritone';
+  if (name === 'P1') return 'unison';
+  if (name === 'P8') return 'octave';
+  if (name === 'P15') return 'two octaves';
+  const match = /^([PMmA])(\d+)$/.exec(name);
+  if (!match) return name;
+  const size = Number(match[2]);
+  const ordinal = ORDINALS[size] ?? `${size}th`;
+  return `${QUALITY[match[1]]} ${ordinal}`;
+}
+
+/**
+ * A column's step as a sentence, direction spelled out: "Down a minor 3rd
+ * from the previous note.", "A chord: P5, P8.", or null at a line start.
+ */
+export function stepSentence(
+  fromPrevious: Interval | null,
+  chordIntervals: readonly Interval[],
+): string | null {
+  if (chordIntervals.length)
+    return `A chord: ${chordIntervals.map((c) => c.name).join(', ')} above the lowest note.`;
+  if (!fromPrevious) return null;
+  if (fromPrevious.semitones === 0)
+    return 'The same pitch as the previous note.';
+  const words = intervalWords(fromPrevious.semitones);
+  const article = /^[aeiou]/.test(words) ? 'an' : 'a';
+  const counted =
+    words.startsWith('two') || words === 'unison'
+      ? words
+      : `${article} ${words}`;
+  return `${fromPrevious.semitones > 0 ? 'Up' : 'Down'} ${counted} from the previous note.`;
+}
+
 export function interval(fromMidi: number, toMidi: number): Interval {
   const semitones = toMidi - fromMidi;
   return { semitones, name: intervalName(semitones) };

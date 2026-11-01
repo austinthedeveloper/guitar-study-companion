@@ -1,4 +1,6 @@
 import { analyzeNotes, intervalName } from './analyze-notes';
+import { ChordChange, NoteRole } from './chords';
+import { harmonize } from './harmony';
 import { formatKey, parseKey } from './keys';
 import { EventLike } from './validate-events';
 
@@ -12,6 +14,8 @@ export interface PhraseFacets {
   techniques: string[];
   /** Melodic steps in order, e.g. "m3 up"; repeated notes are "P1". */
   steps: string[];
+  /** Role of each column's lowest note over its chord; empty without chords. */
+  roles: NoteRole[];
 }
 
 export function phraseFacets(input: {
@@ -19,6 +23,8 @@ export function phraseFacets(input: {
   tuningMidi: readonly number[];
   capo: number;
   key?: string;
+  chords?: string;
+  chordChanges?: readonly ChordChange[];
 }): PhraseFacets {
   const key = parseKey(input.key);
   const analysis = analyzeNotes({
@@ -39,7 +45,22 @@ export function phraseFacets(input: {
           ]
         : [],
     ),
+    roles: columnRoles(analysis, input.chords, input.chordChanges),
   };
+}
+
+function columnRoles(
+  analysis: ReturnType<typeof analyzeNotes>,
+  chords: string | undefined,
+  chordChanges: readonly ChordChange[] | undefined,
+): NoteRole[] {
+  if (!chords?.trim()) return [];
+  const { roles } = harmonize({ analysis, chords, chordChanges });
+  return analysis.columns.flatMap((c) => {
+    const lowest = c.notes.find((n) => !n.dead);
+    const role = lowest && roles[lowest.eventId]?.note;
+    return role ? [role] : [];
+  });
 }
 
 interface PatternStep {
