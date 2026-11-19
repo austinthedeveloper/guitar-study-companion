@@ -7,13 +7,11 @@ import { RouterLink } from '@angular/router';
   imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <article class="max-w-2xl space-y-5 text-stone-800" data-testid="privacy">
-      <h1 class="text-2xl font-semibold text-stone-900">
-        Privacy and your data
-      </h1>
+    <article class="max-w-2xl space-y-5 text-ink" data-testid="privacy">
+      <h1 class="h1">Privacy and your data</h1>
 
       <section class="space-y-2">
-        <h2 class="text-lg font-semibold">Book photos</h2>
+        <h2 class="h2">Book photos</h2>
         <p>
           Photos stay on your device. Only the passage you select is sent, and
           only after you agree in the consent dialog each time. It goes to the
@@ -24,7 +22,7 @@ import { RouterLink } from '@angular/router';
       </section>
 
       <section class="space-y-2">
-        <h2 class="text-lg font-semibold">What is saved</h2>
+        <h2 class="h2">What is saved</h2>
         <p>
           Your corrected phrases (notes, tuning, key, chords), the source
           details you type, your tags, favorites and notes, practice plans and
@@ -34,7 +32,7 @@ import { RouterLink } from '@angular/router';
       </section>
 
       <section class="space-y-2">
-        <h2 class="text-lg font-semibold">What AI sees after import</h2>
+        <h2 class="h2">What AI sees after import</h2>
         <p>
           Explanations and practice tips are written from facts the app computes
           from your verified notes, plus the key and chords you entered. No
@@ -43,7 +41,7 @@ import { RouterLink } from '@angular/router';
       </section>
 
       <section class="space-y-2">
-        <h2 class="text-lg font-semibold">Deleting</h2>
+        <h2 class="h2">Deleting</h2>
         <p>
           "Delete phrase" on a phrase's page removes it along with its practice
           plans and progress. Phrases you made from it (transpositions,
@@ -52,7 +50,7 @@ import { RouterLink } from '@angular/router';
       </section>
 
       <section class="space-y-2">
-        <h2 class="text-lg font-semibold">Books and copyright</h2>
+        <h2 class="h2">Books and copyright</h2>
         <p>
           This app is for studying music you own. Saved phrases are private to
           you. Please don't use it to copy or share whole songs or pages from
@@ -60,7 +58,7 @@ import { RouterLink } from '@angular/router';
         </p>
       </section>
 
-      <a routerLink="/phrases" class="text-brand-700 underline"
+      <a routerLink="/phrases" class="text-brand-ink underline"
         >Back to my phrases</a
       >
     </article>

@@ -15,16 +15,16 @@ import {
       class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-10 text-center"
       [class]="
         dragging()
-          ? 'border-brand-600 bg-brand-50'
-          : 'border-stone-300 bg-white hover:bg-stone-50'
+          ? 'border-brand bg-brand-tint'
+          : 'border-rule-strong bg-paper-raised hover:bg-paper-sunk'
       "
       (dragover)="onDragOver($event)"
       (dragleave)="dragging.set(false)"
       (drop)="onDrop($event)"
       data-testid="file-drop"
     >
-      <span class="font-medium text-stone-900">{{ label() }}</span>
-      <span class="text-sm text-stone-600">{{ hint() }}</span>
+      <span class="font-medium text-ink">{{ label() }}</span>
+      <span class="text-sm text-ink-muted">{{ hint() }}</span>
       <input
         type="file"
         class="sr-only"

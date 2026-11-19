@@ -19,7 +19,7 @@ export interface CompareRow {
         <caption class="sr-only">
           Notes and chord-tone roles before and after transposing
         </caption>
-        <thead class="text-stone-600">
+        <thead class="text-ink-muted">
           <tr>
             <th scope="col" class="py-1 pr-4 font-medium">#</th>
             <th scope="col" class="py-1 pr-4 font-medium">
@@ -30,14 +30,14 @@ export interface CompareRow {
         </thead>
         <tbody>
           @for (r of rows(); track r.step) {
-            <tr class="border-t border-stone-200" data-testid="compare-row">
-              <td class="py-1 pr-4 tabular-nums text-stone-500">
+            <tr class="border-t border-rule" data-testid="compare-row">
+              <td class="py-1 pr-4 tabular-nums text-ink-muted">
                 {{ r.step }}
               </td>
               <td class="py-1 pr-4">
                 {{ r.before.notes }}
                 @if (r.before.roles) {
-                  <span class="text-stone-600"
+                  <span class="text-ink-muted"
                     >({{ r.before.roles }} of {{ r.before.chord }})</span
                   >
                 }
@@ -45,7 +45,7 @@ export interface CompareRow {
               <td class="py-1">
                 {{ r.after.notes }}
                 @if (r.after.roles) {
-                  <span class="text-stone-600"
+                  <span class="text-ink-muted"
                     >({{ r.after.roles }} of {{ r.after.chord }})</span
                   >
                 }

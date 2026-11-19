@@ -9,17 +9,17 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
       <ol class="flex flex-wrap gap-2 text-sm">
         @for (label of steps(); track label; let i = $index) {
           <li
-            class="rounded-full px-3 py-1"
+            class="rounded-full border px-3 py-1 font-medium"
             [class]="
               i === current()
-                ? 'bg-brand-700 text-white'
+                ? 'border-brand bg-brand font-semibold text-on-brand'
                 : i < current()
-                  ? 'bg-stone-200 text-stone-800'
-                  : 'bg-stone-100 text-stone-700'
+                  ? 'border-rule-strong bg-paper-raised text-ink'
+                  : 'border-transparent bg-paper-sunk text-ink-muted'
             "
             [attr.aria-current]="i === current() ? 'step' : null"
           >
-            {{ i + 1 }}. {{ label }}
+            <span class="font-mono">{{ i + 1 }}.</span> {{ label }}
           </li>
         }
       </ol>

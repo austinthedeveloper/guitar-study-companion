@@ -1,4 +1,11 @@
-import { analyzeNotes, describeStep, intervalName } from './analyze-notes';
+import {
+  analyzeNotes,
+  describeStep,
+  intervalName,
+  intervalWords,
+  shortStep,
+  stepSentence,
+} from './analyze-notes';
 import { parseKey } from './keys';
 import { STANDARD_TUNING_MIDI } from './pitch';
 import { EventLike } from './validate-events';
@@ -54,6 +61,43 @@ describe('describeStep', () => {
     expect(describeStep(iv(-3), [])).toBe('m3 down');
     expect(describeStep(iv(0), [])).toBe('same note');
     expect(describeStep(null, [])).toBeNull();
+  });
+});
+
+describe('shortStep and stepSentence', () => {
+  const iv = (semitones: number) => ({
+    semitones,
+    name: intervalName(semitones),
+  });
+  it('gives a compact step with its direction', () => {
+    expect(shortStep(iv(-3), [])).toBe('↓m3');
+    expect(shortStep(iv(5), [])).toBe('↑P4');
+    expect(shortStep(iv(0), [])).toBe('=');
+    expect(shortStep(null, [iv(7)])).toBe('chord');
+    expect(shortStep(null, [])).toBeNull();
+  });
+  it('spells the step out as a sentence', () => {
+    expect(stepSentence(iv(-3), [])).toBe(
+      'Down a minor 3rd from the previous note.',
+    );
+    expect(stepSentence(iv(6), [])).toBe(
+      'Up a tritone from the previous note.',
+    );
+    expect(stepSentence(iv(-12), [])).toBe(
+      'Down an octave from the previous note.',
+    );
+    expect(stepSentence(iv(0), [])).toBe(
+      'The same pitch as the previous note.',
+    );
+    expect(stepSentence(null, [iv(7)])).toBe(
+      'A chord: P5 above the lowest note.',
+    );
+  });
+  it('names intervals in words', () => {
+    expect(intervalWords(2)).toBe('major 2nd');
+    expect(intervalWords(7)).toBe('perfect 5th');
+    expect(intervalWords(14)).toBe('major 9th');
+    expect(intervalWords(18)).toBe('augmented 11th');
   });
 });
 

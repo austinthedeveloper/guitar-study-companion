@@ -20,15 +20,13 @@ import { AlertComponent } from '../alert/alert';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section
-      class="space-y-3 rounded-lg border border-stone-300 bg-white p-4"
+      class="space-y-3 rounded-lg border border-rule-strong bg-paper-raised p-4"
       aria-labelledby="explanation-heading"
       data-testid="explanation"
     >
       <header>
-        <h2 id="explanation-heading" class="text-lg font-semibold">
-          Why it works
-        </h2>
-        <p class="text-sm text-stone-600">
+        <h2 id="explanation-heading" class="h2">Why it works</h2>
+        <p class="text-sm text-ink-muted">
           Written by AI from the computed notes and your key and chords (no
           image is sent). Check it against the facts above.
         </p>
@@ -44,7 +42,7 @@ import { AlertComponent } from '../alert/alert';
         <p data-testid="explanation-summary">{{ ex.summary }}</p>
         @if (observations().length) {
           <div>
-            <h3 class="text-sm font-semibold text-stone-700">In the notes</h3>
+            <h3 class="text-sm font-semibold text-ink">In the notes</h3>
             <ul class="mt-1 list-disc space-y-1 pl-5 text-sm">
               @for (p of observations(); track $index) {
                 <li data-testid="explanation-observation">
@@ -59,7 +57,7 @@ import { AlertComponent } from '../alert/alert';
         }
         @if (interpretations().length) {
           <div>
-            <h3 class="text-sm font-semibold text-stone-700">Interpretation</h3>
+            <h3 class="text-sm font-semibold text-ink">Interpretation</h3>
             <ul class="mt-1 list-disc space-y-1 pl-5 text-sm">
               @for (p of interpretations(); track $index) {
                 <li data-testid="explanation-interpretation">
@@ -70,7 +68,7 @@ import { AlertComponent } from '../alert/alert';
                     />
                   }
                   @if (p.assumption) {
-                    <div class="text-stone-600">
+                    <div class="text-ink-muted">
                       Assumes: {{ p.assumption }}
                     </div>
                   }
@@ -82,7 +80,7 @@ import { AlertComponent } from '../alert/alert';
         <ng-template #show let-p>
           <button
             type="button"
-            class="ml-1 rounded px-1 text-stone-600 underline decoration-dotted hover:bg-stone-100"
+            class="ml-1 rounded px-1 text-ink-muted underline decoration-dotted hover:bg-paper-sunk"
             [attr.aria-pressed]="isShown(p)"
             [attr.aria-label]="'Show ' + cites(p) + ' in the tab'"
             (click)="showNotes.emit(isShown(p) ? [] : p.eventIds)"
@@ -91,7 +89,7 @@ import { AlertComponent } from '../alert/alert';
             ({{ cites(p) }})
           </button>
         </ng-template>
-        <p class="text-xs text-stone-500" data-testid="explanation-meta">
+        <p class="text-xs text-ink-muted" data-testid="explanation-meta">
           {{ ex.provider }} · {{ ex.model }}
         </p>
       }
@@ -102,7 +100,7 @@ import { AlertComponent } from '../alert/alert';
         </gsc-alert>
       }
       @if (blockedReason()) {
-        <p class="text-sm text-stone-600" data-testid="explanation-blocked">
+        <p class="text-sm text-ink-muted" data-testid="explanation-blocked">
           {{ blockedReason() }}
         </p>
       }

@@ -8,6 +8,7 @@ export * from './lib/not-found/not-found';
 export * from './lib/phrase-list/phrase-list';
 export * from './lib/source-form/source-form';
 export * from './lib/steps/steps';
+export * from './lib/note-roles/note-roles';
 export * from './lib/tab-editor/tab-editor';
 export * from './lib/tab-editor/tab-editor-model';
 export * from './lib/note-facts/note-facts';

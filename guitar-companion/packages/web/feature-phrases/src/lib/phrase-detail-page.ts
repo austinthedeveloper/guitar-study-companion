@@ -21,6 +21,8 @@ import {
   midiToNoteName,
   parseKey,
   parseProgression,
+  sliceOrders,
+  stepSentence,
 } from '@gsc/music-domain';
 import {
   ClientError,
@@ -39,6 +41,10 @@ import {
   PhraseMetaValue,
   PracticeHistoryComponent,
   ScaleCandidatesComponent,
+  displayRole,
+  noteText,
+  roleKind,
+  tabAnnotations,
   TabEditorComponent,
 } from '@gsc/web/ui';
 import { firstValueFrom } from 'rxjs';
@@ -61,17 +67,17 @@ import { firstValueFrom } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (phrase.isLoading()) {
-      <p class="text-stone-600" role="status">Loading…</p>
+      <p class="text-ink-muted" role="status">Loading…</p>
     } @else if (error(); as err) {
       @if (err.code === 'not_found') {
         <section class="py-12 text-center" data-testid="phrase-not-found">
-          <h1 class="text-2xl font-semibold">Phrase not found</h1>
-          <p class="mt-2 text-stone-600">
+          <h1 class="h1">Phrase not found</h1>
+          <p class="mt-2 text-ink-muted">
             It may have been deleted, or the link is wrong.
           </p>
           <a
             routerLink="/phrases"
-            class="mt-4 inline-block text-brand-700 underline"
+            class="mt-4 inline-block text-brand-ink underline"
             >Back to my phrases</a
           >
         </section>
@@ -95,133 +101,243 @@ import { firstValueFrom } from 'rxjs';
             and practice.</gsc-alert
           >
         }
-        <header>
-          <h1
-            class="text-2xl font-semibold text-stone-900"
-            data-testid="phrase-heading"
-          >
-            {{ p.title }}
-          </h1>
-          <p class="text-stone-600" data-testid="phrase-source">
-            {{ p.source.bookTitle }}
-            @if (p.source.songTitle) {
-              · {{ p.source.songTitle }}
-            }
-            @if (p.source.page) {
-              · p. {{ p.source.page }}
-            }
-          </p>
+        <header class="flex flex-wrap items-start gap-x-6 gap-y-3">
+          <div class="min-w-0 flex-[1_1_320px]">
+            <h1 class="h1" data-testid="phrase-heading">
+              {{ p.title }}
+            </h1>
+            <p class="mt-1 text-sm text-ink-muted" data-testid="phrase-source">
+              {{ p.source.bookTitle }}
+              @if (p.source.songTitle) {
+                · {{ p.source.songTitle }}
+              }
+              @if (p.source.page) {
+                · p. {{ p.source.page }}
+              }
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <a
+              [routerLink]="['/phrases', p.id, 'transpose']"
+              class="btn-secondary"
+              data-testid="transpose-link"
+              >Transpose and vary</a
+            >
+            <a
+              [routerLink]="['/phrases', p.id, 'practice']"
+              class="btn-primary"
+              data-testid="practice-link"
+              >Practice this phrase</a
+            >
+          </div>
         </header>
-        <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm">
-          <dt class="text-stone-600">Tuning</dt>
-          <dd data-testid="phrase-tuning">{{ tuningLabel() }}</dd>
-          <dt class="text-stone-600">Capo</dt>
-          <dd>{{ p.context.capo || 'None' }}</dd>
-          <dt class="text-stone-600">Rhythm</dt>
-          <dd data-testid="phrase-rhythm">
-            {{ p.rhythmKnown ? 'Known' : 'Unknown (not transcribed)' }}
-          </dd>
-          <dt class="text-stone-600">Origin</dt>
-          <dd data-testid="phrase-origin">
-            @if (p.derivedFrom; as d) {
-              {{ d.change }} from
-              <a
-                [routerLink]="['/phrases', d.phraseId]"
-                class="text-brand-700 underline"
-                data-testid="phrase-derived-from"
-                >the original phrase</a
-              >
-            } @else {
-              {{
-                p.draftProvider
-                  ? 'AI draft (' + p.draftProvider + '), corrected by you'
-                  : 'Entered manually'
-              }}
-            }
-          </dd>
-          <dt class="text-stone-600">Saved</dt>
-          <dd>{{ p.createdAt | date: 'medium' }}</dd>
+        <dl
+          class="flex flex-wrap gap-x-6 gap-y-1 text-sm [&_dt]:text-ink-muted [&>div]:flex [&>div]:gap-2"
+        >
+          <div>
+            <dt>Tuning</dt>
+            <dd data-testid="phrase-tuning">{{ tuningLabel() }}</dd>
+          </div>
+          <div>
+            <dt>Capo</dt>
+            <dd>{{ p.context.capo || 'None' }}</dd>
+          </div>
+          <div>
+            <dt>Rhythm</dt>
+            <dd data-testid="phrase-rhythm">
+              {{ p.rhythmKnown ? 'Known' : 'Unknown (not transcribed)' }}
+            </dd>
+          </div>
+          <div>
+            <dt>Origin</dt>
+            <dd data-testid="phrase-origin">
+              @if (p.derivedFrom; as d) {
+                {{ d.change }} from
+                <a
+                  [routerLink]="['/phrases', d.phraseId]"
+                  class="link"
+                  data-testid="phrase-derived-from"
+                  >the original phrase</a
+                >
+              } @else {
+                {{
+                  p.draftProvider
+                    ? 'AI draft (' + p.draftProvider + '), corrected by you'
+                    : 'Entered manually'
+                }}
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Saved</dt>
+            <dd>{{ p.createdAt | date: 'medium' }}</dd>
+          </div>
         </dl>
-        <gsc-tab-editor
-          class="block"
-          [events]="events()"
-          [rhythmKnown]="p.rhythmKnown"
-          [stringCount]="p.context.tuningMidi.length"
-          [stringLabels]="stringLabels()"
-          [readonly]="true"
-          [roles]="roles()"
-          [columnChords]="columnChords()"
-          [highlightIds]="highlightIds()"
-        />
-        <gsc-harmony-form
-          [(key)]="keyText"
-          [(chords)]="chordsText"
-          [unknownChords]="unknownChords()"
-          [placementHelp]="placementHelp()"
-          [dirty]="dirty()"
-          [saving]="saving()"
-          [saveError]="
-            saveError()
-              ? {
-                  message: saveError()!.message,
-                  conflict: saveError()!.code === 'conflict',
+
+        <section
+          aria-label="Annotated tab"
+          class="flex flex-wrap gap-6 rounded-[10px] border border-rule bg-paper-raised p-4 sm:p-6"
+        >
+          <gsc-tab-editor
+            class="block min-w-0 flex-[999_1_480px] [&_[role=group]]:border-0 [&_[role=group]]:p-0"
+            [events]="events()"
+            [rhythmKnown]="p.rhythmKnown"
+            [stringCount]="p.context.tuningMidi.length"
+            [stringLabels]="stringLabels()"
+            [readonly]="true"
+            [roles]="roles()"
+            [columnChords]="columnChords()"
+            [highlightIds]="highlightIds()"
+            [annotations]="annotations()"
+            [selectable]="true"
+            [activeColumn]="activeOrder()"
+            (columnPick)="selectedOrder.set($event)"
+          />
+          @if (activeNote(); as n) {
+            <aside
+              class="flex min-w-0 flex-[1_1_220px] flex-col gap-2 border-rule sm:border-l sm:pl-6"
+              aria-live="polite"
+              data-testid="note-panel"
+            >
+              <p
+                class="text-xs font-medium tracking-[0.06em] text-ink-muted uppercase"
+              >
+                Note {{ n.index + 1 }}
+              </p>
+              <p class="font-display text-[30px] leading-9 font-[560]">
+                {{ n.names }}
+                @if (n.chord && n.roles.length) {
+                  <span class="font-sans text-base font-medium">
+                    @for (r of n.roles; track $index) {
+                      <span [class]="r.cls">{{ r.label }}</span>
+                      {{ ' ' }}
+                    }
+                    <span class="text-ink-muted">of {{ n.chord }}</span>
+                  </span>
                 }
-              : null
-          "
-          (save)="saveHarmony(p)"
-          (reload)="phrase.reload()"
-        />
-        <gsc-note-facts
-          [analysis]="noteAnalysis()"
-          [keyLabel]="key() ? formatKey(key()!) : null"
-          [unparsedKey]="key() ? null : keyText().trim() || null"
-          [roles]="roles()"
-          [columnChords]="columnChords()"
-          [chordOptions]="chordOptions()"
-          [chordStarts]="chordStarts()"
-          (chordChange)="placeChord($event.order, $event.chord)"
-        />
-        <gsc-scale-candidates [analysis]="scales()" />
-        <gsc-phrase-meta
-          [value]="{ tags: p.tags, favorite: p.favorite, notes: p.notes ?? '' }"
-          [saving]="metaSaving()"
-          [status]="metaStatus()"
-          (save)="saveMeta(p, $event)"
-        />
-        <gsc-practice-history [entries]="history.value() ?? []" />
-        <gsc-explanation
-          [explanation]="p.explanation ?? null"
-          [stale]="
-            !!p.explanation && p.explanation.phraseRevision !== p.revision
-          "
-          [busy]="explaining()"
-          [error]="explainError()"
-          [blockedReason]="
-            dirty()
-              ? 'Save your harmony changes first; the explanation uses the saved phrase.'
-              : null
-          "
-          [stepOf]="stepOf()"
-          [shownIds]="highlightIds()"
-          (explain)="explain(p)"
-          (showNotes)="highlightIds.set($event)"
-        />
-        <div class="flex flex-wrap gap-4">
-          <a
-            [routerLink]="['/phrases', p.id, 'practice']"
-            class="btn-primary"
-            data-testid="practice-link"
-            >Practice this phrase</a
+              </p>
+              <p class="text-sm text-ink-muted">{{ n.where }}</p>
+              @if (n.step) {
+                <p class="text-sm">{{ n.step }}</p>
+              }
+            </aside>
+          }
+        </section>
+
+        <section aria-label="Study" class="space-y-5">
+          <div
+            role="tablist"
+            aria-label="Study"
+            class="flex gap-6 overflow-x-auto border-b border-rule"
           >
-          <a
-            [routerLink]="['/phrases', p.id, 'transpose']"
-            class="btn-secondary"
-            data-testid="transpose-link"
-            >Transpose and vary</a
+            @for (t of studyTabs; track t.key) {
+              <button
+                type="button"
+                role="tab"
+                class="-mb-px shrink-0 border-b-2 px-0.5 py-2.5 text-sm font-medium"
+                [class]="
+                  tab() === t.key
+                    ? 'border-brand text-ink'
+                    : 'border-transparent text-ink-muted hover:text-ink'
+                "
+                [id]="'study-tab-' + t.key"
+                [attr.aria-selected]="tab() === t.key"
+                [attr.aria-controls]="'study-panel-' + t.key"
+                [attr.data-testid]="'study-tab-' + t.key"
+                (click)="tab.set(t.key)"
+              >
+                {{ t.label }}
+              </button>
+            }
+          </div>
+          <div
+            role="tabpanel"
+            class="space-y-5"
+            [id]="'study-panel-' + tab()"
+            [attr.aria-labelledby]="'study-tab-' + tab()"
           >
-          <a routerLink="/phrases" class="self-center text-brand-700 underline"
-            >All phrases</a
-          >
+            @switch (tab()) {
+              @case ('notes') {
+                <gsc-harmony-form
+                  class="block"
+                  [(key)]="keyText"
+                  [(chords)]="chordsText"
+                  [unknownChords]="unknownChords()"
+                  [placementHelp]="placementHelp()"
+                  [dirty]="dirty()"
+                  [saving]="saving()"
+                  [saveError]="
+                    saveError()
+                      ? {
+                          message: saveError()!.message,
+                          conflict: saveError()!.code === 'conflict',
+                        }
+                      : null
+                  "
+                  (save)="saveHarmony(p)"
+                  (reload)="phrase.reload()"
+                />
+                <gsc-note-facts
+                  class="block"
+                  [analysis]="noteAnalysis()"
+                  [keyLabel]="key() ? formatKey(key()!) : null"
+                  [unparsedKey]="key() ? null : keyText().trim() || null"
+                  [roles]="roles()"
+                  [columnChords]="columnChords()"
+                  [chordOptions]="chordOptions()"
+                  [chordStarts]="chordStarts()"
+                  (chordChange)="placeChord($event.order, $event.chord)"
+                />
+              }
+              @case ('why') {
+                <gsc-explanation
+                  class="block"
+                  [explanation]="p.explanation ?? null"
+                  [stale]="
+                    !!p.explanation &&
+                    p.explanation.phraseRevision !== p.revision
+                  "
+                  [busy]="explaining()"
+                  [error]="explainError()"
+                  [blockedReason]="
+                    dirty()
+                      ? 'Save your harmony changes first; the explanation uses the saved phrase.'
+                      : null
+                  "
+                  [stepOf]="stepOf()"
+                  [shownIds]="highlightIds()"
+                  (explain)="explain(p)"
+                  (showNotes)="highlightIds.set($event)"
+                />
+              }
+              @case ('scales') {
+                <gsc-scale-candidates class="block" [analysis]="scales()" />
+              }
+              @case ('library') {
+                <gsc-phrase-meta
+                  class="block"
+                  [value]="{
+                    tags: p.tags,
+                    favorite: p.favorite,
+                    notes: p.notes ?? '',
+                  }"
+                  [saving]="metaSaving()"
+                  [status]="metaStatus()"
+                  (save)="saveMeta(p, $event)"
+                />
+                <gsc-practice-history
+                  class="block"
+                  [entries]="history.value() ?? []"
+                />
+              }
+            }
+          </div>
+        </section>
+
+        <footer
+          class="flex flex-wrap items-center gap-4 border-t border-rule pt-4"
+        >
+          <a routerLink="/phrases" class="link">All phrases</a>
           <span class="ml-auto" data-testid="phrase-delete">
             <gsc-confirm-button
               label="Delete phrase"
@@ -231,7 +347,7 @@ import { firstValueFrom } from 'rxjs';
               (confirmed)="deletePhrase(p)"
             />
           </span>
-        </div>
+        </footer>
       </article>
     }
   `,
@@ -311,6 +427,52 @@ export class PhraseDetailPage {
       chords: this.harmony().chords,
     }),
   );
+  protected readonly studyTabs = STUDY_TABS;
+  protected readonly tab = signal<StudyTab>('notes');
+  /** Column picked in the tab; the first column until the user picks one. */
+  protected readonly selectedOrder = signal<number | null>(null);
+  private readonly orders = computed(() => sliceOrders(this.events()));
+  protected readonly activeOrder = computed(() => {
+    const picked = this.selectedOrder();
+    return picked !== null && this.orders().includes(picked)
+      ? picked
+      : (this.orders()[0] ?? null);
+  });
+  /** Facts per tab column for the rows under the strings. */
+  protected readonly annotations = computed(() =>
+    tabAnnotations(this.orders(), this.noteAnalysis(), this.roles()),
+  );
+  /** The picked column, described for the note panel. */
+  protected readonly activeNote = computed(() => {
+    const order = this.activeOrder();
+    if (order === null) return null;
+    const index = this.orders().indexOf(order);
+    const col = this.noteAnalysis().columns.find((c) => c.order === order);
+    const roles = this.roles();
+    const labels = this.stringLabels();
+    const events = this.events()
+      .filter((e) => e.order === order)
+      .sort((a, b) => a.stringIndex - b.stringIndex);
+    return {
+      index,
+      names: (col?.notes ?? []).map(noteText).join(' + ') || '—',
+      chord: this.columnChords()[index] ?? null,
+      roles: (col?.notes ?? []).flatMap((n) => {
+        const r = roles[n.eventId]?.note;
+        return r
+          ? [{ label: displayRole(r.label), cls: `role-${roleKind(r)}` }]
+          : [];
+      }),
+      where: events
+        .map(
+          (e) =>
+            `${labels[e.stringIndex] ?? e.stringIndex + 1} string, ` +
+            (e.fret === null ? 'dead note' : `fret ${e.fret}`),
+        )
+        .join(' · '),
+      step: col ? stepSentence(col.fromPrevious, col.chordIntervals) : null,
+    };
+  });
   /** Notes highlighted in the tab, from an explanation point. */
   protected readonly highlightIds = signal<string[]>([]);
   protected readonly explaining = signal(false);
@@ -450,6 +612,14 @@ export class PhraseDetailPage {
     );
   });
 }
+
+type StudyTab = 'notes' | 'why' | 'scales' | 'library';
+const STUDY_TABS: { key: StudyTab; label: string }[] = [
+  { key: 'notes', label: 'Notes and harmony' },
+  { key: 'why', label: 'Why it works' },
+  { key: 'scales', label: 'Likely scales' },
+  { key: 'library', label: 'Library and history' },
+];
 
 const sortChanges = (changes: readonly ChordChange[]) =>
   [...changes].sort((a, b) => a.fromOrder - b.fromOrder);

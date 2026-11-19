@@ -1,28 +1,210 @@
 @import 'tailwindcss';
+/* Fonts are self-hosted, so no page load reaches a font CDN. */
+@import '@fontsource-variable/fraunces/index.css';
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+@import '@fontsource/ibm-plex-mono/600.css';
 @source '../../../packages/web';
 
+/*
+ * Design system tokens (see the Guitar Study Companion design system).
+ * Light values live here; dark values swap in below. Utilities read the
+ * variables, so `bg-paper`, `text-ink`, `border-rule` and friends follow
+ * the theme without `dark:` variants.
+ */
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --color-brand-50: oklch(97% 0.02 70);
-  --color-brand-600: oklch(55% 0.15 50);
-  --color-brand-700: oklch(47% 0.14 48);
+  --font-sans:
+    'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI',
+    sans-serif;
+  --font-mono:
+    'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --font-display: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
+
+  --color-paper: #f8f3ea;
+  --color-paper-raised: #fffdf8;
+  --color-paper-sunk: #f0e8da;
+  --color-rule: #e3d8c6;
+  --color-rule-strong: #8c7c68;
+  --color-ink: #2a2118;
+  --color-ink-muted: #5e5244;
+
+  --color-brand: oklch(47% 0.14 48);
+  --color-brand-hover: oklch(55% 0.15 50);
+  --color-on-brand: #ffffff;
+  --color-brand-ink: oklch(47% 0.14 48);
+  --color-brand-tint: oklch(97% 0.02 70);
+  --color-focus: oklch(55% 0.15 50);
+
+  --color-uncertain-fill: #fbe3a0;
+  --color-uncertain-line: #a86e0b;
+  --color-uncertain-tint: #fdf3d8;
+  --color-uncertain-ink: #6b4405;
+  --color-error-line: #b8281a;
+  --color-error-tint: #fcebe7;
+  --color-error-ink: #94180d;
+  --color-success-line: #3b8a60;
+  --color-success-tint: #e7f3eb;
+  --color-success-ink: #1c5e3b;
+  --color-info-line: #4a7fa8;
+  --color-info-tint: #e8f0f7;
+  --color-info-ink: #1d4f75;
+
+  /* Note roles: how a note sits against the chord under it. */
+  --color-role-chord-line: #1f7a80;
+  --color-role-chord-tint: #dcefef;
+  --color-role-chord-ink: #0f5459;
+  --color-role-other-line: #7a52a8;
+  --color-role-other-tint: #efe8f7;
+  --color-role-other-ink: #58357f;
+
+  --color-scrim: rgba(42, 33, 24, 0.45);
+  --shadow-dialog: 0 12px 32px rgba(42, 33, 24, 0.18);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-paper: #1b1814;
+    --color-paper-raised: #24201b;
+    --color-paper-sunk: #14120f;
+    --color-rule: #3a342c;
+    --color-rule-strong: #857866;
+    --color-ink: #f2ebe0;
+    --color-ink-muted: #bdb1a0;
+    --color-brand: #e3a46e;
+    --color-brand-hover: #efbb8c;
+    --color-on-brand: #1b1814;
+    --color-brand-ink: #e8ad7a;
+    --color-brand-tint: #33251a;
+    --color-focus: #f0b27c;
+    --color-uncertain-fill: #4d3a10;
+    --color-uncertain-line: #d9a63a;
+    --color-uncertain-tint: #2c2413;
+    --color-uncertain-ink: #f2d48c;
+    --color-error-line: #ff8a78;
+    --color-error-tint: #371b17;
+    --color-error-ink: #ffb6aa;
+    --color-success-line: #5aa77d;
+    --color-success-tint: #15281d;
+    --color-success-ink: #9bd9b5;
+    --color-info-line: #5d8fb6;
+    --color-info-tint: #152230;
+    --color-info-ink: #a7cdec;
+    --color-role-chord-line: #4fb3ba;
+    --color-role-chord-tint: #12292b;
+    --color-role-chord-ink: #9adfe4;
+    --color-role-other-line: #a88ad8;
+    --color-role-other-tint: #261c34;
+    --color-role-other-ink: #d2bff2;
+    --color-scrim: rgba(0, 0, 0, 0.6);
+    --shadow-dialog: 0 12px 32px rgba(0, 0, 0, 0.55);
+  }
 }
 
 @layer base {
+  body {
+    @apply bg-paper font-sans text-ink antialiased;
+  }
   :focus-visible {
-    outline: 2px solid var(--color-brand-600);
+    outline: 2px solid var(--color-focus);
     outline-offset: 2px;
+  }
+  input[type='checkbox'],
+  input[type='radio'],
+  input[type='range'] {
+    accent-color: var(--color-brand);
   }
 }
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center rounded bg-brand-700 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50;
-  }
-  .btn-ghost {
-    @apply rounded border border-stone-300 bg-white px-2 py-0.5 disabled:opacity-50;
+    @apply inline-flex items-center gap-2 rounded-md border border-brand bg-brand px-4 py-2 text-sm font-semibold text-on-brand transition-colors hover:border-brand-hover hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-secondary {
-    @apply inline-flex items-center rounded border border-stone-300 bg-white px-4 py-2 text-sm text-stone-800 hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center gap-2 rounded-md border border-rule-strong bg-paper-raised px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-paper-sunk disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-ghost {
+    @apply rounded border border-rule-strong bg-transparent px-2 py-0.5 text-ink transition-colors hover:bg-paper-sunk disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .link {
+    @apply text-brand-ink underline decoration-1 underline-offset-[3px] hover:decoration-2;
+  }
+  .card {
+    @apply rounded-[10px] border border-rule bg-paper-raised p-6;
+  }
+  .field {
+    @apply flex flex-col gap-1 text-sm font-medium;
+  }
+  .input {
+    @apply min-w-0 rounded-md border border-rule-strong bg-paper-raised px-3 py-2 text-base font-normal text-ink placeholder:text-ink-muted disabled:cursor-not-allowed disabled:bg-paper-sunk aria-[invalid=true]:border-error-line aria-[invalid=true]:ring-1 aria-[invalid=true]:ring-error-line;
+  }
+  .h1 {
+    @apply font-display text-[30px] leading-9 font-[560] text-ink;
+  }
+  .h2 {
+    @apply font-display text-[22px] leading-7 font-[560] text-ink;
+  }
+  /* Header band: brand tint with a brand rule. */
+  .masthead {
+    @apply border-b-[3px] border-brand bg-brand-tint;
+  }
+
+  /* Tab: the string line runs behind each cell, level with the fret chip. */
+  .tab-line {
+    background: linear-gradient(
+        var(--color-rule-strong),
+        var(--color-rule-strong)
+      )
+      0 14px / 100% 1px no-repeat;
+  }
+  .tab-line.is-active {
+    background:
+      linear-gradient(var(--color-rule-strong), var(--color-rule-strong)) 0
+        14px / 100% 1px no-repeat,
+      var(--color-brand-tint);
+  }
+
+  /* Note roles. Always shown with the role text, never colour alone. */
+  .role-root {
+    @apply font-semibold text-brand-ink;
+  }
+  .role-chord {
+    @apply text-role-chord-line;
+  }
+  .role-other {
+    @apply text-role-other-line;
+  }
+  .note-chip {
+    @apply inline-flex h-6 min-w-7 items-center justify-center rounded border border-rule-strong bg-paper-raised px-1 font-mono text-[15px] font-medium text-ink;
+  }
+  .note-chip.is-root {
+    @apply border-brand bg-brand font-semibold text-on-brand;
+  }
+  .note-chip.is-chord {
+    @apply border-role-chord-line bg-role-chord-tint text-role-chord-ink;
+  }
+  .note-chip.is-other {
+    @apply border-dashed border-role-other-line bg-role-other-tint text-role-other-ink;
+  }
+  .swatch {
+    @apply inline-block h-3 w-3 rounded-[3px];
+  }
+  .swatch.is-root {
+    @apply bg-brand;
+  }
+  .swatch.is-chord {
+    @apply border border-role-chord-line bg-role-chord-tint;
+  }
+  .swatch.is-other {
+    @apply border border-dashed border-role-other-line bg-role-other-tint;
+  }
+  .swatch.is-uncertain {
+    @apply border border-uncertain-line bg-uncertain-fill;
+  }
+  .swatch.is-invalid {
+    @apply border-2 border-error-line bg-error-tint;
   }
 }

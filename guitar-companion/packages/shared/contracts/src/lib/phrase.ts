@@ -55,6 +55,8 @@ export const PhraseFacetsSchema = z.object({
   key: z.string().nullable(),
   techniques: z.array(z.string()),
   steps: z.array(z.string()),
+  /** Role of each column's lowest note over its chord; empty without chords. */
+  roles: z.array(z.object({ label: z.string(), chordTone: z.boolean() })),
 });
 
 export const PhraseSummarySchema = PhraseSchema.pick({

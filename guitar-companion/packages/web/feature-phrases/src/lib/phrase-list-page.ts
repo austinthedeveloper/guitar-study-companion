@@ -28,8 +28,8 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="space-y-4">
-      <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-semibold text-stone-900">My phrases</h1>
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h1 class="h1">My phrases</h1>
         <a routerLink="/import" class="btn-primary" data-testid="import-link"
           >Import a passage</a
         >
@@ -47,11 +47,31 @@ import {
         [(interval)]="interval"
         [(favorite)]="favorite"
       />
+      @if (hasRoles()) {
+        <p
+          class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-medium text-ink-muted"
+          data-testid="list-role-legend"
+        >
+          <span>Each note's role over its chord:</span>
+          <span class="inline-flex items-center gap-1"
+            ><i class="swatch is-root"></i>Root</span
+          >
+          <span class="inline-flex items-center gap-1"
+            ><i class="swatch is-chord"></i>Chord tone</span
+          >
+          <span class="inline-flex items-center gap-1"
+            ><i class="swatch is-other"></i>Outside the chord</span
+          >
+        </p>
+      }
       @if (phrases.isLoading() && !phrases.hasValue()) {
-        <p class="text-stone-600" role="status">Loading…</p>
+        <p class="text-ink-muted" role="status">Loading…</p>
       } @else if (error(); as err) {
         @if (err.code === 'validation_failed') {
-          <p class="text-sm text-amber-800" data-testid="library-search-error">
+          <p
+            class="text-sm text-uncertain-ink"
+            data-testid="library-search-error"
+          >
             {{ err.issues?.[0]?.message ?? err.message }}
           </p>
         } @else {
@@ -69,18 +89,18 @@ import {
         }
       } @else if (phrases.value(); as list) {
         @if (list.length === 0 && filtering()) {
-          <p class="text-stone-600" data-testid="library-no-match">
+          <p class="text-ink-muted" data-testid="library-no-match">
             No phrases match this search.
           </p>
         } @else if (list.length === 0) {
           <div
-            class="rounded border border-dashed border-stone-300 p-8 text-center text-stone-600"
+            class="rounded border border-dashed border-rule-strong p-8 text-center text-ink-muted"
             data-testid="phrases-empty"
           >
             <p>No saved phrases yet.</p>
             <a
               routerLink="/import"
-              class="mt-2 inline-block text-brand-700 underline"
+              class="mt-2 inline-block text-brand-ink underline"
               >Import your first passage</a
             >
           </div>
@@ -132,6 +152,11 @@ export class PhraseListPage {
       onCleanup(() => clearTimeout(timer));
     });
   }
+  protected readonly hasRoles = computed(
+    () =>
+      this.phrases.hasValue() &&
+      (this.phrases.value() ?? []).some((p) => p.facets.roles.length > 0),
+  );
   protected readonly error = computed(() =>
     this.phrases.error() ? toClientError(this.phrases.error()) : null,
   );

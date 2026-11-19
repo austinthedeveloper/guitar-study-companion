@@ -99,7 +99,14 @@ test.describe('Practice page', { tag: routeTag(ROUTE_PATHS.practice) }, () => {
       '1 of 2 done',
     );
     await page.getByTestId('session-notes').fill('Bend runs flat.');
+    // "Saved" may still show from the checkbox save, so wait for the notes.
+    const notesSaved = page.waitForResponse(
+      (r) =>
+        r.request().method() === 'PUT' &&
+        (r.request().postData() ?? '').includes('Bend runs flat.'),
+    );
     await page.getByTestId('session-notes').blur();
+    expect((await notesSaved).ok()).toBe(true);
     await expect(page.getByTestId('plan-progress')).toContainText('Saved');
 
     await page.reload();

@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { ROUTE_PATHS, routeTag } from '@gsc/web/routes';
 import { expectNoA11yViolations } from '../support/a11y';
 import { reachReview } from '../support/import-flow';
+import { openStudyTab } from '../support/phrase-detail';
 
 test.describe(
   'Journey: corrected phrase → musical analysis',
@@ -36,11 +37,14 @@ test.describe(
       await expect(page.getByTestId('cell-role-0-1')).toHaveText('4→5');
       await expect(page.getByTestId('cell-role-2-0')).toHaveText('R');
       await expect(page.getByTestId('cell-role-4-1')).toHaveText('R');
+      await openStudyTab(page, 'scales');
       await expect(page.getByTestId('scales-certainty')).not.toBeEmpty();
+      await openStudyTab(page, 'notes');
       await page.getByTestId('harmony-save').click();
       await expect(page.getByTestId('harmony-dirty')).toHaveCount(0);
 
       // Explanation: observations (cited) apart from interpretations (assumed).
+      await openStudyTab(page, 'why');
       await page.getByTestId('explain').click();
       await expect(page.getByTestId('explanation-observation')).toContainText(
         'Opens on D5, the 4 of A7.',
@@ -52,12 +56,16 @@ test.describe(
       await expectNoA11yViolations(page);
 
       // Correct an assumption: D7 actually arrives one note earlier.
+      await openStudyTab(page, 'notes');
       await chordAt.nth(4).selectOption('');
       await chordAt.nth(3).selectOption('D7');
       // Re-analysis is immediate: E5 is now the 2 of D7.
       await expect(page.getByTestId('cell-role-3-1')).toHaveText('2');
+      await openStudyTab(page, 'why');
       await expect(page.getByTestId('explanation-blocked')).toBeVisible();
+      await openStudyTab(page, 'notes');
       await page.getByTestId('harmony-save').click();
+      await openStudyTab(page, 'why');
       await expect(page.getByTestId('explanation-stale')).toBeVisible();
 
       await page.getByTestId('explain').click();
@@ -66,6 +74,7 @@ test.describe(
       // Everything persists.
       await page.reload();
       await expect(page.getByTestId('tab-chord-3')).toHaveText('D7');
+      await openStudyTab(page, 'why');
       await expect(page.getByTestId('explanation-summary')).toBeVisible();
       await expect(page.getByTestId('explanation-stale')).toHaveCount(0);
     });

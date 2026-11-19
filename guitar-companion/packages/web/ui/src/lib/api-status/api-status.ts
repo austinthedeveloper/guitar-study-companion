@@ -70,13 +70,13 @@ export class ApiStatusComponent {
   protected readonly tone = computed(() => {
     switch (this.status().state) {
       case 'ok':
-        return 'border-emerald-300 bg-emerald-50 text-emerald-900';
+        return 'border-success-line bg-success-tint text-success-ink';
       case 'degraded':
-        return 'border-amber-300 bg-amber-50 text-amber-900';
+        return 'border-uncertain-line bg-uncertain-tint text-uncertain-ink';
       case 'error':
-        return 'border-red-300 bg-red-50 text-red-900';
+        return 'border-error-line bg-error-tint text-error-ink';
       default:
-        return 'border-stone-200 bg-stone-50 text-stone-800';
+        return 'border-rule bg-paper-sunk text-ink';
     }
   });
 }

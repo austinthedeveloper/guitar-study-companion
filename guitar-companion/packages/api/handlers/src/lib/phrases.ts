@@ -142,6 +142,8 @@ export async function listPhrases(
       tuningMidi: p.context.tuningMidi,
       capo: p.context.capo,
       key: p.context.key,
+      chords: p.context.chords,
+      chordChanges: p.context.chordChanges,
     });
     const text = [
       p.title,

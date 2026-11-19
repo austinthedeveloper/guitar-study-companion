@@ -16,15 +16,15 @@ const MINUTES = [5, 10, 15, 20, 30, 45, 60];
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <form
-      class="flex flex-wrap items-end gap-4 rounded-lg border border-stone-300 bg-white p-4 text-sm"
+      class="flex flex-wrap items-end gap-4 rounded-lg border border-rule-strong bg-paper-raised p-4 text-sm"
       aria-label="Plan settings"
       data-testid="plan-settings"
       (submit)="$event.preventDefault(); build.emit(value())"
     >
       <label>
-        <span class="block text-stone-700">Difficulty</span>
+        <span class="block text-ink">Difficulty</span>
         <select
-          class="mt-1 rounded border border-stone-300 bg-white px-2 py-1"
+          class="mt-1 rounded border border-rule-strong bg-paper-raised px-2 py-1"
           (change)="set('difficulty', $any($event.target).value)"
           data-testid="plan-difficulty"
         >
@@ -39,9 +39,9 @@ const MINUTES = [5, 10, 15, 20, 30, 45, 60];
         </select>
       </label>
       <label>
-        <span class="block text-stone-700">Session</span>
+        <span class="block text-ink">Session</span>
         <select
-          class="mt-1 rounded border border-stone-300 bg-white px-2 py-1"
+          class="mt-1 rounded border border-rule-strong bg-paper-raised px-2 py-1"
           (change)="set('minutes', +$any($event.target).value)"
           data-testid="plan-minutes"
         >
@@ -53,9 +53,9 @@ const MINUTES = [5, 10, 15, 20, 30, 45, 60];
         </select>
       </label>
       <label>
-        <span class="block text-stone-700">Focus</span>
+        <span class="block text-ink">Focus</span>
         <select
-          class="mt-1 rounded border border-stone-300 bg-white px-2 py-1"
+          class="mt-1 rounded border border-rule-strong bg-paper-raised px-2 py-1"
           (change)="set('focus', $any($event.target).value)"
           data-testid="plan-focus"
         >

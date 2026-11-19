@@ -38,7 +38,23 @@ describe('phraseFacets', () => {
       key: 'A minor',
       techniques: ['hammer-on', 'vibrato'],
       steps: ['m2 up', 'm3 up', 'P1', 'M3 down'],
+      roles: [],
     });
+  });
+
+  it('gives the role of each column over the chords', () => {
+    // C4 E4 G4 over C, then F4 over F (placed from the fourth note).
+    const facets = phraseFacets({
+      events: [ev(0, 2, 5), ev(1, 1, 5), ev(2, 0, 3), ev(3, 1, 6)],
+      tuningMidi: STANDARD_TUNING_MIDI,
+      capo: 0,
+      chords: 'C F',
+      chordChanges: [
+        { fromOrder: 0, chord: 'C' },
+        { fromOrder: 3, chord: 'F' },
+      ],
+    });
+    expect(facets.roles.map((r) => r.label)).toEqual(['R', '3', '5', 'R']);
   });
 
   it('has no key when it is missing or not understood', () => {

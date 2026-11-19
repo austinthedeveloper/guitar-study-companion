@@ -10,14 +10,14 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
-      class="rounded-lg border p-4"
+      class="rounded-md border px-4 py-3"
       [class]="tone()"
       [attr.role]="kind() === 'error' ? 'alert' : 'status'"
       [attr.data-kind]="kind()"
       data-testid="alert"
     >
       @if (heading()) {
-        <h3 class="font-medium">{{ heading() }}</h3>
+        <h3 class="font-semibold">{{ heading() }}</h3>
       }
       <div class="text-sm" [class.mt-1]="!!heading()"><ng-content /></div>
     </div>
@@ -29,10 +29,10 @@ export class AlertComponent {
   protected readonly tone = computed(
     () =>
       ({
-        info: 'border-sky-300 bg-sky-50 text-sky-900',
-        warning: 'border-amber-300 bg-amber-50 text-amber-900',
-        error: 'border-red-300 bg-red-50 text-red-900',
-        success: 'border-emerald-300 bg-emerald-50 text-emerald-900',
+        info: 'border-info-line bg-info-tint text-info-ink',
+        warning: 'border-uncertain-line bg-uncertain-tint text-uncertain-ink',
+        error: 'border-error-line bg-error-tint text-error-ink',
+        success: 'border-success-line bg-success-tint text-success-ink',
       })[this.kind()],
   );
 }

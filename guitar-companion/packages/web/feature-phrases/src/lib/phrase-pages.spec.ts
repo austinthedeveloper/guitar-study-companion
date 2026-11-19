@@ -120,7 +120,12 @@ describe('PhraseListPage', () => {
         createdAt: phrase.createdAt,
         tags: ['blues'],
         favorite: true,
-        facets: { key: 'G major', techniques: ['bend'], steps: [] },
+        facets: {
+          key: 'G major',
+          techniques: ['bend'],
+          steps: [],
+          roles: [{ label: 'R', chordTone: true }],
+        },
       },
     ]);
     await settle();

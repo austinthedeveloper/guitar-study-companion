@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openStudyTab } from '../support/phrase-detail';
 import { API_PATHS, PracticePlan } from '@gsc/contracts';
 import { ROUTE_PATHS, routeTag } from '@gsc/web/routes';
 import { expectNoA11yViolations } from '../support/a11y';
@@ -51,6 +52,7 @@ test.describe('Review page', { tag: routeTag(ROUTE_PATHS.review) }, () => {
     );
 
     await page.goto(`/phrases/${phrase.id}`);
+    await openStudyTab(page, 'library');
     await expect(page.getByTestId('history-entry')).toContainText(
       `1 of ${plan.exercises.length} done`,
     );

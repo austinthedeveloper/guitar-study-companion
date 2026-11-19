@@ -20,12 +20,12 @@ export interface PhraseMetaValue {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section
-      class="space-y-3 rounded-lg border border-stone-300 bg-white p-4"
+      class="space-y-3 rounded-lg border border-rule-strong bg-paper-raised p-4"
       aria-labelledby="meta-heading"
       data-testid="phrase-meta"
     >
       <header class="flex items-center gap-3">
-        <h2 id="meta-heading" class="text-lg font-semibold">In your library</h2>
+        <h2 id="meta-heading" class="h2">In your library</h2>
         <button
           type="button"
           class="btn-secondary"
@@ -37,9 +37,9 @@ export interface PhraseMetaValue {
         </button>
       </header>
       <label class="block text-sm">
-        <span class="block text-stone-700">Tags (comma-separated)</span>
+        <span class="block text-ink">Tags (comma-separated)</span>
         <input
-          class="mt-1 w-full rounded border border-stone-300 px-2 py-1"
+          class="mt-1 w-full rounded border border-rule-strong px-2 py-1"
           autocomplete="off"
           placeholder="e.g. blues, warmup"
           [value]="tagsText()"
@@ -48,9 +48,9 @@ export interface PhraseMetaValue {
         />
       </label>
       <label class="block text-sm">
-        <span class="block text-stone-700">Your notes</span>
+        <span class="block text-ink">Your notes</span>
         <textarea
-          class="mt-1 w-full rounded border border-stone-300 p-2"
+          class="mt-1 w-full rounded border border-rule-strong p-2"
           rows="3"
           [value]="notes()"
           (input)="notes.set($any($event.target).value)"
@@ -68,7 +68,7 @@ export interface PhraseMetaValue {
           {{ saving() ? 'Saving…' : 'Save' }}
         </button>
         @if (status()) {
-          <span class="text-stone-600" data-testid="meta-status">{{
+          <span class="text-ink-muted" data-testid="meta-status">{{
             status()
           }}</span>
         }

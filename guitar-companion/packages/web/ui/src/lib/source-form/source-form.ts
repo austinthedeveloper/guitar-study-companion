@@ -44,7 +44,7 @@ export interface SourceFormValue {
           aria-describedby="book-title-error"
         />
         @if (showError('bookTitle')) {
-          <span id="book-title-error" class="text-sm text-red-700"
+          <span id="book-title-error" class="text-sm text-error-ink"
             >Enter the book title so you can find this later.</span
           >
         }
@@ -108,10 +108,10 @@ export interface SourceFormValue {
     }
     .field input,
     .field select {
-      border: 1px solid var(--color-stone-300);
+      border: 1px solid var(--color-rule-strong);
       border-radius: 0.25rem;
       padding: 0.375rem 0.5rem;
-      background: white;
+      background: var(--color-paper-raised);
     }
   `,
 })

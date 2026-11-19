@@ -28,13 +28,13 @@ const KIND_LABELS: Record<Exercise['kind'], string> = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <article
-      class="space-y-3 rounded-lg border bg-white p-4"
-      [class]="done() ? 'border-green-600' : 'border-stone-300'"
+      class="space-y-3 rounded-lg border bg-paper-raised p-4"
+      [class]="done() ? 'border-success-line' : 'border-rule-strong'"
       [attr.aria-labelledby]="'exercise-' + exercise().id"
       data-testid="exercise"
     >
       <header class="flex flex-wrap items-baseline gap-2">
-        <span class="text-sm tabular-nums text-stone-500">{{ number() }}.</span>
+        <span class="text-sm tabular-nums text-ink-muted">{{ number() }}.</span>
         <h3
           [id]="'exercise-' + exercise().id"
           class="font-semibold"
@@ -43,11 +43,11 @@ const KIND_LABELS: Record<Exercise['kind'], string> = {
           {{ exercise().title }}
         </h3>
         <span
-          class="rounded bg-stone-100 px-1.5 text-xs text-stone-700"
+          class="rounded bg-paper-sunk px-1.5 text-xs text-ink"
           data-testid="exercise-kind"
           >{{ kindLabel() }}</span
         >
-        <span class="ml-auto text-xs text-stone-500"
+        <span class="ml-auto text-xs text-ink-muted"
           >about {{ exercise().minutes }} min</span
         >
       </header>
@@ -114,7 +114,7 @@ const KIND_LABELS: Record<Exercise['kind'], string> = {
         >
           +
         </button>
-        <span class="text-stone-600" data-testid="tempo-range"
+        <span class="text-ink-muted" data-testid="tempo-range"
           >{{ exercise().tempo.startBpm }} →
           {{ exercise().tempo.targetBpm }} bpm</span
         >
@@ -140,7 +140,7 @@ const KIND_LABELS: Record<Exercise['kind'], string> = {
         <button
           type="button"
           class="btn-secondary"
-          [class.bg-stone-200]="metronomeOn()"
+          [class.bg-paper-sunk]="metronomeOn()"
           [attr.aria-pressed]="metronomeOn()"
           (click)="toggleMetronome.emit()"
           data-testid="metronome"
@@ -157,7 +157,7 @@ const KIND_LABELS: Record<Exercise['kind'], string> = {
             @for (b of [0, 1, 2, 3]; track b) {
               <span
                 class="h-3 w-3 rounded-full"
-                [class]="beat() % 4 === b ? 'bg-brand-600' : 'bg-stone-200'"
+                [class]="beat() % 4 === b ? 'bg-brand-hover' : 'bg-paper-sunk'"
               ></span>
             }
           </span>
@@ -172,7 +172,7 @@ const KIND_LABELS: Record<Exercise['kind'], string> = {
         </button>
       </div>
       @if (!exercise().tempo.rhythmic) {
-        <p class="text-xs text-stone-600">
+        <p class="text-xs text-ink-muted">
           Playback is one note per click, not the real rhythm.
         </p>
       }
@@ -196,10 +196,10 @@ const KIND_LABELS: Record<Exercise['kind'], string> = {
       </div>
       @if (exercise().coaching.length) {
         <div
-          class="rounded bg-stone-50 p-2 text-sm"
+          class="rounded bg-paper-sunk p-2 text-sm"
           data-testid="exercise-coaching"
         >
-          <p class="text-xs font-medium text-stone-600">Tips (written by AI)</p>
+          <p class="text-xs font-medium text-ink-muted">Tips (written by AI)</p>
           <ul class="mt-1 list-disc pl-5">
             @for (t of exercise().coaching; track $index) {
               <li>{{ t }}</li>
@@ -218,7 +218,7 @@ const KIND_LABELS: Record<Exercise['kind'], string> = {
           />
           Done
           @if (progress()?.bestBpm; as best) {
-            <span class="text-stone-600" data-testid="exercise-best"
+            <span class="text-ink-muted" data-testid="exercise-best"
               >· best {{ best }} bpm</span
             >
           }
